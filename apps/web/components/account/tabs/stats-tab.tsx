@@ -10,7 +10,6 @@ import {
   IconBook,
   IconMovie,
   IconDeviceGamepad,
-  IconHeadphones,
 } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 
@@ -34,7 +33,6 @@ const STATS_CATEGORIES: Array<{
   { id: "tv", name: "TV Series", icon: IconDeviceTv },
   { id: "game", name: "Games", icon: IconDeviceGamepad },
   { id: "book", name: "Books", icon: IconBook },
-  { id: "music", name: "Music", icon: IconHeadphones },
 ]
 
 export function StatsTab({ username, userId }: StatsTabProps): React.JSX.Element {

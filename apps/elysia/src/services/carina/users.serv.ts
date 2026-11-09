@@ -116,6 +116,31 @@ const FAVORITE_TYPE_MAP: Record<string, FavoriteType> = {
   user: 'USER',
 }
 
+function formatEntry(entry: any) {
+  if (!entry) return null
+  return {
+    ...entry,
+    startedAt: entry.startedAt ? (entry.startedAt instanceof Date ? entry.startedAt.toISOString() : String(entry.startedAt)) : null,
+    completedAt: entry.completedAt ? (entry.completedAt instanceof Date ? entry.completedAt.toISOString() : String(entry.completedAt)) : null,
+    createdAt: entry.createdAt ? (entry.createdAt instanceof Date ? entry.createdAt.toISOString() : String(entry.createdAt)) : new Date().toISOString(),
+    updatedAt: entry.updatedAt ? (entry.updatedAt instanceof Date ? entry.updatedAt.toISOString() : String(entry.updatedAt)) : new Date().toISOString(),
+  }
+}
+
+function formatMedia(media: any) {
+  if (!media) return null
+  const genres = (media.genres || [])
+    .filter((g: any) => Boolean(g?.genre || g?.name))
+    .map((g: any) => ({
+      id: g.genre?.id ?? g.id,
+      name: g.genre?.name ?? g.name,
+    }))
+  return {
+    ...media,
+    genres,
+  }
+}
+
 export class CarinaUsersServ {
   /**
    * Resolves a user strictly by database user ID.
@@ -873,7 +898,7 @@ export class CarinaUsersServ {
   }
 
   /**
-   * Helper to enrich raw favorite records with entity metadata (title, cover, link, format, score).
+   * Helper to enrich raw favorite records with entity metadata (title, cover, link, format, score, list entry, media).
    */
   private static async enrichFavoritesWithEntities(
     rawFavorites: Array<{
@@ -936,32 +961,143 @@ export class CarinaUsersServ {
     ] = await Promise.all([
       animeIds.length
         ? prisma.orm.public.Anime.where((m) => m.id.in(animeIds))
-            .select('id', 'titlePrimary', 'titleSecondary', 'titleNative', 'coverImage', 'bannerImage', 'format', 'description', 'averageScore', 'status', 'startDateYear', 'episodeCount')
+            .select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'titleNative',
+              'coverImage',
+              'bannerImage',
+              'format',
+              'status',
+              'episodeCount',
+              'averageScore',
+              'startDateYear',
+              'description'
+            )
+            .include('genres', (g) =>
+              g.include('genre', (ge) => ge.select('id', 'name'))
+            )
             .all()
         : [],
       mangaIds.length
         ? prisma.orm.public.Manga.where((m) => m.id.in(mangaIds))
-            .select('id', 'titlePrimary', 'titleSecondary', 'titleNative', 'coverImage', 'bannerImage', 'format', 'description', 'averageScore', 'status', 'startDateYear', 'chapterCount', 'volumeCount')
+            .select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'titleNative',
+              'coverImage',
+              'bannerImage',
+              'format',
+              'status',
+              'chapterCount',
+              'volumeCount',
+              'averageScore',
+              'startDateYear',
+              'description'
+            )
+            .include('genres', (g) =>
+              g.include('genre', (ge) => ge.select('id', 'name'))
+            )
             .all()
         : [],
       movieIds.length
         ? prisma.orm.public.Movie.where((m) => m.id.in(movieIds))
-            .select('id', 'titlePrimary', 'titleSecondary', 'titleNative', 'coverImage', 'bannerImage', 'description', 'averageScore', 'status', 'releaseDateYear')
+            .select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'titleNative',
+              'coverImage',
+              'bannerImage',
+              'status',
+              'runtime',
+              'averageScore',
+              'releaseDateYear',
+              'description'
+            )
+            .include('genres', (g) =>
+              g.include('genre', (ge) => ge.select('id', 'name'))
+            )
             .all()
         : [],
       tvIds.length
         ? prisma.orm.public.Tv.where((m) => m.id.in(tvIds))
-            .select('id', 'titlePrimary', 'titleSecondary', 'titleNative', 'coverImage', 'bannerImage', 'description', 'averageScore', 'status', 'firstAiredYear', 'episodeCount')
+            .select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'titleNative',
+              'coverImage',
+              'bannerImage',
+              'status',
+              'episodeCount',
+              'seasonCount',
+              'averageScore',
+              'firstAiredYear',
+              'description'
+            )
+            .include('genres', (g) =>
+              g.include('genre', (ge) => ge.select('id', 'name'))
+            )
+            .include('seasons', (s) =>
+              s
+                .select(
+                  'id',
+                  'seasonNumber',
+                  'titlePrimary',
+                  'titleSecondary',
+                  'episodeCount'
+                )
+                .orderBy((sn) => sn.seasonNumber.asc())
+            )
             .all()
         : [],
       gameIds.length
         ? prisma.orm.public.Game.where((m) => m.id.in(gameIds))
-            .select('id', 'titlePrimary', 'titleSecondary', 'coverImage', 'bannerImage', 'description', 'averageScore', 'status', 'releaseDateYear')
+            .select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'titleNative',
+              'coverImage',
+              'bannerImage',
+              'status',
+              'platforms',
+              'developers',
+              'publishers',
+              'averageScore',
+              'releaseDateYear',
+              'description'
+            )
+            .include('genres', (ge) =>
+              ge.include('genre', (g) => g.select('id', 'name'))
+            )
             .all()
         : [],
       bookIds.length
         ? prisma.orm.public.Book.where((m) => m.id.in(bookIds))
-            .select('id', 'titlePrimary', 'titleSecondary', 'coverImage', 'bannerImage', 'description', 'averageScore', 'status', 'releaseDateYear')
+            .select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'subtitle',
+              'coverImage',
+              'bannerImage',
+              'format',
+              'status',
+              'pageCount',
+              'chapterCount',
+              'volumeCount',
+              'authors',
+              'averageScore',
+              'releaseDateYear',
+              'description'
+            )
+            .include('genres', (ge) =>
+              ge.include('genre', (g) => g.select('id', 'name'))
+            )
             .all()
         : [],
       musicIds.length
@@ -971,12 +1107,37 @@ export class CarinaUsersServ {
         : [],
       characterIds.length
         ? prisma.orm.public.Character.where((m) => m.id.in(characterIds))
-            .select('id', 'namePrimary', 'nameNative', 'image')
+            .select(
+              'id',
+              'namePrimary',
+              'nameNative',
+              'image',
+              'description',
+              'gender',
+              'age',
+              'dateOfBirthYear',
+              'dateOfBirthMonth',
+              'dateOfBirthDay',
+              'favorites'
+            )
             .all()
         : [],
       personIds.length
         ? prisma.orm.public.Person.where((m) => m.id.in(personIds))
-            .select('id', 'namePrimary', 'nameNative', 'image')
+            .select(
+              'id',
+              'namePrimary',
+              'nameNative',
+              'image',
+              'description',
+              'gender',
+              'age',
+              'dateOfBirthYear',
+              'dateOfBirthMonth',
+              'dateOfBirthDay',
+              'primaryOccupations',
+              'favorites'
+            )
             .all()
         : [],
       studioIds.length
@@ -987,48 +1148,40 @@ export class CarinaUsersServ {
       animeIds.length
         ? prisma.orm.public.AnimeList.where({ userId: targetUserId })
             .where((m) => m.animeId.in(animeIds))
-            .select('animeId', 'score')
             .all()
         : [],
       mangaIds.length
         ? prisma.orm.public.MangaList.where({ userId: targetUserId })
             .where((m) => m.mangaId.in(mangaIds))
-            .select('mangaId', 'score')
             .all()
         : [],
       movieIds.length
         ? prisma.orm.public.MovieList.where({ userId: targetUserId })
             .where((m) => m.movieId.in(movieIds))
-            .select('movieId', 'score')
             .all()
         : [],
       tvIds.length
         ? prisma.orm.public.TvList.where({ userId: targetUserId })
             .where((m) => m.tvId.in(tvIds))
-            .select('tvId', 'score')
             .all()
         : [],
       gameIds.length
         ? prisma.orm.public.GameList.where({ userId: targetUserId })
             .where((m) => m.gameId.in(gameIds))
-            .select('gameId', 'score')
             .all()
         : [],
       bookIds.length
         ? prisma.orm.public.BookList.where({ userId: targetUserId })
             .where((m) => m.bookId.in(bookIds))
-            .select('bookId', 'score')
             .all()
         : [],
       otherIds.length
         ? prisma.orm.public.Other.where((m) => m.id.in(otherIds))
-            .select('id', 'titlePrimary', 'titleSecondary', 'coverImage')
             .all()
         : [],
       otherIds.length
         ? prisma.orm.public.OtherList.where({ userId: targetUserId })
             .where((m) => m.otherId.in(otherIds))
-            .select('otherId', 'score')
             .all()
         : [],
     ])
@@ -1045,14 +1198,13 @@ export class CarinaUsersServ {
     const studioMap = new Map<number, any>(studioList.map((i: any): [number, any] => [i.id, i]))
     const otherMap = new Map<number, any>(otherList.map((i: any): [number, any] => [i.id, i]))
 
-    const scoreMap = new Map<string, number>()
-    userAnimeEntries.forEach((e: any) => e.score && scoreMap.set(`ANIME:${e.animeId}`, e.score))
-    userMangaEntries.forEach((e: any) => e.score && scoreMap.set(`MANGA:${e.mangaId}`, e.score))
-    userMovieEntries.forEach((e: any) => e.score && scoreMap.set(`MOVIE:${e.movieId}`, e.score))
-    userTvEntries.forEach((e: any) => e.score && scoreMap.set(`TV:${e.tvId}`, e.score))
-    userGameEntries.forEach((e: any) => e.score && scoreMap.set(`GAME:${e.gameId}`, e.score))
-    userBookEntries.forEach((e: any) => e.score && scoreMap.set(`BOOK:${e.bookId}`, e.score))
-    userOtherEntries.forEach((e: any) => e.score && scoreMap.set(`OTHER:${e.otherId}`, e.score))
+    const userAnimeMap = new Map<number, any>(userAnimeEntries.map((e: any): [number, any] => [e.animeId, formatEntry(e)]))
+    const userMangaMap = new Map<number, any>(userMangaEntries.map((e: any): [number, any] => [e.mangaId, formatEntry(e)]))
+    const userMovieMap = new Map<number, any>(userMovieEntries.map((e: any): [number, any] => [e.movieId, formatEntry(e)]))
+    const userTvMap = new Map<number, any>(userTvEntries.map((e: any): [number, any] => [e.tvId, formatEntry(e)]))
+    const userGameMap = new Map<number, any>(userGameEntries.map((e: any): [number, any] => [e.gameId, formatEntry(e)]))
+    const userBookMap = new Map<number, any>(userBookEntries.map((e: any): [number, any] => [e.bookId, formatEntry(e)]))
+    const userOtherMap = new Map<number, any>(userOtherEntries.map((e: any): [number, any] => [e.otherId, formatEntry(e)]))
 
     return rawFavorites.map((f) => {
       let title = ''
@@ -1060,10 +1212,26 @@ export class CarinaUsersServ {
       let coverImage: string | null = null
       let link = ''
       let format: string | null = null
-      const userScore = scoreMap.get(`${f.type}:${f.targetId}`) || null
+      let userEntry: any = null
+      let media: any = null
 
       if (f.type === 'ANIME') {
         const item = animeMap.get(f.targetId)
+        media = item ? formatMedia(item) : null
+        userEntry = userAnimeMap.get(f.targetId) || {
+          id: 0,
+          userId: targetUserId,
+          animeId: f.targetId,
+          status: null,
+          score: null,
+          progress: 0,
+          notes: null,
+          private: false,
+          startedAt: null,
+          completedAt: null,
+          createdAt: toDate(f.createdAt).toISOString(),
+          updatedAt: toDate(f.createdAt).toISOString(),
+        }
         title = item?.titlePrimary || item?.titleSecondary || `Anime #${f.targetId}`
         subtitle = item?.titleSecondary || item?.titleNative || null
         coverImage = item?.coverImage || null
@@ -1071,6 +1239,22 @@ export class CarinaUsersServ {
         format = item?.format || 'ANIME'
       } else if (f.type === 'MANGA') {
         const item = mangaMap.get(f.targetId)
+        media = item ? formatMedia(item) : null
+        userEntry = userMangaMap.get(f.targetId) || {
+          id: 0,
+          userId: targetUserId,
+          mangaId: f.targetId,
+          status: null,
+          score: null,
+          chaptersProgress: 0,
+          volumesProgress: 0,
+          notes: null,
+          private: false,
+          startedAt: null,
+          completedAt: null,
+          createdAt: toDate(f.createdAt).toISOString(),
+          updatedAt: toDate(f.createdAt).toISOString(),
+        }
         title = item?.titlePrimary || item?.titleSecondary || `Manga #${f.targetId}`
         subtitle = item?.titleSecondary || item?.titleNative || null
         coverImage = item?.coverImage || null
@@ -1078,6 +1262,21 @@ export class CarinaUsersServ {
         format = item?.format || 'MANGA'
       } else if (f.type === 'MOVIE') {
         const item = movieMap.get(f.targetId)
+        media = item ? formatMedia(item) : null
+        userEntry = userMovieMap.get(f.targetId) || {
+          id: 0,
+          userId: targetUserId,
+          movieId: f.targetId,
+          status: null,
+          score: null,
+          progress: 0,
+          notes: null,
+          private: false,
+          startedAt: null,
+          completedAt: null,
+          createdAt: toDate(f.createdAt).toISOString(),
+          updatedAt: toDate(f.createdAt).toISOString(),
+        }
         title = item?.titlePrimary || item?.titleSecondary || `Movie #${f.targetId}`
         subtitle = item?.titleSecondary || item?.titleNative || null
         coverImage = item?.coverImage || null
@@ -1085,6 +1284,21 @@ export class CarinaUsersServ {
         format = 'MOVIE'
       } else if (f.type === 'TV') {
         const item = tvMap.get(f.targetId)
+        media = item ? formatMedia(item) : null
+        userEntry = userTvMap.get(f.targetId) || {
+          id: 0,
+          userId: targetUserId,
+          tvId: f.targetId,
+          status: null,
+          score: null,
+          progress: 0,
+          notes: null,
+          private: false,
+          startedAt: null,
+          completedAt: null,
+          createdAt: toDate(f.createdAt).toISOString(),
+          updatedAt: toDate(f.createdAt).toISOString(),
+        }
         title = item?.titlePrimary || item?.titleSecondary || `TV Series #${f.targetId}`
         subtitle = item?.titleSecondary || item?.titleNative || null
         coverImage = item?.coverImage || null
@@ -1092,6 +1306,21 @@ export class CarinaUsersServ {
         format = 'TV'
       } else if (f.type === 'GAME') {
         const item = gameMap.get(f.targetId)
+        media = item ? formatMedia(item) : null
+        userEntry = userGameMap.get(f.targetId) || {
+          id: 0,
+          userId: targetUserId,
+          gameId: f.targetId,
+          status: null,
+          score: null,
+          progress: 0,
+          notes: null,
+          private: false,
+          startedAt: null,
+          completedAt: null,
+          createdAt: toDate(f.createdAt).toISOString(),
+          updatedAt: toDate(f.createdAt).toISOString(),
+        }
         title = item?.titlePrimary || item?.titleSecondary || `Game #${f.targetId}`
         subtitle = item?.titleSecondary || null
         coverImage = item?.coverImage || null
@@ -1099,6 +1328,22 @@ export class CarinaUsersServ {
         format = 'GAME'
       } else if (f.type === 'BOOK') {
         const item = bookMap.get(f.targetId)
+        media = item ? formatMedia(item) : null
+        userEntry = userBookMap.get(f.targetId) || {
+          id: 0,
+          userId: targetUserId,
+          bookId: f.targetId,
+          status: null,
+          score: null,
+          progressPages: 0,
+          progressChapters: 0,
+          notes: null,
+          private: false,
+          startedAt: null,
+          completedAt: null,
+          createdAt: toDate(f.createdAt).toISOString(),
+          updatedAt: toDate(f.createdAt).toISOString(),
+        }
         title = item?.titlePrimary || item?.titleSecondary || `Book #${f.targetId}`
         subtitle = item?.titleSecondary || null
         coverImage = item?.coverImage || null
@@ -1119,6 +1364,7 @@ export class CarinaUsersServ {
         coverImage = item?.image || null
         link = `/borealis/characters/${f.targetId}`
         format = 'CHARACTER'
+        media = item ? { ...item } : null
       } else if (f.type === 'PERSON') {
         const item = personMap.get(f.targetId)
         title = item?.namePrimary || `Person #${f.targetId}`
@@ -1126,13 +1372,30 @@ export class CarinaUsersServ {
         coverImage = item?.image || null
         link = `/borealis/people/${f.targetId}`
         format = 'PERSON'
+        media = item ? { ...item } : null
       } else if (f.type === 'STUDIO') {
         const item = studioMap.get(f.targetId)
         title = item?.name || `Studio #${f.targetId}`
         link = `/borealis/studios/${f.targetId}`
         format = 'STUDIO'
+        media = item ? { ...item } : null
       } else if (f.type === 'OTHER') {
         const item = otherMap.get(f.targetId)
+        media = item ? formatMedia(item) : null
+        userEntry = userOtherMap.get(f.targetId) || {
+          id: 0,
+          userId: targetUserId,
+          otherId: f.targetId,
+          status: null,
+          score: null,
+          progressValues: {},
+          notes: null,
+          private: false,
+          startedAt: null,
+          completedAt: null,
+          createdAt: toDate(f.createdAt).toISOString(),
+          updatedAt: toDate(f.createdAt).toISOString(),
+        }
         title = item?.titlePrimary || item?.titleSecondary || `Item #${f.targetId}`
         subtitle = item?.titleSecondary || null
         coverImage = item?.coverImage || null
@@ -1143,13 +1406,14 @@ export class CarinaUsersServ {
         format = f.type
       }
 
-
       return {
         id: f.id,
         userId: f.userId,
         type: f.type,
         targetId: f.targetId,
         createdAt: toDate(f.createdAt).toISOString(),
+        entry: userEntry,
+        media,
         entity: {
           id: f.targetId,
           title,
@@ -1157,7 +1421,8 @@ export class CarinaUsersServ {
           coverImage,
           link,
           format,
-          score: userScore,
+          score: userEntry?.score ?? null,
+          raw: media,
         },
       }
     })
@@ -1254,6 +1519,102 @@ export class CarinaUsersServ {
         total,
         totalPages,
         hasMore,
+      },
+    }
+  }
+
+  /**
+   * Get all user favorites grouped by category at once (excludes music).
+   */
+  public static async getAllUserFavorites(
+    targetIdentifier: string,
+    query?: { limit?: number }
+  ) {
+    const target = await this.resolveUser(targetIdentifier)
+    const limitPerCategory = Math.max(1, Math.min(250, Number(query?.limit ?? 50)))
+
+    const allowedTypes: FavoriteType[] = [
+      'ANIME',
+      'MANGA',
+      'MOVIE',
+      'TV',
+      'GAME',
+      'BOOK',
+      'CHARACTER',
+      'PERSON',
+      'STUDIO',
+      'OTHER',
+    ]
+
+    const rawFavorites = await prisma.orm.public.Favorite.where({ userId: target.id })
+      .where((f) => f.type.in(allowedTypes))
+      .orderBy((f) => f.createdAt.desc())
+      .all()
+
+    const enriched = await this.enrichFavoritesWithEntities(rawFavorites, target.id)
+
+    const categories: Record<string, any[]> = {
+      anime: [],
+      manga: [],
+      movie: [],
+      tv: [],
+      game: [],
+      book: [],
+      character: [],
+      person: [],
+      studio: [],
+      other: [],
+    }
+
+    const counts: Record<string, number> = {
+      anime: 0,
+      manga: 0,
+      movie: 0,
+      tv: 0,
+      game: 0,
+      book: 0,
+      character: 0,
+      person: 0,
+      studio: 0,
+      other: 0,
+      total: enriched.length,
+    }
+
+    for (const fav of enriched) {
+      let cat = 'other'
+      if (fav.type === 'ANIME') cat = 'anime'
+      else if (fav.type === 'MANGA') cat = 'manga'
+      else if (fav.type === 'MOVIE') cat = 'movie'
+      else if (fav.type === 'TV') cat = 'tv'
+      else if (fav.type === 'GAME') cat = 'game'
+      else if (fav.type === 'BOOK') cat = 'book'
+      else if (fav.type === 'CHARACTER') cat = 'character'
+      else if (fav.type === 'PERSON') cat = 'person'
+      else if (fav.type === 'STUDIO') cat = 'studio'
+      else if (fav.type === 'OTHER') cat = 'other'
+
+      counts[cat] = (counts[cat] || 0) + 1
+      const targetCategoryList = categories[cat]
+      if (targetCategoryList && targetCategoryList.length < limitPerCategory) {
+        targetCategoryList.push(fav)
+      }
+    }
+
+    return {
+      success: true,
+      favorites: categories,
+      counts: counts as {
+        anime: number
+        manga: number
+        movie: number
+        tv: number
+        game: number
+        book: number
+        character: number
+        person: number
+        studio: number
+        other: number
+        total: number
       },
     }
   }

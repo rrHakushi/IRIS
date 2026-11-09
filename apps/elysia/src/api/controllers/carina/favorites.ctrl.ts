@@ -1,10 +1,32 @@
 import { Elysia } from 'elysia'
 import { session } from '../../../plugins/session'
 import { CarinaFavoritesModel } from '../../models/carina/favorites.model'
+import { CarinaUsersModel } from '../../models/carina/users.model'
 import { CarinaFavoritesServ } from '../../../services/carina/favorites.serv'
+import { CarinaUsersServ } from '../../../services/carina/users.serv'
 
 export const carinaFavorites = new Elysia({ prefix: '/carina/favorites' })
   .use(session())
+
+  // --- 0. GET /carina/favorites/all (Get all favorites across all categories at once) ---
+  .get(
+    '/all',
+    {
+      query: CarinaUsersModel.allFavoritesQuery,
+      detail: {
+        summary: 'Get all user favorites in all categories at once',
+        tags: ['Carina Favorites'],
+      },
+      response: {
+        200: CarinaUsersModel.allFavoritesResponse,
+        401: CarinaFavoritesModel.unauthorizedError,
+      },
+    },
+    async ({ query, session: userSession }) => {
+      const user = userSession.requireUser()
+      return await CarinaUsersServ.getAllUserFavorites(user.id, query)
+    }
+  )
 
   // --- 1. POST /carina/favorites (Add media to user favorites) ---
   .post(

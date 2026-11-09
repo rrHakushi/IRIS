@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
-import { elysia } from "@/lib/elysia"
+import { fetchCarinaUser } from "@/lib/user-profile"
 import { getProfileCustomization } from "@IRIS/shared"
 import { UserProfileView } from "@/components/account/user-profile-view"
 
@@ -19,36 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Page({ params }: Props) {
   const { userId } = await params
 
-  let userData: any = null
-
-  try {
-    const isUuid =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-        userId
-      )
-    if (isUuid) {
-      const res = await elysia.carina.users({ userId }).get()
-      if (!res.error && res.data?.success && res.data.user) {
-        userData = res.data.user
-      }
-    } else {
-      // Backward-compatibility: if legacy route provided a username, search for ID
-      const searchRes = await elysia.carina.users.get({
-        query: { q: userId, limit: 1 },
-      })
-      const found = searchRes.data?.users?.find(
-        (u) => u.username.toLowerCase() === userId.toLowerCase()
-      )
-      if (found) {
-        const res = await elysia.carina.users({ userId: found.id }).get()
-        if (!res.error && res.data?.success && res.data.user) {
-          userData = res.data.user
-        }
-      }
-    }
-  } catch (err) {
-    console.error(`[UserProfilePage] Failed to fetch user '${userId}':`, err)
-  }
+  const userData = await fetchCarinaUser(userId)
 
   if (!userData) {
     notFound()

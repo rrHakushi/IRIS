@@ -1381,6 +1381,8 @@ interface MediaHoverExtra {
   relations?: any[]
   similar?: any[]
   description?: string
+  gender?: string | null
+  age?: string | null
 }
 
 const mediaHoverExtraCache = new Map<string, MediaHoverExtra>()
@@ -1421,6 +1423,43 @@ function formatEpisodeTitle(
     return null
   }
   return cleaned || null
+}
+
+function getEpisodeDisplayTitle(
+  ep: any,
+  epNum: number,
+  titlePreference?: "primary" | "secondary" | "native"
+): string | null {
+  if (!ep) return null
+
+  const candidates: (string | null | undefined)[] = []
+  if (titlePreference === "native") {
+    candidates.push(ep.titleNative, ep.titleSecondary, ep.titlePrimary, ep.title, ep.name)
+  } else if (titlePreference === "secondary") {
+    candidates.push(ep.titleSecondary, ep.titlePrimary, ep.titleNative, ep.title, ep.name)
+  } else {
+    candidates.push(ep.titlePrimary, ep.titleSecondary, ep.titleNative, ep.title, ep.name)
+  }
+
+  const validStrings = candidates
+    .filter((t): t is string => typeof t === "string" && t.trim().length > 0)
+    .map((t) => t.trim())
+
+  // 1. Try to find a distinct/meaningful title (stripping redundant "Episode 1:" prefix)
+  for (const raw of validStrings) {
+    const formatted = formatEpisodeTitle(raw, epNum)
+    if (formatted) {
+      return formatted
+    }
+  }
+
+  // 2. Fallback: if all matched "Episode X" or similar, use the raw title unless purely numeric
+  for (const raw of validStrings) {
+    if (/^#?\s*0*\d+$/.test(raw)) continue
+    return raw
+  }
+
+  return null
 }
 
 // -----------------------------------------------------------------------------
@@ -2015,8 +2054,11 @@ function BorealisCardHoverEpisodesTab({
     if (!mediaId || mediaId <= 0) return
     if (backendMediaType !== "ANIME" && backendMediaType !== "TV") return
 
-    // If initial data already has episode titles, no need to fetch
-    const hasTitles = initialEpisodes.some((e) => Boolean(e.titlePrimary || e.title || e.name))
+    // If initial data already has meaningful episode titles, no need to fetch
+    const hasTitles = initialEpisodes.some((e) => {
+      const t = e.titlePrimary || e.titleSecondary || e.titleNative || e.title || e.name
+      return Boolean(t && !/^#?\s*0*\d+$/.test(t) && !/^Episode\s*0*\d+$/i.test(t))
+    })
     if (hasTitles) return
 
     // Check cache
@@ -2165,11 +2207,13 @@ function BorealisCardHoverEpisodesTab({
     }
   }
 
+  const titlePreference = config.titlePreference ?? data.titlePreference ?? "primary"
+
   const episodeMap = useMemo(() => {
     const map = new Map<number, any>()
     for (const ep of episodes) {
-      const num = ep.number ?? ep.episodeNumber
-      if (typeof num === "number") {
+      const num = Number(ep.number ?? ep.episodeNumber)
+      if (!isNaN(num) && num > 0) {
         map.set(num, ep)
       }
     }
@@ -2237,17 +2281,14 @@ function BorealisCardHoverEpisodesTab({
                         const epNum = idx + 1
                         const ep =
                           season.episodes?.find(
-                            (e: any) => (e.episodeNumber ?? e.number) === epNum
+                            (e: any) => Number(e.episodeNumber ?? e.number) === epNum
                           ) ||
                           seasonEps.find(
-                            (e: any) => (e.number ?? e.episodeNumber) === epNum
+                            (e: any) => Number(e.number ?? e.episodeNumber) === epNum
                           ) ||
                           episodeMap.get(epNum)
                         const watched = isEpisodeWatched(seasonNum, epNum)
-                        const cleanTitle = formatEpisodeTitle(
-                          ep?.titlePrimary || ep?.title || ep?.name,
-                          epNum
-                        )
+                        const cleanTitle = getEpisodeDisplayTitle(ep, epNum, titlePreference)
 
                         return (
                           <button
@@ -2303,10 +2344,7 @@ function BorealisCardHoverEpisodesTab({
             const epNum = idx + 1
             const watched = epNum <= draftProgress
             const epItem = episodeMap.get(epNum)
-            const cleanTitle = formatEpisodeTitle(
-              epItem?.titlePrimary || epItem?.titleSecondary || epItem?.title || epItem?.name,
-              epNum
-            )
+            const cleanTitle = getEpisodeDisplayTitle(epItem, epNum, titlePreference)
 
             return (
               <button
@@ -3856,7 +3894,12 @@ export function BorealisCardHoverContent({
   })
 
   useEffect(() => {
-    if (config.showTabNav || (!isHovered && !isHoverCardEditing) || !mediaId || isNaN(mediaId)) {
+    const hasDescription = Boolean(
+      data.description ||
+      data.hoverDetails?.description ||
+      rawMedia?.description
+    )
+    if (hasDescription || (!isHovered && !isHoverCardEditing) || !mediaId || isNaN(mediaId)) {
       return
     }
 
@@ -3871,12 +3914,48 @@ export function BorealisCardHoverContent({
 
     if (!promise) {
       promise = (async (): Promise<MediaHoverExtra> => {
+        const norm = (data.type || "").toLowerCase()
+        const result: MediaHoverExtra = {}
+
+        if (norm === "character" || norm === "characters") {
+          try {
+            const res = await safeBorealisFetch(`/borealis/characters/${mediaId}`)
+            if (res.ok) {
+              const json = await res.json()
+              const char = json.character || json
+              if (char) {
+                if (char.description) result.description = char.description
+                if (char.gender) result.gender = char.gender
+                if (char.age) result.age = String(char.age)
+              }
+            }
+          } catch {}
+          mediaHoverExtraCache.set(key, result)
+          return result
+        }
+
+        if (norm === "staff" || norm === "people" || norm === "person") {
+          try {
+            const res = await safeBorealisFetch(`/borealis/people/${mediaId}`)
+            if (res.ok) {
+              const json = await res.json()
+              const p = json.person || json
+              if (p) {
+                if (p.description) result.description = p.description
+                if (p.gender) result.gender = p.gender
+                if (p.age) result.age = String(p.age)
+              }
+            }
+          } catch {}
+          mediaHoverExtraCache.set(key, result)
+          return result
+        }
+
         const pathPrefix = getMediaApiPath(data.type)
-        if (!pathPrefix || pathPrefix === "other" || pathPrefix === "studio" || pathPrefix === "character" || pathPrefix === "staff") {
+        if (!pathPrefix || pathPrefix === "other" || pathPrefix === "studio") {
           return {}
         }
 
-        const result: MediaHoverExtra = {}
         try {
           const detailRes = await safeBorealisFetch(`/borealis/media/${pathPrefix}/${mediaId}`)
           if (detailRes.ok) {
@@ -3888,16 +3967,6 @@ export function BorealisCardHoverContent({
               if (json.media.description) {
                 result.description = json.media.description
               }
-            }
-          }
-        } catch {}
-
-        try {
-          const similarRes = await safeBorealisFetch(`/borealis/media/${pathPrefix}/${mediaId}/similar?limit=6`)
-          if (similarRes.ok) {
-            const json = await similarRes.json()
-            if (Array.isArray(json.similar)) {
-              result.similar = json.similar
             }
           }
         } catch {}
@@ -3920,7 +3989,7 @@ export function BorealisCardHoverContent({
     return () => {
       isMounted = false
     }
-  }, [config.showTabNav, isHovered, isHoverCardEditing, data.type, mediaId])
+  }, [isHovered, isHoverCardEditing, data.type, mediaId, data.description, data.hoverDetails?.description, rawMedia?.description])
 
   const effectiveSimilar = useMemo(() => {
     if (Array.isArray(data.hoverDetails?.recommendations) && data.hoverDetails.recommendations.length > 0) {
@@ -3932,10 +4001,12 @@ export function BorealisCardHoverContent({
     if (Array.isArray(rawMedia?.similar) && rawMedia.similar.length > 0) {
       return rawMedia.similar
     }
-    return fetchedExtra?.similar || []
-  }, [data.hoverDetails?.recommendations, rawMedia?.recommendations, rawMedia?.similar, fetchedExtra?.similar])
+    return []
+  }, [data.hoverDetails?.recommendations, rawMedia?.recommendations, rawMedia?.similar])
 
   const effectiveDescription = data.hoverDetails?.description || rawMedia?.description || fetchedExtra?.description
+  const effectiveGender = data.hoverDetails?.gender || fetchedExtra?.gender
+  const effectiveAge = data.hoverDetails?.age || fetchedExtra?.age
 
   const [mounted, setMounted] = useState(false)
   const [coords, setCoords] = useState<{
@@ -4421,16 +4492,16 @@ export function BorealisCardHoverContent({
               )}
 
               {/* Gender badge for characters/people */}
-              {details?.gender && (
+              {effectiveGender && (
                 <span className="inline-flex items-center rounded-md border border-frost bg-frost px-1.5 py-0.5 font-mono text-[10px] font-bold text-zinc-100 uppercase">
-                  {details.gender}
+                  {effectiveGender}
                 </span>
               )}
 
               {/* Age badge for characters/people */}
-              {details?.age && (
+              {effectiveAge && (
                 <span className="inline-flex items-center rounded-md border border-frost bg-frost px-1.5 py-0.5 font-mono text-[10px] font-bold text-zinc-300">
-                  {details.age.toLowerCase().includes("age") ? details.age : `Age: ${details.age}`}
+                  {effectiveAge.toLowerCase().includes("age") ? effectiveAge : `Age: ${effectiveAge}`}
                 </span>
               )}
             </div>

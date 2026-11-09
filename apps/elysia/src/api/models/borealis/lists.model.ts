@@ -81,6 +81,14 @@ export const BorealisListsModel = {
     })
   ),
 
+  // --- Watching All Lists Query Schema ---
+  watchingQuery: t.Optional(
+    t.Object({
+      userId: t.Optional(t.String({ description: 'Target user ID' })),
+      limit: t.Optional(t.Numeric({ default: 50, minimum: 1, maximum: 250, description: 'Limit per category' })),
+    })
+  ),
+
   // --- Mutation Body Schemas ---
   animeBody: t.Object({
     status: t.Optional(ListStatusSchema),
@@ -258,6 +266,29 @@ export const BorealisListsModel = {
       })
     ),
     pagination: PaginationMetaSchema,
+  }),
+
+  watchingResponse: t.Object({
+    success: t.Boolean(),
+    lists: t.Object({
+      anime: t.Array(t.Object({ entry: t.Any(), media: t.Any() })),
+      tv: t.Array(t.Object({ entry: t.Any(), media: t.Any() })),
+      movie: t.Array(t.Object({ entry: t.Any(), media: t.Any() })),
+      manga: t.Array(t.Object({ entry: t.Any(), media: t.Any() })),
+      game: t.Array(t.Object({ entry: t.Any(), media: t.Any() })),
+      book: t.Array(t.Object({ entry: t.Any(), media: t.Any() })),
+      other: t.Array(t.Object({ entry: t.Any(), media: t.Any() })),
+    }),
+    counts: t.Object({
+      anime: t.Number(),
+      tv: t.Number(),
+      movie: t.Number(),
+      manga: t.Number(),
+      game: t.Number(),
+      book: t.Number(),
+      other: t.Number(),
+      total: t.Number(),
+    }),
   }),
 
   singleResponse: t.Object({

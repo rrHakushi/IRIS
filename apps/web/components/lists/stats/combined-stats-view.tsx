@@ -53,7 +53,16 @@ const MEDIA_NAMES: Record<string, string> = {
 }
 
 const combinedStatsClientCache = new Map<string, { data: any; timestamp: number }>()
+const combinedStatsInFlightRequests = new Map<string, Promise<any>>()
 const CLIENT_CACHE_TTL_MS = 30_000
+
+export function invalidateCombinedStatsCache(username?: string) {
+  if (username) {
+    combinedStatsClientCache.delete(`combined:${username}`)
+  } else {
+    combinedStatsClientCache.clear()
+  }
+}
 
 export interface CombinedStatsViewProps {
   username: string
@@ -92,17 +101,29 @@ export function CombinedStatsView({
     setHasError(false)
 
     async function fetchStats() {
-      try {
-        let targetId = userId
-        if (!targetId && username) {
-          targetId = (await resolveUserId(username)) ?? undefined
-        }
+      let promise = combinedStatsInFlightRequests.get(cacheKey)
 
-        const res = await elysia.borealis.lists.stats.get({
-          query: {
-            ...(targetId ? { userId: targetId } : {}),
-          },
+      if (!promise) {
+        promise = (async () => {
+          let targetId = userId
+          if (!targetId && username) {
+            targetId = (await resolveUserId(username)) ?? undefined
+          }
+
+          return await elysia.borealis.lists.stats.get({
+            query: {
+              ...(targetId ? { userId: targetId } : {}),
+            },
+          })
+        })().finally(() => {
+          combinedStatsInFlightRequests.delete(cacheKey)
         })
+
+        combinedStatsInFlightRequests.set(cacheKey, promise)
+      }
+
+      try {
+        const res = await promise
 
         if (ignore) return
 
@@ -255,18 +276,23 @@ export function CombinedStatsView({
       </div>
 
       {/* 2. Media Types Breakdown Grid */}
-      {stats.mediaBreakdown && stats.mediaBreakdown.length > 0 && (
-        <Card className="rounded-2xl border border-border/60 bg-card/60 p-5 backdrop-blur-md">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="font-heading text-sm font-semibold tracking-wide text-foreground uppercase">
-              Cross-Media Breakdown
-            </h3>
-          </div>
+      {(() => {
+        const breakdown = (stats.mediaBreakdown || []).filter(
+          (item: any) => item.mediaType !== "music"
+        )
+        if (breakdown.length === 0) return null
+        return (
+          <Card className="rounded-2xl border border-border/60 bg-card/60 p-5 backdrop-blur-md">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-heading text-sm font-semibold tracking-wide text-foreground uppercase">
+                Cross-Media Breakdown
+              </h3>
+            </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
-            {stats.mediaBreakdown.map((item: any) => {
-              const IconComp = MEDIA_ICONS[item.mediaType] || IconStack2
-              const label = MEDIA_NAMES[item.mediaType] || item.mediaType
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              {breakdown.map((item: any) => {
+                const IconComp = MEDIA_ICONS[item.mediaType] || IconStack2
+                const label = MEDIA_NAMES[item.mediaType] || item.mediaType
               return (
                 <div
                   key={item.mediaType}
@@ -302,7 +328,7 @@ export function CombinedStatsView({
             })}
           </div>
         </Card>
-      )}
+      )})()}
 
       {/* 3. Charts Row: Score Distribution & Status Distribution */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

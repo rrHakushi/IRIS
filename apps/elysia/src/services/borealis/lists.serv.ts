@@ -4940,4 +4940,55 @@ export class BorealisListsServ {
       message: 'Export share link revoked successfully',
     }
   }
+
+  /**
+   * Get all watching / in-progress media across all 7 lists at once (excludes music).
+   */
+  public static async getAllWatchingMedia(userId: string, limit = 50) {
+    const lim = Math.max(1, Math.min(250, Number(limit ?? 50)))
+    const q = { status: 'IN_PROGRESS', limit: lim, sortBy: 'updatedAt' as const, order: 'desc' as const }
+
+    const [animeRes, tvRes, movieRes, mangaRes, gameRes, bookRes, otherRes] =
+      await Promise.all([
+        this.getAnimeList(userId, q),
+        this.getTvList(userId, q),
+        this.getMovieList(userId, q),
+        this.getMangaList(userId, q),
+        this.getGameList(userId, q),
+        this.getBookList(userId, q),
+        this.getOtherList(userId, q),
+      ])
+
+    const counts = {
+      anime: animeRes.pagination.total,
+      tv: tvRes.pagination.total,
+      movie: movieRes.pagination.total,
+      manga: mangaRes.pagination.total,
+      game: gameRes.pagination.total,
+      book: bookRes.pagination.total,
+      other: otherRes.pagination.total,
+      total:
+        animeRes.pagination.total +
+        tvRes.pagination.total +
+        movieRes.pagination.total +
+        mangaRes.pagination.total +
+        gameRes.pagination.total +
+        bookRes.pagination.total +
+        otherRes.pagination.total,
+    }
+
+    return {
+      success: true,
+      lists: {
+        anime: animeRes.items,
+        tv: tvRes.items,
+        movie: movieRes.items,
+        manga: mangaRes.items,
+        game: gameRes.items,
+        book: bookRes.items,
+        other: otherRes.items,
+      },
+      counts,
+    }
+  }
 }

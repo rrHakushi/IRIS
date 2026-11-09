@@ -1460,4 +1460,25 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
     }
   )
 
+  // GET /borealis/lists/watching (Get all watching / in-progress media across all lists)
+  .get(
+    '/watching',
+    {
+      query: BorealisListsModel.watchingQuery,
+      detail: {
+        summary: 'Get all watching media in all lists at once',
+        description: 'Retrieves all currently in-progress items across anime, tv, movie, manga, game, book, music, and other lists at once.',
+        tags: ['Borealis Lists - Global'],
+      },
+      response: {
+        200: BorealisListsModel.watchingResponse,
+        401: BorealisListsModel.unauthorizedError,
+      },
+    },
+    async ({ query, session: userSession }) => {
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getAllWatchingMedia(targetUserId, query?.limit)
+    }
+  )
+
 export default borealisLists

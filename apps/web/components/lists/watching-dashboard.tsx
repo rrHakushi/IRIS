@@ -136,6 +136,18 @@ const CATEGORY_META: Record<
 const STORAGE_ORDER_KEY = "iris-watching-section-order"
 const STORAGE_COLLAPSED_KEY = "iris-watching-collapsed-sections"
 
+const watchingClientCache = new Map<string, { lists: any; timestamp: number }>()
+const watchingInFlightRequests = new Map<string, Promise<any>>()
+const WATCHING_CACHE_TTL_MS = 60 * 1000 // 1 minute
+
+export function invalidateWatchingCache(userId?: string) {
+  if (userId) {
+    watchingClientCache.delete(userId)
+  } else {
+    watchingClientCache.clear()
+  }
+}
+
 function getInitialCategoryOrder(
   customization?: unknown
 ): WatchingMediaListType[] {
@@ -244,7 +256,6 @@ interface WatchingCategorySectionProps {
   cols: number
   isCollapsed: boolean
   onToggleCollapse: (type: WatchingMediaListType) => void
-  onFetch: (type: WatchingMediaListType) => void
   mediaTitlePreference: "primary" | "secondary" | "native"
   onOpenEditModal: (item: ListEntryData, mediaType?: MediaListType) => void
   onIncrementProgress: (
@@ -282,7 +293,6 @@ function WatchingCategorySection({
   cols,
   isCollapsed,
   onToggleCollapse,
-  onFetch,
   mediaTitlePreference,
   onOpenEditModal,
   onIncrementProgress,
@@ -292,7 +302,6 @@ function WatchingCategorySection({
   onSaveEntry,
   prioritySection = false,
 }: WatchingCategorySectionProps) {
-  const sentinelRef = useRef<HTMLDivElement>(null)
   const SectionIcon = meta.icon
 
   // Client-side zero-knowledge decryption
@@ -318,30 +327,10 @@ function WatchingCategorySection({
     [vaultKey]
   )
 
-  // Viewport trigger to fetch data for this section when near viewport
-  useEffect(() => {
-    if (data.isLoaded || data.isLoading) return
-    const el = sentinelRef.current
-    if (!el) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0]
-        if (entry?.isIntersecting) {
-          onFetch(type)
-        }
-      },
-      { rootMargin: "350px 0px" }
-    )
-
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [data.isLoaded, data.isLoading, onFetch, type])
-
-  // Not loaded yet: render sentinel / skeleton while loading
+  // Not loaded yet: render skeleton while loading
   if (!data.isLoaded) {
     return (
-      <div ref={sentinelRef} className="min-h-[40px] w-full">
+      <div className="min-h-[40px] w-full">
         {data.isLoading && (
           <div className="flex animate-pulse flex-col gap-3 py-4">
             <div className="flex items-center gap-2 border-b border-border/40 pb-2.5">
@@ -699,14 +688,31 @@ export function WatchingDashboard(): React.JSX.Element {
   // ---------------------------------------------------------------------------
   const [categoryData, setCategoryData] = useState<
     Record<WatchingMediaListType, CategoryState>
-  >({
-    anime: { items: [], isLoaded: false, isLoading: false },
-    tv: { items: [], isLoaded: false, isLoading: false },
-    movie: { items: [], isLoaded: false, isLoading: false },
-    manga: { items: [], isLoaded: false, isLoading: false },
-    game: { items: [], isLoaded: false, isLoading: false },
-    book: { items: [], isLoaded: false, isLoading: false },
-    other: { items: [], isLoaded: false, isLoading: false },
+  >(() => {
+    if (userId) {
+      const cached = watchingClientCache.get(userId)
+      if (cached && Date.now() - cached.timestamp < WATCHING_CACHE_TTL_MS) {
+        const lists = cached.lists
+        return {
+          anime: { items: (lists.anime as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+          tv: { items: (lists.tv as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+          movie: { items: (lists.movie as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+          manga: { items: (lists.manga as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+          game: { items: (lists.game as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+          book: { items: (lists.book as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+          other: { items: (lists.other as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+        }
+      }
+    }
+    return {
+      anime: { items: [], isLoaded: false, isLoading: false },
+      tv: { items: [], isLoaded: false, isLoading: false },
+      movie: { items: [], isLoaded: false, isLoading: false },
+      manga: { items: [], isLoaded: false, isLoading: false },
+      game: { items: [], isLoaded: false, isLoading: false },
+      book: { items: [], isLoaded: false, isLoading: false },
+      other: { items: [], isLoaded: false, isLoading: false },
+    }
   })
 
   // Edit Modal State
@@ -726,110 +732,119 @@ export function WatchingDashboard(): React.JSX.Element {
   )
 
   // ---------------------------------------------------------------------------
-  // Fetch a Single Category On-Demand (Guaranteed at-most-once fetch per category)
+  // Fetch All Watching Categories at Once (with in-flight deduplication & caching)
   // ---------------------------------------------------------------------------
-  const loadedCategoriesRef = useRef<Set<WatchingMediaListType>>(new Set())
-  const inFlightCategoriesRef = useRef<Set<WatchingMediaListType>>(new Set())
+  const fetchAllCategories = useCallback(async (forceRefresh = false) => {
+    if (!userId) return
 
-  // Reset tracking if active user changes
-  useEffect(() => {
-    loadedCategoriesRef.current.clear()
-    inFlightCategoriesRef.current.clear()
+    if (!forceRefresh) {
+      const cached = watchingClientCache.get(userId)
+      if (cached && Date.now() - cached.timestamp < WATCHING_CACHE_TTL_MS) {
+        const lists = cached.lists
+        setCategoryData({
+          anime: { items: (lists.anime as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+          tv: { items: (lists.tv as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+          movie: { items: (lists.movie as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+          manga: { items: (lists.manga as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+          game: { items: (lists.game as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+          book: { items: (lists.book as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+          other: { items: (lists.other as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+        })
+        return
+      }
+
+      const inFlight = watchingInFlightRequests.get(userId)
+      if (inFlight) {
+        try {
+          const res = await inFlight
+          if (res?.data?.success && res.data.lists) {
+            const lists = res.data.lists
+            setCategoryData({
+              anime: { items: (lists.anime as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+              tv: { items: (lists.tv as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+              movie: { items: (lists.movie as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+              manga: { items: (lists.manga as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+              game: { items: (lists.game as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+              book: { items: (lists.book as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+              other: { items: (lists.other as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+            })
+          }
+        } catch {}
+        return
+      }
+    }
+
+    setCategoryData((prev) => {
+      const next = { ...prev }
+      for (const k of DEFAULT_CATEGORY_ORDER) {
+        next[k] = { ...next[k], isLoading: true }
+      }
+      return next
+    })
+
+    const promise = (async () => {
+      return await (elysia.borealis.lists as any).watching.get({
+        query: { userId, limit: 100 },
+      })
+    })().finally(() => {
+      watchingInFlightRequests.delete(userId)
+    })
+
+    watchingInFlightRequests.set(userId, promise)
+
+    try {
+      const res = await promise
+
+      if (res?.data?.success && res.data.lists) {
+        watchingClientCache.set(userId, {
+          lists: res.data.lists,
+          timestamp: Date.now(),
+        })
+        const lists = res.data.lists
+        setCategoryData({
+          anime: { items: (lists.anime as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+          tv: { items: (lists.tv as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+          movie: { items: (lists.movie as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+          manga: { items: (lists.manga as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+          game: { items: (lists.game as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+          book: { items: (lists.book as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+          other: { items: (lists.other as ListEntryData[]) || [], isLoaded: true, isLoading: false },
+        })
+      } else {
+        setCategoryData((prev) => {
+          const next = { ...prev }
+          for (const k of DEFAULT_CATEGORY_ORDER) {
+            next[k] = { ...next[k], isLoaded: true, isLoading: false }
+          }
+          return next
+        })
+      }
+    } catch (err) {
+      console.error("[WatchingDashboard] Failed to fetch all watching media:", err)
+      setCategoryData((prev) => {
+        const next = { ...prev }
+        for (const k of DEFAULT_CATEGORY_ORDER) {
+          next[k] = { ...next[k], isLoaded: true, isLoading: false }
+        }
+        return next
+      })
+    }
   }, [userId])
 
   const fetchCategory = useCallback(
     async (type: WatchingMediaListType) => {
-      if (!userId) return
-      if (
-        loadedCategoriesRef.current.has(type) ||
-        inFlightCategoriesRef.current.has(type)
-      ) {
-        return
-      }
-
-      inFlightCategoriesRef.current.add(type)
-      setCategoryData((prev) => ({
-        ...prev,
-        [type]: { ...prev[type], isLoading: true },
-      }))
-
-      try {
-        const meta = CATEGORY_META[type]
-        const query = {
-          status: meta.statusParam,
-          limit: 100,
-          sortBy: "updatedAt",
-          order: "desc" as const,
-          userId,
-        }
-
-        let res: any = null
-        switch (type) {
-          case "anime":
-            res = await elysia.borealis.lists.anime.get({ query })
-            break
-          case "tv":
-            res = await elysia.borealis.lists.tv.get({ query })
-            break
-          case "movie":
-            res = await elysia.borealis.lists.movies.get({ query })
-            break
-          case "manga":
-            res = await elysia.borealis.lists.manga.get({ query })
-            break
-          case "game":
-            res = await elysia.borealis.lists.games.get({ query })
-            break
-          case "book":
-            res = await elysia.borealis.lists.books.get({ query })
-            break
-          case "other":
-            res = await elysia.borealis.lists.other.get({ query })
-            break
-        }
-
-        const items =
-          res?.data?.success && Array.isArray(res.data.items)
-            ? (res.data.items as ListEntryData[])
-            : []
-
-        loadedCategoriesRef.current.add(type)
-        setCategoryData((prev) => ({
-          ...prev,
-          [type]: { items, isLoaded: true, isLoading: false },
-        }))
-      } catch (err) {
-        console.error(`[WatchingDashboard] Failed to fetch ${type}:`, err)
-        loadedCategoriesRef.current.add(type)
-        setCategoryData((prev) => ({
-          ...prev,
-          [type]: { items: [], isLoaded: true, isLoading: false },
-        }))
-      } finally {
-        inFlightCategoriesRef.current.delete(type)
-      }
+      invalidateWatchingCache(userId)
+      fetchAllCategories(true)
     },
-    [userId]
+    [fetchAllCategories, userId]
   )
 
-  // Fetch the first category in order immediately when authenticated
+  // Fetch all categories at once immediately when authenticated
   useEffect(() => {
-    const first = categoryOrder[0]
-    if (authStatus === "authenticated" && userId && first) {
-      fetchCategory(first)
+    if (authStatus === "authenticated" && userId) {
+      fetchAllCategories()
     }
-  }, [authStatus, userId, categoryOrder, fetchCategory])
-
-  // Pre-fetch remaining categories when reorder dialog is opened so counts are accurate
-  useEffect(() => {
-    if (isReorderOpen && authStatus === "authenticated" && userId) {
-      for (const type of DEFAULT_CATEGORY_ORDER) {
-        if (!categoryData[type].isLoaded && !categoryData[type].isLoading) {
-          fetchCategory(type)
-        }
-      }
-    }
-  }, [isReorderOpen, authStatus, userId, categoryData, fetchCategory])
+  }, [authStatus, userId, fetchAllCategories])
 
   // ---------------------------------------------------------------------------
   // Debounced Increment Handler (Optimistic Update)
@@ -1354,10 +1369,11 @@ export function WatchingDashboard(): React.JSX.Element {
           : payload.notes,
       }
       await saveListEntry(mediaType, mediaId, encryptedPayload)
+      invalidateWatchingCache(userId)
       handleEntryUpdated(item.entry.id, payload)
       toast.success("List entry updated")
     },
-    [handleEntryUpdated, vaultKey]
+    [handleEntryUpdated, vaultKey, userId]
   )
 
   // ---------------------------------------------------------------------------
@@ -1393,11 +1409,11 @@ export function WatchingDashboard(): React.JSX.Element {
   }
 
   // ---------------------------------------------------------------------------
-  // Initial Loading State (before first category is checked)
+  // Initial Loading State (before categories are loaded)
   // ---------------------------------------------------------------------------
-  const firstCategory: WatchingMediaListType = categoryOrder[0] ?? "anime"
-  const firstCatState = categoryData[firstCategory]
-  if (!firstCatState?.isLoaded && firstCatState?.isLoading) {
+  const isNoneLoaded = Object.values(categoryData).every((d) => !d.isLoaded)
+  const isAnyLoading = Object.values(categoryData).some((d) => d.isLoading)
+  if (isNoneLoaded && isAnyLoading) {
     return (
       <div className="flex min-h-[50vh] w-full flex-col items-center justify-center gap-3">
         <Spinner className="size-6 text-primary" />
@@ -1464,7 +1480,6 @@ export function WatchingDashboard(): React.JSX.Element {
             cols={cols}
             isCollapsed={Boolean(collapsedSections[type])}
             onToggleCollapse={handleToggleCollapse}
-            onFetch={fetchCategory}
             mediaTitlePreference={mediaTitlePreference}
             onOpenEditModal={handleOpenEditModal}
             onIncrementProgress={handleIncrementProgress}
