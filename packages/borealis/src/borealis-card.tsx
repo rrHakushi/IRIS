@@ -4260,6 +4260,9 @@ export function BorealisCardHoverContent({
     <div
       ref={popoverRef}
       role="tooltip"
+      onClick={(e) => {
+        e.stopPropagation()
+      }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={() => {
         if (!isHoverCardEditing) {
@@ -4488,6 +4491,12 @@ export function BorealisCardHoverContent({
                 <span className="font-mono text-xs text-zinc-400 font-medium">
                   {data.titleNative ?? data.titleSecondary}
                 </span>
+              )}
+
+              {Boolean((rawMedia as any)?.episodeTitle || (data.raw as any)?.episodeTitle) && (
+                <p className="text-xs text-zinc-300 italic line-clamp-2 mt-0.5 text-start">
+                  &ldquo;{(rawMedia as any)?.episodeTitle || (data.raw as any)?.episodeTitle}&rdquo;
+                </p>
               )}
             </div>
 

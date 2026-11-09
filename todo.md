@@ -4,7 +4,6 @@
     - Link manga list entries to books since its kinda the same
 
 
-    - Update calendar to use hoverCard from borealisCard
     - test phone/touch experience with new borealisCard
 
     

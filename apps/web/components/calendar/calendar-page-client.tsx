@@ -74,6 +74,7 @@ export function CalendarPageClient() {
 
   // Sequence counter to prevent race conditions and guarantee latest request completes
   const requestSeqRef = useRef(0)
+  const lastFetchedKeyRef = useRef<string>("")
 
   // Calculate range bounds for the current month view grid
   const dateRange = useMemo(() => {
@@ -102,6 +103,11 @@ export function CalendarPageClient() {
 
   // Fetch releases from Elysia via Eden Treaty
   useEffect(() => {
+    if (status === "loading") return
+
+    const fetchKey = `${dateRange.start}|${dateRange.end}|${onlyInLists}|${isAuthenticated}`
+    if (lastFetchedKeyRef.current === fetchKey) return
+
     const seq = ++requestSeqRef.current
     setIsLoading(true)
 
@@ -118,6 +124,7 @@ export function CalendarPageClient() {
         if (seq !== requestSeqRef.current) return
 
         if (!error && data?.success) {
+          lastFetchedKeyRef.current = fetchKey
           setItems(data.items)
           setCounts(data.meta.counts)
         }
@@ -131,7 +138,7 @@ export function CalendarPageClient() {
     }
 
     loadReleases()
-  }, [dateRange.start, dateRange.end, onlyInLists, isAuthenticated])
+  }, [dateRange.start, dateRange.end, onlyInLists, status, isAuthenticated])
 
   // Navigation handlers
   const handlePrev = useCallback(() => {

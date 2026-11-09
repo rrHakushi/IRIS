@@ -114,7 +114,13 @@ export interface StatusOption {
 }
 
 export type SortByOption =
-  "updatedAt" | "score" | "title" | "progress" | "addedAt"
+  | "updatedAt"
+  | "score"
+  | "title"
+  | "progress"
+  | "addedAt"
+  | "createdAt"
+  | "priority"
 export type SortOrderOption = "asc" | "desc"
 export type ListViewTab = "list" | "comments" | "stats" | "activity"
 
