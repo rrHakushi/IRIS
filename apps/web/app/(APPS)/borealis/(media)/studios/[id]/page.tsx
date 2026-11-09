@@ -2,7 +2,7 @@ import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import type { StudioDetails } from "@IRIS/elysia"
 import { elysia } from "@/lib/elysia"
-import { StudioDetailView } from "@/components/media/studios/studio-detail-view"
+import { StudioDetailView } from "@Runa/borealis"
 
 interface Props {
   params: Promise<{ id: string }>

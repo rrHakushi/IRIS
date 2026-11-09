@@ -18,12 +18,21 @@ export interface ListQuery {
   sortBy?: string
   order?: 'asc' | 'desc'
   q?: string
+  priority?: string
+  privacy?: string
+  hasNotes?: string
+  connection?: string
+  company?: string
+  season?: string
+  country?: string
+  isAdult?: string
 }
 
 function formatEntry(entry: any) {
   if (!entry) return null
   return {
     ...entry,
+    priority: entry.priority || 'LOW',
     startedAt: entry.startedAt ? (entry.startedAt instanceof Date ? entry.startedAt.toISOString() : String(entry.startedAt)) : null,
     completedAt: entry.completedAt ? (entry.completedAt instanceof Date ? entry.completedAt.toISOString() : String(entry.completedAt)) : null,
     createdAt: entry.createdAt ? (entry.createdAt instanceof Date ? entry.createdAt.toISOString() : String(entry.createdAt)) : new Date().toISOString(),
@@ -215,11 +224,54 @@ function computeFilters(items: any[], mediaKey: string, yearKey: string = 'start
   const mediaStatusCounts: Record<string, number> = {}
   const genreCounts: Record<string, number> = {}
   const yearCounts: Record<number, number> = {}
+  const priorityCounts: Record<string, number> = { LOW: 0, MEDIUM: 0, HIGH: 0, ULTRA: 0 }
+  const connectionCounts: Record<string, number> = {}
+  const companyCounts: Record<string, number> = {}
+  const seasonCounts: Record<string, number> = {}
+  const countryCounts: Record<string, number> = {}
+  let publicCount = 0
+  let privateCount = 0
+  let withNotesCount = 0
+  let withoutNotesCount = 0
+  let sfwCount = 0
+  let nsfwCount = 0
 
   for (const item of items) {
     if (item.status) {
       statusCounts[item.status] = (statusCounts[item.status] || 0) + 1
     }
+    const prio = (item.priority || 'LOW').toUpperCase()
+    priorityCounts[prio] = (priorityCounts[prio] || 0) + 1
+
+    if (item.private) {
+      privateCount++
+    } else {
+      publicCount++
+    }
+
+    if (item.notes && item.notes.trim()) {
+      withNotesCount++
+    } else {
+      withoutNotesCount++
+    }
+
+    if (item.connections && typeof item.connections === 'object') {
+      if (Array.isArray(item.connections)) {
+        for (const c of item.connections) {
+          const provider = typeof c === 'string' ? c : c?.provider || c?.name || c?.source
+          if (provider) {
+            connectionCounts[provider] = (connectionCounts[provider] || 0) + 1
+          }
+        }
+      } else {
+        for (const [provider, val] of Object.entries(item.connections)) {
+          if (val) {
+            connectionCounts[provider] = (connectionCounts[provider] || 0) + 1
+          }
+        }
+      }
+    }
+
     const media = item[mediaKey]
     if (media) {
       const format = media.format || media.type
@@ -229,15 +281,37 @@ function computeFilters(items: any[], mediaKey: string, yearKey: string = 'start
       if (media.status) {
         mediaStatusCounts[media.status] = (mediaStatusCounts[media.status] || 0) + 1
       }
-      const yr = media[yearKey]
+      const yr = media[yearKey] ?? media.startDateYear ?? media.releaseDateYear ?? media.firstAiredYear
       if (yr) {
-        yearCounts[yr] = (yearCounts[yr] || 0) + 1
+        yearCounts[Number(yr)] = (yearCounts[Number(yr)] || 0) + 1
       }
       if (Array.isArray(media.genres)) {
         for (const g of media.genres) {
           const name = g.name ?? g
           if (name) {
             genreCounts[name] = (genreCounts[name] || 0) + 1
+          }
+        }
+      }
+      const season = media.seasonSeason || media.season
+      if (season && season !== 'UNKNOWN') {
+        seasonCounts[season] = (seasonCounts[season] || 0) + 1
+      }
+      const country = media.countryOfOrigin || media.country || media.originCountry
+      if (country) {
+        countryCounts[country] = (countryCounts[country] || 0) + 1
+      }
+      if (media.isAdult || media.adult) {
+        nsfwCount++
+      } else {
+        sfwCount++
+      }
+      const companies = media.studios || media.publishers || media.developers || media.companies || media.networks
+      if (Array.isArray(companies)) {
+        for (const c of companies) {
+          const name = typeof c === 'string' ? c : c?.name || c?.studio?.name || c?.publisher?.name
+          if (name) {
+            companyCounts[name] = (companyCounts[name] || 0) + 1
           }
         }
       }
@@ -250,6 +324,14 @@ function computeFilters(items: any[], mediaKey: string, yearKey: string = 'start
     mediaStatuses: Object.entries(mediaStatusCounts).map(([value, count]) => ({ value, count })),
     genres: Object.entries(genreCounts).map(([value, count]) => ({ value, count })),
     years: Object.entries(yearCounts).map(([value, count]) => ({ value: Number(value), count })),
+    priorities: Object.entries(priorityCounts).map(([value, count]) => ({ value, count })),
+    connections: Object.entries(connectionCounts).map(([value, count]) => ({ value, count })),
+    companies: Object.entries(companyCounts).map(([value, count]) => ({ value, count })),
+    seasons: Object.entries(seasonCounts).map(([value, count]) => ({ value, count })),
+    countries: Object.entries(countryCounts).map(([value, count]) => ({ value, count })),
+    privacyCounts: { public: publicCount, private: privateCount },
+    notesCounts: { withNotes: withNotesCount, withoutNotes: withoutNotesCount },
+    adultCounts: { sfw: sfwCount, nsfw: nsfwCount },
   }
 }
 
@@ -498,6 +580,7 @@ export class BorealisListsServ {
 
     const updateData: any = {
       ...(body.status ? { status: body.status } : {}),
+      ...(body.priority ? { priority: body.priority } : {}),
       ...(progress !== undefined ? { progress } : {}),
       ...(body.score !== undefined ? { score: body.score } : {}),
       ...(body.notes !== undefined ? { notes: body.notes } : {}),
@@ -515,6 +598,7 @@ export class BorealisListsServ {
           userId,
           animeId,
           status: body.status ?? 'PLANNED',
+          priority: body.priority ?? 'LOW',
           progress: progress ?? 0,
           score: body.score ?? null,
           notes: body.notes,
@@ -719,10 +803,10 @@ export class BorealisListsServ {
 
   public static async getAnimeFilters(userId: string) {
     const rawItems = await prisma.orm.public.AnimeList.where({ userId })
-      .select('status')
+      .select('status', 'priority', 'private', 'notes', 'connections')
       .include('anime', (a) =>
         a
-          .select('format', 'status', 'startDateYear')
+          .select('format', 'status', 'startDateYear', 'seasonSeason', 'countryOfOrigin', 'isAdult')
           .include('genres', (g) =>
             g.include('genre', (ge) => ge.select('name'))
           )
@@ -730,6 +814,10 @@ export class BorealisListsServ {
       .all()
     const items = rawItems.map((item) => ({
       status: item.status,
+      priority: item.priority,
+      private: item.private,
+      notes: item.notes,
+      connections: item.connections,
       anime: item.anime
         ? {
             ...item.anime,
@@ -934,6 +1022,7 @@ export class BorealisListsServ {
 
     const updateData: any = {
       ...(body.status ? { status: body.status } : {}),
+      ...(body.priority ? { priority: body.priority } : {}),
       ...(chaptersProgress !== undefined ? { chaptersProgress } : {}),
       ...(volumesProgress !== undefined ? { volumesProgress } : {}),
       ...(body.score !== undefined ? { score: body.score } : {}),
@@ -952,6 +1041,7 @@ export class BorealisListsServ {
           userId,
           mangaId,
           status: body.status ?? 'PLANNED',
+          priority: body.priority ?? 'LOW',
           chaptersProgress: chaptersProgress ?? 0,
           volumesProgress: volumesProgress ?? 0,
           score: body.score ?? null,
@@ -1178,10 +1268,10 @@ export class BorealisListsServ {
 
   public static async getMangaFilters(userId: string) {
     const rawItems = await prisma.orm.public.MangaList.where({ userId })
-      .select('status')
+      .select('status', 'priority', 'private', 'notes', 'connections')
       .include('manga', (m) =>
         m
-          .select('format', 'status', 'startDateYear')
+          .select('format', 'status', 'startDateYear', 'countryOfOrigin', 'isAdult')
           .include('genres', (g) =>
             g.include('genre', (ge) => ge.select('name'))
           )
@@ -1189,6 +1279,10 @@ export class BorealisListsServ {
       .all()
     const items = rawItems.map((item) => ({
       status: item.status,
+      priority: item.priority,
+      private: item.private,
+      notes: item.notes,
+      connections: item.connections,
       manga: item.manga
         ? {
             ...item.manga,
@@ -1363,6 +1457,7 @@ export class BorealisListsServ {
 
     const updateData: any = {
       ...(body.status ? { status: body.status } : {}),
+      ...(body.priority ? { priority: body.priority } : {}),
       ...(body.score !== undefined ? { score: body.score } : {}),
       ...(body.notes !== undefined ? { notes: body.notes } : {}),
       ...(body.rewatched !== undefined ? { rewatched: Number(body.rewatched) } : {}),
@@ -1379,6 +1474,7 @@ export class BorealisListsServ {
           userId,
           movieId,
           status: body.status ?? 'PLANNED',
+          priority: body.priority ?? 'LOW',
           score: body.score ?? null,
           notes: body.notes,
           rewatched: body.rewatched ?? 0,
@@ -1554,10 +1650,10 @@ export class BorealisListsServ {
 
   public static async getMovieFilters(userId: string) {
     const rawItems = await prisma.orm.public.MovieList.where({ userId })
-      .select('status')
+      .select('status', 'priority', 'private', 'notes', 'connections')
       .include('movie', (m) =>
         m
-          .select('status', 'releaseDateYear')
+          .select('status', 'releaseDateYear', 'countryOfOrigin', 'isAdult')
           .include('genres', (g) =>
             g.include('genre', (ge) => ge.select('name'))
           )
@@ -1565,6 +1661,10 @@ export class BorealisListsServ {
       .all()
     const items = rawItems.map((item) => ({
       status: item.status,
+      priority: item.priority,
+      private: item.private,
+      notes: item.notes,
+      connections: item.connections,
       movie: item.movie
         ? {
             ...item.movie,
@@ -1770,6 +1870,7 @@ export class BorealisListsServ {
 
     const updateData: any = {
       ...(body.status ? { status: body.status } : {}),
+      ...(body.priority ? { priority: body.priority } : {}),
       ...(progress !== undefined ? { progress } : {}),
       ...(body.score !== undefined ? { score: body.score } : {}),
       ...(body.notes !== undefined ? { notes: body.notes } : {}),
@@ -1787,6 +1888,7 @@ export class BorealisListsServ {
           userId,
           tvId,
           status: body.status ?? 'PLANNED',
+          priority: body.priority ?? 'LOW',
           progress: progress ?? 0,
           score: body.score ?? null,
           notes: body.notes,
@@ -1982,10 +2084,10 @@ export class BorealisListsServ {
 
   public static async getTvFilters(userId: string) {
     const rawItems = await prisma.orm.public.TvList.where({ userId })
-      .select('status')
+      .select('status', 'priority', 'private', 'notes', 'connections')
       .include('tv', (t) =>
         t
-          .select('status', 'firstAiredYear')
+          .select('status', 'firstAiredYear', 'countryOfOrigin', 'isAdult')
           .include('genres', (g) =>
             g.include('genre', (ge) => ge.select('name'))
           )
@@ -1993,6 +2095,10 @@ export class BorealisListsServ {
       .all()
     const items = rawItems.map((item) => ({
       status: item.status,
+      priority: item.priority,
+      private: item.private,
+      notes: item.notes,
+      connections: item.connections,
       tv: item.tv
         ? {
             ...item.tv,
@@ -2182,6 +2288,7 @@ export class BorealisListsServ {
 
     const updateData: any = {
       ...(body.status ? { status: body.status } : {}),
+      ...(body.priority ? { priority: body.priority } : {}),
       ...(progress !== undefined ? { progress } : {}),
       ...(body.score !== undefined ? { score: body.score } : {}),
       ...(body.notes !== undefined ? { notes: body.notes } : {}),
@@ -2199,6 +2306,7 @@ export class BorealisListsServ {
           userId,
           gameId,
           status: body.status ?? 'PLANNED',
+          priority: body.priority ?? 'LOW',
           progress: progress ?? 0,
           score: body.score ?? null,
           notes: body.notes,
@@ -2381,10 +2489,10 @@ export class BorealisListsServ {
 
   public static async getGameFilters(userId: string) {
     const rawItems = await prisma.orm.public.GameList.where({ userId })
-      .select('status')
+      .select('status', 'priority', 'private', 'notes', 'connections')
       .include('game', (g) =>
         g
-          .select('status', 'releaseDateYear')
+          .select('status', 'releaseDateYear', 'isAdult', 'developers', 'publishers')
           .include('genres', (ge) =>
             ge.include('genre', (gn) => gn.select('name'))
           )
@@ -2392,6 +2500,10 @@ export class BorealisListsServ {
       .all()
     const items = rawItems.map((item) => ({
       status: item.status,
+      priority: item.priority,
+      private: item.private,
+      notes: item.notes,
+      connections: item.connections,
       game: item.game
         ? {
             ...item.game,
@@ -2590,6 +2702,7 @@ export class BorealisListsServ {
 
     const updateData: any = {
       ...(body.status ? { status: body.status } : {}),
+      ...(body.priority ? { priority: body.priority } : {}),
       ...(progressPages !== undefined ? { progressPages } : {}),
       ...(progressChapters !== undefined ? { progressChapters } : {}),
       ...(progressVolumes !== undefined ? { progressVolumes } : {}),
@@ -2609,6 +2722,7 @@ export class BorealisListsServ {
           userId,
           bookId,
           status: body.status ?? 'PLANNED',
+          priority: body.priority ?? 'LOW',
           progressPages: progressPages ?? 0,
           progressChapters: progressChapters ?? 0,
           progressVolumes: progressVolumes ?? 0,
@@ -2843,10 +2957,10 @@ export class BorealisListsServ {
 
   public static async getBookFilters(userId: string) {
     const rawItems = await prisma.orm.public.BookList.where({ userId })
-      .select('status')
+      .select('status', 'priority', 'private', 'notes', 'connections')
       .include('book', (b) =>
         b
-          .select('format', 'status', 'releaseDateYear')
+          .select('format', 'status', 'releaseDateYear', 'countryOfOrigin', 'isAdult', 'publishers')
           .include('genres', (ge) =>
             ge.include('genre', (gn) => gn.select('name'))
           )
@@ -2854,6 +2968,10 @@ export class BorealisListsServ {
       .all()
     const items = rawItems.map((item) => ({
       status: item.status,
+      priority: item.priority,
+      private: item.private,
+      notes: item.notes,
+      connections: item.connections,
       book: item.book
         ? {
             ...item.book,
@@ -3039,6 +3157,7 @@ export class BorealisListsServ {
 
     const updateData: any = {
       ...(body.status ? { status: body.status } : {}),
+      ...(body.priority ? { priority: body.priority } : {}),
       ...(body.score !== undefined ? { score: body.score } : {}),
       ...(body.playCount !== undefined ? { playCount: Number(body.playCount) } : {}),
       ...(body.notes !== undefined ? { notes: body.notes } : {}),
@@ -3054,6 +3173,7 @@ export class BorealisListsServ {
           userId,
           musicId,
           status: body.status ?? 'PLANNED',
+          priority: body.priority ?? 'LOW',
           score: body.score ?? null,
           playCount: body.playCount !== undefined ? Number(body.playCount) : 0,
           notes: body.notes,
@@ -3251,10 +3371,10 @@ export class BorealisListsServ {
 
   public static async getMusicFilters(userId: string) {
     const rawItems = await prisma.orm.public.MusicList.where({ userId })
-      .select('status')
+      .select('status', 'priority', 'private', 'notes', 'connections')
       .include('music', (m) =>
         m
-          .select('type', 'status', 'releaseDateYear')
+          .select('type', 'releaseDateYear', 'label', 'explicitLyrics')
           .include('genres', (ge) =>
             ge.include('genre', (gn) => gn.select('name'))
           )
@@ -3262,9 +3382,15 @@ export class BorealisListsServ {
       .all()
     const items = rawItems.map((item) => ({
       status: item.status,
+      priority: item.priority,
+      private: item.private,
+      notes: item.notes,
+      connections: item.connections,
       music: item.music
         ? {
             ...item.music,
+            isAdult: item.music.explicitLyrics,
+            companies: item.music.label ? [item.music.label] : [],
             genres: (item.music.genres || [])
               .filter((g: any) => Boolean(g.genre))
               .map((g: any) => ({ name: g.genre!.name })),
@@ -3443,6 +3569,7 @@ export class BorealisListsServ {
     const entry = existing
       ? await prisma.orm.public.OtherList.where({ id: existing.id }).update({
           status,
+          ...(body?.priority ? { priority: body.priority } : {}),
           progressValues,
           score: body?.score !== undefined ? body.score : undefined,
           notes: body?.notes !== undefined ? body.notes : undefined,
@@ -3454,6 +3581,7 @@ export class BorealisListsServ {
           userId,
           otherId,
           status,
+          priority: body?.priority ?? 'LOW',
           progressValues,
           score: body?.score !== undefined ? body.score : null,
           notes: body?.notes !== undefined ? body.notes : null,
@@ -3696,7 +3824,7 @@ export class BorealisListsServ {
 
   public static async getOtherFilters(userId: string) {
     const entries = await prisma.orm.public.OtherList.where({ userId })
-      .select('status')
+      .select('status', 'priority', 'private', 'notes')
       .include('other', (o) =>
         o.select('startDate', 'format')
       )
@@ -3705,18 +3833,34 @@ export class BorealisListsServ {
     const statusCounts: Record<string, number> = {}
     const formatCounts: Record<string, number> = {}
     const yearCounts: Record<number, number> = {}
+    const priorityCounts: Record<string, number> = { LOW: 0, MEDIUM: 0, HIGH: 0, ULTRA: 0 }
+    let publicCount = 0
+    let privateCount = 0
+    let withNotesCount = 0
+    let withoutNotesCount = 0
 
     for (const item of entries) {
       if (item.status) {
         statusCounts[item.status] = (statusCounts[item.status] || 0) + 1
       }
+      const prio = (item.priority || 'LOW').toUpperCase()
+      priorityCounts[prio] = (priorityCounts[prio] || 0) + 1
+
+      if (item.private) privateCount++
+      else publicCount++
+
+      if (item.notes && item.notes.trim()) withNotesCount++
+      else withoutNotesCount++
+
       if (item.other?.format) {
         const fmt = item.other.format.trim().toLowerCase()
         formatCounts[fmt] = (formatCounts[fmt] || 0) + 1
       }
       if (item.other?.startDate) {
         const yr = new Date(item.other.startDate).getFullYear()
-        yearCounts[yr] = (yearCounts[yr] || 0) + 1
+        if (!isNaN(yr)) {
+          yearCounts[yr] = (yearCounts[yr] || 0) + 1
+        }
       }
     }
 
@@ -3729,6 +3873,14 @@ export class BorealisListsServ {
         value: Number(value),
         count,
       })),
+      priorities: Object.entries(priorityCounts).map(([value, count]) => ({ value, count })),
+      connections: [],
+      companies: [],
+      seasons: [],
+      countries: [],
+      privacyCounts: { public: publicCount, private: privateCount },
+      notesCounts: { withNotes: withNotesCount, withoutNotes: withoutNotesCount },
+      adultCounts: { sfw: entries.length, nsfw: 0 },
     }
   }
 

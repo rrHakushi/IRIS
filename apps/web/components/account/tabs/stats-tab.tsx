@@ -1,9 +1,11 @@
 "use client"
 
 import React, { useState } from "react"
-import { MediaStatsTab } from "@/components/lists/stats/media-stats-tab"
-import { CombinedStatsView } from "@/components/lists/stats/combined-stats-view"
-import type { MediaListType } from "@/components/lists/types"
+import {
+  MediaStatsTab,
+  CombinedStatsView,
+  type MediaListType,
+} from "@Runa/borealis"
 import {
   IconChartBar,
   IconDeviceTv,

@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import { elysia } from "@/lib/elysia"
-import { MediaDetailView } from "@/components/media/media-detail-view"
+import { MediaDetailView } from "@Runa/borealis"
 import type {
   NormalizedMediaData,
   SimilarMediaCardItem,
-} from "@/components/media/media-types"
+} from "@Runa/borealis"
 
 type Props = {
   params: Promise<{ id: string }>

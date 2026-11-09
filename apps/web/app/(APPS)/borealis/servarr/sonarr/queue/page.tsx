@@ -1,5 +1,5 @@
 import { Metadata } from "next"
-import { ServarrQueueView } from "@/components/servarr/servarr-queue-view"
+import { ServarrQueueView } from "@Runa/borealis"
 
 export const metadata: Metadata = {
   title: "Borealis | Servarr > Sonarr > Activity Queue",

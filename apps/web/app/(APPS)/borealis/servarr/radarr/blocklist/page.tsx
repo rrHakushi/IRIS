@@ -1,5 +1,5 @@
 import { Metadata } from "next"
-import { ServarrBlocklistView } from "@/components/servarr/servarr-blocklist-view"
+import { ServarrBlocklistView } from "@Runa/borealis"
 
 export const metadata: Metadata = {
   title: "Borealis | Servarr > Radarr > Blocklist",

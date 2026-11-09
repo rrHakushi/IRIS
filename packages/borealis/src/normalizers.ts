@@ -765,6 +765,9 @@ export function normalizeBorealisData(
           ? getMediaListStatusText(listStatusStr, type)
           : null
 
+        const rawPriority = raw?.entry?.priority ?? item?.entry?.priority ?? item.priority ?? item.listPriority ?? item.listEntry?.priority ?? "LOW"
+        const priorityStr = typeof rawPriority === "string" ? rawPriority.toUpperCase() : "LOW"
+
         const hoverDetails: BorealisHoverDetails = {
           bannerImage,
           description,
@@ -819,6 +822,7 @@ export function normalizeBorealisData(
           progress,
           connectedCount,
           listStatus: listStatusStr,
+          priority: priorityStr,
           hoverDetails,
           raw,
         }

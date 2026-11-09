@@ -24,6 +24,7 @@ import {
   IconEdit,
   IconExternalLink,
   IconFileText,
+  IconFlag,
   IconFolder,
   IconHelpCircle,
   IconLayoutGrid,
@@ -224,6 +225,9 @@ export function BorealisCardRoot({
     className,
   }
 
+  const rawEntry = data.raw?.entry ?? data.raw?.listEntry ?? data.raw
+  const entryPriority = (rawEntry?.priority ?? data.priority ?? "").toUpperCase()
+
   return (
     <BorealisCardContext.Provider
       value={{
@@ -250,6 +254,9 @@ export function BorealisCardRoot({
         onMouseLeave={handleMouseLeave}
         className={cn(
           "group/bcard relative flex rounded-2xl border border-border/60 bg-card text-card-foreground transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5",
+          entryPriority === "ULTRA" && "border-t-2 border-e-2 border-t-purple-500 border-e-purple-500",
+          entryPriority === "HIGH" && "border-t-2 border-e-2 border-t-rose-500 border-e-rose-500",
+          entryPriority === "MEDIUM" && "border-t-2 border-e-2 border-t-amber-500 border-e-amber-500",
           expanded
             ? cn(
                 "w-full p-2 items-center gap-3 sm:gap-4",
@@ -1472,6 +1479,8 @@ function BorealisCardHoverEditForm({
   setDraftStatus,
   draftScore,
   setDraftScore,
+  draftPriority,
+  setDraftPriority,
   draftProgress,
   setDraftProgress,
   draftChaptersProgress,
@@ -1495,6 +1504,8 @@ function BorealisCardHoverEditForm({
   setDraftStatus: (st: ListStatus) => void
   draftScore: number | null
   setDraftScore: (sc: number | null) => void
+  draftPriority: string
+  setDraftPriority: (pr: string) => void
   draftProgress: number
   setDraftProgress: (pr: number) => void
   draftChaptersProgress: number
@@ -1979,6 +1990,41 @@ function BorealisCardHoverEditForm({
           onChange={(e) => setDraftIsPrivate(e.target.checked)}
           className="size-4 rounded border-zinc-700 bg-zinc-900 text-primary accent-primary cursor-pointer"
         />
+      </div>
+
+      {/* Row 4b: Priority Segmented Control */}
+      <div className="flex flex-col gap-1 relative z-0">
+        <label className="flex items-center gap-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+          <IconFlag className="size-3" />
+          <span>Priority</span>
+        </label>
+        <div className="grid grid-cols-4 gap-1 rounded-xl border border-frost bg-frost/80 p-1 backdrop-blur-md">
+          {(["LOW", "MEDIUM", "HIGH", "ULTRA"] as const).map((p) => {
+            const isSelected = (draftPriority || "LOW").toUpperCase() === p
+            const label = p === "MEDIUM" ? "Med" : p.charAt(0) + p.slice(1).toLowerCase()
+            return (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setDraftPriority(p)}
+                className={cn(
+                  "flex items-center justify-center rounded-lg py-1 text-[11px] font-semibold transition-all cursor-pointer select-none",
+                  isSelected
+                    ? p === "ULTRA"
+                      ? "bg-purple-600/30 text-purple-300 shadow-xs border border-purple-500/50"
+                      : p === "HIGH"
+                        ? "bg-rose-600/30 text-rose-300 shadow-xs border border-rose-500/50"
+                        : p === "MEDIUM"
+                          ? "bg-amber-600/30 text-amber-300 shadow-xs border border-amber-500/50"
+                          : "bg-zinc-800 text-zinc-100 shadow-xs border border-zinc-700/60"
+                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40"
+                )}
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {/* Row 5: Notes */}
@@ -3674,6 +3720,10 @@ export function BorealisCardHoverContent({
     return Boolean(rawEntry?.private ?? rawEntry?.isPrivate ?? false)
   })
 
+  const [draftPriority, setDraftPriority] = useState<string>(() => {
+    return (rawEntry?.priority ?? "LOW").toUpperCase()
+  })
+
   const [draftNotes, setDraftNotes] = useState<string>(() => {
     return rawEntry?.notes ?? ""
   })
@@ -3753,6 +3803,7 @@ export function BorealisCardHoverContent({
       setDraftStartedAt(formatDateToYmd(rawEntry?.startedAt))
       setDraftCompletedAt(formatDateToYmd(rawEntry?.completedAt))
       setDraftIsPrivate(Boolean(rawEntry?.private ?? rawEntry?.isPrivate ?? false))
+      setDraftPriority((rawEntry?.priority ?? "LOW").toUpperCase())
     }
   }, [
     isHoverCardEditing,
@@ -3761,6 +3812,7 @@ export function BorealisCardHoverContent({
     rawEntry?.completedAt,
     rawEntry?.private,
     rawEntry?.isPrivate,
+    rawEntry?.priority,
   ])
 
   const handleSave = async () => {
@@ -3769,6 +3821,7 @@ export function BorealisCardHoverContent({
     try {
       const payload: BorealisCardSavePayload = {
         status: draftStatus,
+        priority: draftPriority,
         score: draftScore !== null && draftScore > 0 ? Math.round(Number(draftScore) * 10) / 10 : null,
         progress: draftProgress,
         chaptersProgress: draftChaptersProgress,
@@ -4387,6 +4440,8 @@ export function BorealisCardHoverContent({
             setDraftStatus={setDraftStatus}
             draftScore={draftScore}
             setDraftScore={setDraftScore}
+            draftPriority={draftPriority}
+            setDraftPriority={setDraftPriority}
             draftProgress={draftProgress}
             setDraftProgress={setDraftProgress}
             draftChaptersProgress={draftChaptersProgress}
@@ -4519,12 +4574,28 @@ export function BorealisCardHoverContent({
                     </div>
                   ) : <span />}
 
-                  {draftIsPrivate && (
-                    <span className="inline-flex items-center gap-1 rounded-md border border-frost bg-frost/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-zinc-300 backdrop-blur-md">
-                      <IconLock className="size-3 text-zinc-400" />
-                      Private
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    {draftPriority && draftPriority !== "LOW" && (
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-semibold backdrop-blur-md",
+                          draftPriority === "ULTRA" && "border-purple-500/50 bg-purple-500/20 text-purple-300",
+                          draftPriority === "HIGH" && "border-rose-500/50 bg-rose-500/20 text-rose-300",
+                          draftPriority === "MEDIUM" && "border-amber-500/50 bg-amber-500/20 text-amber-300"
+                        )}
+                      >
+                        <IconFlag className="size-3" />
+                        <span>{draftPriority === "MEDIUM" ? "Med" : draftPriority.charAt(0) + draftPriority.slice(1).toLowerCase()}</span>
+                      </span>
+                    )}
+
+                    {draftIsPrivate && (
+                      <span className="inline-flex items-center gap-1 rounded-md border border-frost bg-frost/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-zinc-300 backdrop-blur-md">
+                        <IconLock className="size-3 text-zinc-400" />
+                        Private
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {draftNotes && (

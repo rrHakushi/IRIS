@@ -68,6 +68,7 @@ export type StaffRole = EnumValues<"StaffRole">;
 export type CharacterRole = EnumValues<"CharacterRole">;
 export type MediaStatus = EnumValues<"MediaStatus">;
 export type ListStatus = EnumValues<"ListStatus">;
+export type EntryPriority = EnumValues<"EntryPriority">;
 export type CollaboratorRole = EnumValues<"CollaboratorRole">;
 export type AnimeSeason = EnumValues<"AnimeSeason">;
 export type AnimeSource = EnumValues<"AnimeSource">;
@@ -75,6 +76,13 @@ export type AnimeFormat = EnumValues<"AnimeFormat">;
 export type EpisodeType = EnumValues<"EpisodeType">;
 export type MangaFormat = EnumValues<"MangaFormat">;
 export type MusicType = EnumValues<"MusicType">;
+
+export const ENTRY_PRIORITIES = [
+  "LOW",
+  "MEDIUM",
+  "HIGH",
+  "ULTRA",
+] as const;
 
 export const LIST_STATUSES = [
   "IN_PROGRESS",

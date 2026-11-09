@@ -23,6 +23,7 @@ export async function saveListEntry(
 
   const commonPayload = {
     status: payload.status,
+    priority: payload.priority ? (String(payload.priority).toUpperCase() as any) : undefined,
     score:
       payload.score !== null && payload.score !== undefined && payload.score > 0
         ? Math.round(Number(payload.score) * 10) / 10

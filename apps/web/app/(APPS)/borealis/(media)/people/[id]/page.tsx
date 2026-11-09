@@ -2,7 +2,7 @@ import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import type { PersonDetails } from "@IRIS/elysia"
 import { elysia } from "@/lib/elysia"
-import { PersonDetailView } from "@/components/media/people/person-detail-view"
+import { PersonDetailView } from "@Runa/borealis"
 
 type Props = {
   params: Promise<{ id: string }>

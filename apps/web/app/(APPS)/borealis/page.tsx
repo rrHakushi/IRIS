@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { WatchingDashboard } from "@/components/lists/watching-dashboard"
+import { WatchingDashboard } from "@Runa/borealis"
 
 export const metadata: Metadata = {
   title: "Borealis | Home",

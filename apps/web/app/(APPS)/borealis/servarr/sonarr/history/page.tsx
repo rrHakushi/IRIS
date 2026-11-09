@@ -1,5 +1,5 @@
 import { Metadata } from "next"
-import { ServarrHistoryView } from "@/components/servarr/servarr-history-view"
+import { ServarrHistoryView } from "@Runa/borealis"
 
 export const metadata: Metadata = {
   title: "Borealis | Servarr > Sonarr > History",

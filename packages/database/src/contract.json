@@ -702,6 +702,27 @@
               }
             ]
           },
+          "EntryPriority": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "LOW",
+                "value": "LOW"
+              },
+              {
+                "name": "MEDIUM",
+                "value": "MEDIUM"
+              },
+              {
+                "name": "HIGH",
+                "value": "HIGH"
+              },
+              {
+                "name": "ULTRA",
+                "value": "ULTRA"
+              }
+            ]
+          },
           "EpisodeType": {
             "codecId": "pg/text@1",
             "members": [
@@ -2941,6 +2962,19 @@
                   "kind": "scalar"
                 }
               },
+              "priority": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "EntryPriority",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
               "private": {
                 "nullable": false,
                 "type": {
@@ -3064,6 +3098,9 @@
                 },
                 "notes": {
                   "column": "notes"
+                },
+                "priority": {
+                  "column": "priority"
                 },
                 "private": {
                   "column": "private"
@@ -4261,6 +4298,19 @@
                   "kind": "scalar"
                 }
               },
+              "priority": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "EntryPriority",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
               "private": {
                 "nullable": false,
                 "type": {
@@ -4398,6 +4448,9 @@
                 },
                 "notes": {
                   "column": "notes"
+                },
+                "priority": {
+                  "column": "priority"
                 },
                 "private": {
                   "column": "private"
@@ -7005,6 +7058,19 @@
                   "kind": "scalar"
                 }
               },
+              "priority": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "EntryPriority",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
               "private": {
                 "nullable": false,
                 "type": {
@@ -7128,6 +7194,9 @@
                 },
                 "notes": {
                   "column": "notes"
+                },
+                "priority": {
+                  "column": "priority"
                 },
                 "private": {
                   "column": "private"
@@ -8700,6 +8769,19 @@
                   "kind": "scalar"
                 }
               },
+              "priority": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "EntryPriority",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
               "private": {
                 "nullable": false,
                 "type": {
@@ -8826,6 +8908,9 @@
                 },
                 "notes": {
                   "column": "notes"
+                },
+                "priority": {
+                  "column": "priority"
                 },
                 "private": {
                   "column": "private"
@@ -10846,6 +10931,19 @@
                   "kind": "scalar"
                 }
               },
+              "priority": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "EntryPriority",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
               "private": {
                 "nullable": false,
                 "type": {
@@ -10962,6 +11060,9 @@
                 },
                 "notes": {
                   "column": "notes"
+                },
+                "priority": {
+                  "column": "priority"
                 },
                 "private": {
                   "column": "private"
@@ -11999,6 +12100,19 @@
                   "kind": "scalar"
                 }
               },
+              "priority": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "EntryPriority",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
               "private": {
                 "nullable": false,
                 "type": {
@@ -12104,6 +12218,9 @@
                 },
                 "playCount": {
                   "column": "playCount"
+                },
+                "priority": {
+                  "column": "priority"
                 },
                 "private": {
                   "column": "private"
@@ -13639,6 +13756,19 @@
                   "kind": "scalar"
                 }
               },
+              "priority": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "EntryPriority",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
               "private": {
                 "nullable": false,
                 "type": {
@@ -13745,6 +13875,9 @@
                 },
                 "otherId": {
                   "column": "otherId"
+                },
+                "priority": {
+                  "column": "priority"
                 },
                 "private": {
                   "column": "private"
@@ -16248,6 +16381,19 @@
                   "kind": "scalar"
                 }
               },
+              "priority": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "EntryPriority",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
               "private": {
                 "nullable": false,
                 "type": {
@@ -16405,6 +16551,9 @@
                 },
                 "notes": {
                   "column": "notes"
+                },
+                "priority": {
+                  "column": "priority"
                 },
                 "private": {
                   "column": "private"
@@ -19768,6 +19917,11 @@
             "AnimeList": {
               "checks": [
                 {
+                  "expression": "\"priority\" IN ('LOW', 'MEDIUM', 'HIGH', 'ULTRA')",
+                  "name": "AnimeList_priority_check_77747031",
+                  "prefix": "AnimeList_priority_check"
+                },
+                {
                   "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED', 'MAYBE')",
                   "name": "AnimeList_status_check_700d0082",
                   "prefix": "AnimeList_status_check"
@@ -19811,6 +19965,21 @@
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
                   "nullable": true
+                },
+                "priority": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "LOW"
+                  },
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "EntryPriority",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
                 },
                 "private": {
                   "codecId": "pg/bool@1",
@@ -19945,6 +20114,15 @@
                   ],
                   "name": "AnimeList_userId_idx_a489d58a",
                   "prefix": "AnimeList_userId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "userId",
+                    "priority"
+                  ],
+                  "name": "AnimeList_userId_priority_idx_48571828",
+                  "prefix": "AnimeList_userId_priority_idx",
                   "unique": false
                 },
                 {
@@ -20659,6 +20837,11 @@
             "BookList": {
               "checks": [
                 {
+                  "expression": "\"priority\" IN ('LOW', 'MEDIUM', 'HIGH', 'ULTRA')",
+                  "name": "BookList_priority_check_77747031",
+                  "prefix": "BookList_priority_check"
+                },
+                {
                   "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED', 'MAYBE')",
                   "name": "BookList_status_check_700d0082",
                   "prefix": "BookList_status_check"
@@ -20702,6 +20885,21 @@
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
                   "nullable": true
+                },
+                "priority": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "LOW"
+                  },
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "EntryPriority",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
                 },
                 "private": {
                   "codecId": "pg/bool@1",
@@ -20854,6 +21052,15 @@
                   ],
                   "name": "BookList_userId_idx_a489d58a",
                   "prefix": "BookList_userId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "userId",
+                    "priority"
+                  ],
+                  "name": "BookList_userId_priority_idx_48571828",
+                  "prefix": "BookList_userId_priority_idx",
                   "unique": false
                 },
                 {
@@ -23004,6 +23211,11 @@
             "GameList": {
               "checks": [
                 {
+                  "expression": "\"priority\" IN ('LOW', 'MEDIUM', 'HIGH', 'ULTRA')",
+                  "name": "GameList_priority_check_77747031",
+                  "prefix": "GameList_priority_check"
+                },
+                {
                   "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED', 'MAYBE')",
                   "name": "GameList_status_check_700d0082",
                   "prefix": "GameList_status_check"
@@ -23047,6 +23259,21 @@
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
                   "nullable": true
+                },
+                "priority": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "LOW"
+                  },
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "EntryPriority",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
                 },
                 "private": {
                   "codecId": "pg/bool@1",
@@ -23181,6 +23408,15 @@
                   ],
                   "name": "GameList_userId_idx_a489d58a",
                   "prefix": "GameList_userId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "userId",
+                    "priority"
+                  ],
+                  "name": "GameList_userId_priority_idx_48571828",
+                  "prefix": "GameList_userId_priority_idx",
                   "unique": false
                 },
                 {
@@ -24216,6 +24452,11 @@
             "MangaList": {
               "checks": [
                 {
+                  "expression": "\"priority\" IN ('LOW', 'MEDIUM', 'HIGH', 'ULTRA')",
+                  "name": "MangaList_priority_check_77747031",
+                  "prefix": "MangaList_priority_check"
+                },
+                {
                   "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED', 'MAYBE')",
                   "name": "MangaList_status_check_700d0082",
                   "prefix": "MangaList_status_check"
@@ -24268,6 +24509,21 @@
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
                   "nullable": true
+                },
+                "priority": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "LOW"
+                  },
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "EntryPriority",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
                 },
                 "private": {
                   "codecId": "pg/bool@1",
@@ -24402,6 +24658,15 @@
                   ],
                   "name": "MangaList_userId_idx_a489d58a",
                   "prefix": "MangaList_userId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "userId",
+                    "priority"
+                  ],
+                  "name": "MangaList_userId_priority_idx_48571828",
+                  "prefix": "MangaList_userId_priority_idx",
                   "unique": false
                 },
                 {
@@ -26256,6 +26521,11 @@
             "MovieList": {
               "checks": [
                 {
+                  "expression": "\"priority\" IN ('LOW', 'MEDIUM', 'HIGH', 'ULTRA')",
+                  "name": "MovieList_priority_check_77747031",
+                  "prefix": "MovieList_priority_check"
+                },
+                {
                   "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED', 'MAYBE')",
                   "name": "MovieList_status_check_700d0082",
                   "prefix": "MovieList_status_check"
@@ -26299,6 +26569,21 @@
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
                   "nullable": true
+                },
+                "priority": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "LOW"
+                  },
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "EntryPriority",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
                 },
                 "private": {
                   "codecId": "pg/bool@1",
@@ -26424,6 +26709,15 @@
                   ],
                   "name": "MovieList_userId_idx_a489d58a",
                   "prefix": "MovieList_userId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "userId",
+                    "priority"
+                  ],
+                  "name": "MovieList_userId_priority_idx_48571828",
+                  "prefix": "MovieList_userId_priority_idx",
                   "unique": false
                 },
                 {
@@ -27081,6 +27375,11 @@
             "MusicList": {
               "checks": [
                 {
+                  "expression": "\"priority\" IN ('LOW', 'MEDIUM', 'HIGH', 'ULTRA')",
+                  "name": "MusicList_priority_check_77747031",
+                  "prefix": "MusicList_priority_check"
+                },
+                {
                   "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED', 'MAYBE')",
                   "name": "MusicList_status_check_700d0082",
                   "prefix": "MusicList_status_check"
@@ -27133,6 +27432,21 @@
                     "value": 0
                   },
                   "nullable": false
+                },
+                "priority": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "LOW"
+                  },
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "EntryPriority",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
                 },
                 "private": {
                   "codecId": "pg/bool@1",
@@ -27244,6 +27558,15 @@
                   ],
                   "name": "MusicList_userId_idx_a489d58a",
                   "prefix": "MusicList_userId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "userId",
+                    "priority"
+                  ],
+                  "name": "MusicList_userId_priority_idx_48571828",
+                  "prefix": "MusicList_userId_priority_idx",
                   "unique": false
                 },
                 {
@@ -28558,6 +28881,11 @@
             "OtherList": {
               "checks": [
                 {
+                  "expression": "\"priority\" IN ('LOW', 'MEDIUM', 'HIGH', 'ULTRA')",
+                  "name": "OtherList_priority_check_77747031",
+                  "prefix": "OtherList_priority_check"
+                },
+                {
                   "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED', 'MAYBE')",
                   "name": "OtherList_status_check_700d0082",
                   "prefix": "OtherList_status_check"
@@ -28596,6 +28924,21 @@
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
                   "nullable": false
+                },
+                "priority": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "LOW"
+                  },
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "EntryPriority",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
                 },
                 "private": {
                   "codecId": "pg/bool@1",
@@ -28716,6 +29059,15 @@
                   ],
                   "name": "OtherList_userId_idx_a489d58a",
                   "prefix": "OtherList_userId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "userId",
+                    "priority"
+                  ],
+                  "name": "OtherList_userId_priority_idx_48571828",
+                  "prefix": "OtherList_userId_priority_idx",
                   "unique": false
                 },
                 {
@@ -30438,6 +30790,11 @@
             "TvList": {
               "checks": [
                 {
+                  "expression": "\"priority\" IN ('LOW', 'MEDIUM', 'HIGH', 'ULTRA')",
+                  "name": "TvList_priority_check_77747031",
+                  "prefix": "TvList_priority_check"
+                },
+                {
                   "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED', 'MAYBE')",
                   "name": "TvList_status_check_700d0082",
                   "prefix": "TvList_status_check"
@@ -30476,6 +30833,21 @@
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
                   "nullable": true
+                },
+                "priority": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "LOW"
+                  },
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "EntryPriority",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
                 },
                 "private": {
                   "codecId": "pg/bool@1",
@@ -30615,6 +30987,15 @@
                   ],
                   "name": "TvList_userId_idx_a489d58a",
                   "prefix": "TvList_userId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "userId",
+                    "priority"
+                  ],
+                  "name": "TvList_userId_priority_idx_48571828",
+                  "prefix": "TvList_userId_priority_idx",
                   "unique": false
                 },
                 {
@@ -33047,6 +33428,15 @@
                 "DISCONNECTED"
               ]
             },
+            "EntryPriority": {
+              "kind": "valueSet",
+              "values": [
+                "LOW",
+                "MEDIUM",
+                "HIGH",
+                "ULTRA"
+              ]
+            },
             "EpisodeType": {
               "kind": "valueSet",
               "values": [
@@ -33253,7 +33643,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "6af71be254d5260b9e4a3c9620253e01422dee5bc0990918c30f6ed991091493"
+    "storageHash": "171540bbf35293d8c6b6c5fded904a71ed3d4b7a557259c61aa92582da621f85"
   },
   "execution": {
     "executionHash": "badedc9bf9c9e244076dcf05953b220b0f6de5a376999c55f32d4164bd8124ba",

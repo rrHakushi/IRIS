@@ -34,6 +34,13 @@ enum ListStatus {
     MAYBE
 }
 
+enum EntryPriority {
+    LOW
+    MEDIUM
+    HIGH
+    ULTRA
+}
+
 enum CollaboratorRole {
     EDITOR
     VIEWER
@@ -116,6 +123,7 @@ model AnimeList {
     animeId     Int
     anime       Anime           @relation(fields: [animeId], references: [id], onDelete: Cascade)
     status      ListStatus      @default(PLANNED)
+    priority    EntryPriority   @default(LOW)
     progress    Int             @default(0)
     score       Float?
     notes       String?
@@ -135,6 +143,7 @@ model AnimeList {
     @@index([animeId])
     @@index([status])
     @@index([userId, status])
+    @@index([userId, priority])
     @@index([userId, score])
 }
 
@@ -145,6 +154,7 @@ model MangaList {
     mangaId          Int
     manga            Manga           @relation(fields: [mangaId], references: [id], onDelete: Cascade)
     status           ListStatus      @default(PLANNED)
+    priority         EntryPriority   @default(LOW)
     chaptersProgress Int             @default(0)
     volumesProgress  Int             @default(0)
     score            Float?
@@ -165,6 +175,7 @@ model MangaList {
     @@index([mangaId])
     @@index([status])
     @@index([userId, status])
+    @@index([userId, priority])
     @@index([userId, score])
 }
 
@@ -175,6 +186,7 @@ model MovieList {
     movieId     Int
     movie       Movie           @relation(fields: [movieId], references: [id], onDelete: Cascade)
     status      ListStatus      @default(PLANNED)
+    priority    EntryPriority   @default(LOW)
     score       Float?
     notes       String?
     rewatched   Int             @default(0)
@@ -193,6 +205,7 @@ model MovieList {
     @@index([movieId])
     @@index([status])
     @@index([userId, status])
+    @@index([userId, priority])
     @@index([userId, score])
 }
 
@@ -203,6 +216,7 @@ model TvList {
     tvId        Int
     tv          Tv           @relation(fields: [tvId], references: [id], onDelete: Cascade)
     status      ListStatus   @default(PLANNED)
+    priority    EntryPriority @default(LOW)
     progress    Int          @default(0)
     score       Float?
     notes       String?
@@ -225,6 +239,7 @@ model TvList {
     @@index([tvId])
     @@index([status])
     @@index([userId, status])
+    @@index([userId, priority])
     @@index([userId, score])
 }
 
@@ -275,6 +290,7 @@ model GameList {
     gameId      Int
     game        Game           @relation(fields: [gameId], references: [id], onDelete: Cascade)
     status      ListStatus     @default(PLANNED)
+    priority    EntryPriority  @default(LOW)
     progress    Int            @default(0)
     score       Float?
     notes       String?
@@ -294,6 +310,7 @@ model GameList {
     @@index([gameId])
     @@index([status])
     @@index([userId, status])
+    @@index([userId, priority])
     @@index([userId, score])
 }
 
@@ -304,6 +321,7 @@ model BookList {
     bookId           Int
     book             Book           @relation(fields: [bookId], references: [id], onDelete: Cascade)
     status           ListStatus     @default(PLANNED)
+    priority         EntryPriority  @default(LOW)
     progressPages    Int            @default(0)
     progressChapters Int            @default(0)
     progressVolumes  Int            @default(0)
@@ -325,6 +343,7 @@ model BookList {
     @@index([bookId])
     @@index([status])
     @@index([userId, status])
+    @@index([userId, priority])
     @@index([userId, score])
 }
 
@@ -335,6 +354,7 @@ model MusicList {
     musicId     Int
     music       Music           @relation(fields: [musicId], references: [id], onDelete: Cascade)
     status      ListStatus      @default(PLANNED)
+    priority    EntryPriority   @default(LOW)
     score       Float?
     playCount   Int             @default(0)
     notes       String?
@@ -351,6 +371,7 @@ model MusicList {
     @@index([musicId])
     @@index([status])
     @@index([userId, status])
+    @@index([userId, priority])
     @@index([userId, score])
 }
 

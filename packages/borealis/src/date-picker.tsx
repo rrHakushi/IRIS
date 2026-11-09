@@ -236,3 +236,8 @@ export function BorealisDatePicker({
   )
 }
 
+export {
+  BorealisDatePicker as DatePicker,
+  type BorealisDatePickerProps as DatePickerProps,
+}
+

@@ -55,8 +55,11 @@ export interface BorealisProgressInfo {
   chapterMax?: number | null
 }
 
+export type EntryPriority = "LOW" | "MEDIUM" | "HIGH" | "ULTRA"
+
 export interface BorealisCardSavePayload {
   status: ListStatus
+  priority?: EntryPriority | string
   score: number | null
   progress: number
   chaptersProgress?: number
@@ -126,6 +129,7 @@ export interface BorealisNormalizedData {
   progress?: BorealisProgressInfo | null
   connectedCount?: number
   listStatus?: string | null
+  priority?: EntryPriority | string | null
   hoverDetails: BorealisHoverDetails
   raw: any
 }

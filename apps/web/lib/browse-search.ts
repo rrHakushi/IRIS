@@ -1,6 +1,6 @@
 import { elysia } from "@/lib/elysia"
 import type { BrowseCategory } from "@/lib/browse-history"
-import type { SearchResultItem } from "@/components/browse/browse-search-results"
+import type { SearchResultItem } from "@Runa/borealis"
 import type { MediaTitleLanguage } from "@IRIS/shared"
 
 export type MusicFilterType = "all" | "tracks" | "albums"

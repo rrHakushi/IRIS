@@ -1,5 +1,5 @@
 import { Metadata } from "next"
-import { ServarrSeriesDetailView } from "@/components/servarr/servarr-series-detail-view"
+import { ServarrSeriesDetailView } from "@Runa/borealis"
 
 export const metadata: Metadata = {
   title: "Borealis | Servarr > Sonarr > Series Details",
