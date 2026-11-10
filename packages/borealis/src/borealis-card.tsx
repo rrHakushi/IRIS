@@ -253,7 +253,7 @@ export function BorealisCardRoot({
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         className={cn(
-          "group/bcard relative flex rounded-2xl border border-border/60 bg-card text-card-foreground transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5",
+          "bcard group/bcard relative flex rounded-2xl border border-border/60 bg-card text-card-foreground transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5",
           entryPriority === "ULTRA" && "border-t-2 border-e-2 border-t-purple-500 border-e-purple-500",
           entryPriority === "HIGH" && "border-t-2 border-e-2 border-t-rose-500 border-e-rose-500",
           entryPriority === "MEDIUM" && "border-t-2 border-e-2 border-t-amber-500 border-e-amber-500",
@@ -265,7 +265,7 @@ export function BorealisCardRoot({
                   : "flex-row text-start"
               )
             : cn(
-                "flex-col p-1.5",
+                "flex-col p-1.5 shrink-0",
                 size === "sm" && "w-32 text-xs",
                 size === "md" && "w-40 text-sm",
                 size === "lg" && "w-48 text-base"
@@ -319,7 +319,7 @@ export function BorealisCardImage({
       className={cn(
         "relative block w-full overflow-hidden rounded-xl bg-muted outline-none focus-visible:ring-2 focus-visible:ring-primary select-none",
         effectiveRatio === "square" && "aspect-square",
-        effectiveRatio === "poster" && "aspect-2/3",
+        (effectiveRatio === "poster" || !effectiveRatio) && "aspect-[2/3] aspect-2/3",
         effectiveRatio === "video" && "aspect-video",
         className
       )}
@@ -2098,7 +2098,7 @@ function BorealisCardHoverEpisodesTab({
   useEffect(() => {
     let isMounted = true
     if (!mediaId || mediaId <= 0) return
-    if (backendMediaType !== "ANIME" && backendMediaType !== "TV") return
+    if (backendMediaType !== "ANIME") return
 
     // If initial data already has meaningful episode titles, no need to fetch
     const hasTitles = initialEpisodes.some((e) => {
@@ -2121,10 +2121,7 @@ function BorealisCardHoverEpisodesTab({
 
     let promise = HOVER_EPISODES_INFLIGHT.get(cacheKey)
     if (!promise) {
-      const endpoint =
-        backendMediaType === "TV"
-          ? `/borealis/media/tv/${mediaId}`
-          : `/borealis/media/anime/${mediaId}`
+      const endpoint = `/borealis/media/anime/${mediaId}`
 
       promise = safeBorealisFetch(endpoint)
         .then(async (res) => {
@@ -3947,12 +3944,28 @@ export function BorealisCardHoverContent({
   })
 
   useEffect(() => {
+    const norm = (data.type || "").toLowerCase()
+    const isFetchAllowed =
+      norm === "anime" ||
+      norm === "manga" ||
+      norm === "character" ||
+      norm === "characters" ||
+      norm === "staff" ||
+      norm === "people" ||
+      norm === "person"
+
     const hasDescription = Boolean(
       data.description ||
       data.hoverDetails?.description ||
       rawMedia?.description
     )
-    if (hasDescription || (!isHovered && !isHoverCardEditing) || !mediaId || isNaN(mediaId)) {
+    if (
+      !isFetchAllowed ||
+      hasDescription ||
+      (!isHovered && !isHoverCardEditing) ||
+      !mediaId ||
+      isNaN(mediaId)
+    ) {
       return
     }
 
@@ -4005,7 +4018,7 @@ export function BorealisCardHoverContent({
         }
 
         const pathPrefix = getMediaApiPath(data.type)
-        if (!pathPrefix || pathPrefix === "other" || pathPrefix === "studio") {
+        if (norm !== "anime" && norm !== "manga") {
           return {}
         }
 

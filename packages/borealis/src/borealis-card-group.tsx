@@ -409,7 +409,7 @@ export function BorealisCardGroup({
             "w-full",
             gapClass,
             contentClassName,
-            "[&>*]:w-full [&>*]:max-w-none [&_.group\\/bcard]:w-full [&_.group\\/bcard]:max-w-none"
+            "[&>*]:w-full [&>*]:max-w-none [&_.bcard]:w-full [&_.bcard]:max-w-none"
           )}
         >
           {effectiveChildren.map((child, idx) => (

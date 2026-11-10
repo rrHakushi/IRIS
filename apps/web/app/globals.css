@@ -25,6 +25,14 @@
   border-color: var(--frost-border);
 }
 
+@utility aspect-2/3 {
+  aspect-ratio: 2 / 3;
+}
+
+@utility aspect-poster {
+  aspect-ratio: 2 / 3;
+}
+
 /* Hide scrollbars everywhere globally while preserving scroll functionality */
 *,
 *::before,
