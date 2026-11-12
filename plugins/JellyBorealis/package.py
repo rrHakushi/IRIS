@@ -259,6 +259,48 @@ def publish_github_release(version: str, zip_path: Path, overwrite: bool = False
             print(f"Error uploading release asset: {e}", file=sys.stderr)
 
 
+def parse_version(version: str) -> tuple[int, ...]:
+    parts = []
+    for p in version.lstrip("v").split("."):
+        digits = "".join(ch for ch in p if ch.isdigit())
+        parts.append(int(digits) if digits else 0)
+    return tuple(parts)
+
+
+def get_latest_released_version(tag_prefix: str) -> str | None:
+    api_url = f"https://api.github.com/repos/{GITHUB_REPO}/releases?per_page=100"
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "JellyBorealis-Packager",
+    }
+    token = os.environ.get("GITHUB_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    req = urllib.request.Request(api_url, headers=headers, method="GET")
+    try:
+        with urllib.request.urlopen(req, timeout=15) as response:
+            releases = json.loads(response.read().decode("utf-8"))
+    except Exception as e:
+        print(f"Warning: Could not check existing GitHub releases: {e}")
+        return None
+
+    prefix = f"{tag_prefix}-v"
+    versions: list[tuple[tuple[int, ...], str]] = []
+    for rel in releases:
+        if rel.get("draft"):
+            continue
+        tag = rel.get("tag_name", "")
+        if tag.startswith(prefix):
+            ver_str = tag[len(prefix):]
+            versions.append((parse_version(ver_str), ver_str))
+
+    if not versions:
+        return None
+    versions.sort(key=lambda item: item[0], reverse=True)
+    return versions[0][1]
+
+
 def main():
     parser = argparse.ArgumentParser(description="Package JellyBorealis plugin for Jellyfin release.")
     parser.add_argument("--ci", action="store_true", help="Run CI checks and publish to GitHub Releases if GITHUB_TOKEN is present.")
@@ -268,6 +310,12 @@ def main():
 
     meta = read_meta()
     version = meta.get("version", "2.0.0.0")
+
+    if not args.overwrite:
+        latest_released = get_latest_released_version("jellyborealis")
+        if latest_released is not None and parse_version(version) <= parse_version(latest_released):
+            print(f"JellyBorealis v{version} is already released (latest: v{latest_released}). Skipping build and release.")
+            return
 
     if not args.skip_build:
         build_plugin()

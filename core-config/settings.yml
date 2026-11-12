@@ -1,4 +1,30 @@
-use_default_settings: true
+use_default_settings:
+  engines:
+    keep_only:
+      - duckduckgo
+      - google
+      - google cse
+      - brave.images
+      - google cse images
+      - bing images
+      - google images
+      - duckduckgo images
+      - brave.videos
+      - google videos
+      - bing videos
+      - duckduckgo videos
+
+plugins:
+  searx.plugins.unit_converter.SXNGPlugin:
+    active: false
+  searx.plugins.calculator.SXNGPlugin:
+    active: false
+  searx.plugins.hash.SXNGPlugin:
+    active: false
+  searx.plugins.self_info.SXNGPlugin:
+    active: false
+  searx.plugins.tor_check.SXNGPlugin:
+    active: false
 
 general:
   instance_name: "NamelessLiberty Search"

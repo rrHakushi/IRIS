@@ -149,6 +149,7 @@ steps:
     commands:
       - docker compose create searxng
       - docker cp core-config/settings.yml NamelessLiberty-SearXNG:/etc/searxng/settings.yml
+      - docker cp core-config/limiter.toml NamelessLiberty-SearXNG:/etc/searxng/limiter.toml
       - docker compose up -d searxng
     depends_on:
       - deemix
@@ -277,6 +278,9 @@ steps:
 
   - name: Jellyborealis - Build
     image: mcr.microsoft.com/dotnet/sdk:10.0
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
     commands:
       - apt-get update && apt-get install -y python3
       - python3 plugins/JellyBorealis/package.py
@@ -296,6 +300,9 @@ steps:
 
   - name: BorealisExtra - Build
     image: mcr.microsoft.com/dotnet/sdk:10.0
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
     commands:
       - apt-get update && apt-get install -y python3 file fuse libfuse2
       - python3 plugins/BorealisExtra/package.py
