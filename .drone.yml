@@ -175,7 +175,7 @@ steps:
         from_secret: INFISICAL_SITE_URL
     commands:
       - |
-        HOST_IP=$(bun -e "const gw = (await Bun.file('/proc/net/route').text()).split(/\r?\n/).map(l => l.trim().split(/\s+/)).find(c => c[1] === '00000000')?.[2]; console.log(gw ? gw.match(/../g).reverse().map(h => parseInt(h, 16)).join('.') : '172.17.0.1');")
+        HOST_IP=$(bun -e "const gw = (await Bun.file('/proc/net/route').text()).split(String.fromCharCode(10)).map(l => l.trim().split(String.fromCharCode(9))).find(c => c[1] === '00000000')?.[2]; console.log(gw ? gw.match(/../g).reverse().map(h => parseInt(h, 16)).join('.') : '172.17.0.1');")
         PATH="$PWD/node_modules/.bin:$PATH" INFISICAL_API_URL="$(printf '%s' "$INFISICAL_SITE_URL" | sed 's|/$||')/api" infisical run --env=prod -- sh -c "cd packages/database && POSTGRE_HOST=$HOST_IP POSTGRE_PORT=10001 bunx prisma db update"
     depends_on:
       - Prisma Contract
