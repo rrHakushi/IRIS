@@ -2,8 +2,40 @@
 
 import React from "react"
 import { usePathname, useSearchParams } from "next/navigation"
+import {
+  IconChartBar,
+  IconDeviceTv,
+  IconDisc,
+  IconFileText,
+  IconGitBranch,
+  IconLayoutGrid,
+  IconPhoto,
+  IconPlayerPlay,
+  IconSparkles,
+  IconUserCheck,
+  IconUserHeart,
+  IconUsers,
+  IconUsersGroup,
+  type TablerIcon,
+} from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 import type { MediaTabItem, MediaTabKey } from "./media-types"
+
+const TAB_ICONS: Record<MediaTabKey, TablerIcon> = {
+  overview: IconLayoutGrid,
+  relations: IconGitBranch,
+  characters: IconUserHeart,
+  staff: IconUserCheck,
+  episodes: IconDeviceTv,
+  tracks: IconDisc,
+  lyrics: IconFileText,
+  images: IconPhoto,
+  trailers: IconPlayerPlay,
+  stats: IconChartBar,
+  friends: IconUsersGroup,
+  people: IconUsers,
+  recommendations: IconSparkles,
+}
 
 interface MediaTabNavProps {
   tabs: MediaTabItem[]
@@ -51,6 +83,7 @@ export function MediaTabNav({
     >
       {tabs.map((tab) => {
         const isActive = activeTab === tab.key
+        const TabIcon = TAB_ICONS[tab.key]
         return (
           <button
             key={tab.key}
@@ -58,13 +91,14 @@ export function MediaTabNav({
             suppressHydrationWarning
             onClick={() => handleTabClick(tab.key)}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors outline-none select-none",
+              "inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 font-mono text-xs font-semibold whitespace-nowrap transition-all duration-150 outline-none select-none backdrop-blur-md",
               "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
               isActive
-                ? "bg-primary font-semibold text-primary-foreground shadow-xs"
-                : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                ? "border-border bg-background text-foreground shadow-xs dark:border-zinc-700/80 dark:bg-zinc-800/90 dark:text-zinc-100"
+                : "border-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground"
             )}
           >
+            {TabIcon && <TabIcon className="size-3.5 shrink-0" aria-hidden="true" />}
             <span>{tab.label}</span>
           </button>
         )

@@ -32,6 +32,7 @@ import {
 import { Badge } from "@workspace/ui/components/badge"
 import { Button, buttonVariants } from "@workspace/ui/components/button"
 import { cn } from "@workspace/ui/lib/utils"
+import { GlassCard } from "../../glass-card"
 import { useUser } from "@/context/user-context"
 import {
   getMediaPreferences,
@@ -574,7 +575,7 @@ export function OverviewTab({
 
           {/* Synopsis in Card */}
           <section aria-labelledby="synopsis-heading">
-            <div className="rounded-2xl border border-border/40 bg-card/60 p-4 shadow-xs sm:p-5">
+            <GlassCard variant="normal" className="p-4 sm:p-5">
               <h2
                 id="synopsis-heading"
                 className="mb-2.5 text-base font-semibold text-foreground"
@@ -590,7 +591,7 @@ export function OverviewTab({
                   No synopsis available.
                 </p>
               )}
-            </div>
+            </GlassCard>
           </section>
 
           {/* Awards & Accolades */}
@@ -614,7 +615,7 @@ export function OverviewTab({
           {media.requirements &&
             (media.requirements.minimum || media.requirements.recommended) && (
               <section aria-labelledby="requirements-heading">
-                <div className="flex flex-col gap-3 rounded-2xl border border-border/40 bg-card/60 p-4 shadow-xs sm:p-5">
+                <GlassCard variant="normal" className="flex flex-col gap-3 p-4 sm:p-5">
                   <div className="flex items-center gap-2">
                     <IconCpu
                       className="size-4 text-primary"
@@ -685,7 +686,7 @@ export function OverviewTab({
                       </div>
                     )}
                   </div>
-                </div>
+                </GlassCard>
               </section>
             )}
 
@@ -869,7 +870,7 @@ export function OverviewTab({
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {opSongs.length > 0 && (
-                  <div className="rounded-2xl border border-border/40 bg-card p-4">
+                  <GlassCard variant="normal" className="p-4">
                     <h3 className="mb-2.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                       Opening Themes
                     </h3>
@@ -884,11 +885,11 @@ export function OverviewTab({
                         />
                       ))}
                     </ul>
-                  </div>
+                  </GlassCard>
                 )}
 
                 {edSongs.length > 0 && (
-                  <div className="rounded-2xl border border-border/40 bg-card p-4">
+                  <GlassCard variant="normal" className="p-4">
                     <h3 className="mb-2.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                       Ending Themes
                     </h3>
@@ -903,7 +904,7 @@ export function OverviewTab({
                         />
                       ))}
                     </ul>
-                  </div>
+                  </GlassCard>
                 )}
               </div>
             </section>
@@ -949,7 +950,7 @@ export function OverviewTab({
         {/* Info Sidebar: NARROW & ALIGNED TO THE RIGHT */}
         <aside className="flex flex-col gap-3.5">
           {/* 1. STATS CARD: [avgScore, favorites, popularity] */}
-          <div className="flex flex-col gap-3 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+          <GlassCard variant="normal" className="flex flex-col gap-3 p-4 text-xs">
             <div className="flex items-center justify-between border-b border-border/30 pb-2">
               <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
                 Stats
@@ -962,7 +963,7 @@ export function OverviewTab({
 
             <div className="grid grid-cols-3 gap-2">
               <div className="flex flex-col items-center justify-center gap-1 rounded-xl border border-border/30 bg-muted/30 px-2 py-2.5 text-center">
-                <div className="flex items-center gap-1 text-amber-500">
+                <div className="flex items-center gap-1 text-primary">
                   <IconStarFilled className="size-3.5" aria-hidden="true" />
                   <span className="text-sm font-bold text-foreground tabular-nums">
                     {typeof media.averageScore === "number" &&
@@ -977,7 +978,7 @@ export function OverviewTab({
               </div>
 
               <div className="flex flex-col items-center justify-center gap-1 rounded-xl border border-border/30 bg-muted/30 px-2 py-2.5 text-center">
-                <div className="flex items-center gap-1 text-rose-500">
+                <div className="flex items-center gap-1 text-primary">
                   <IconHeartFilled className="size-3.5" aria-hidden="true" />
                   <span className="text-sm font-bold text-foreground tabular-nums">
                     {typeof media.favorites === "number"
@@ -1001,10 +1002,10 @@ export function OverviewTab({
 
               </div>
             </div>
-          </div>
+          </GlassCard>
 
-          {/* 2. INFORMATION CARD: Remaining general metadata (no genres, no duplicate rows) */}
-          <div className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+          {/* 2. INFORMATION CARD: Remaining general metadata */}
+          <GlassCard variant="normal" className="flex flex-col gap-2 p-4 text-xs">
             <div className="flex items-center justify-between border-b border-border/30 pb-2">
               <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
                 Information
@@ -1373,6 +1374,24 @@ export function OverviewTab({
                 </div>
               )}
 
+              {/* Genres */}
+              {media.genres && media.genres.length > 0 && (
+                <div className="flex flex-col gap-1.5 py-1.5">
+                  <span className="text-muted-foreground">Genres</span>
+                  <div className="flex flex-wrap gap-1">
+                    {media.genres.map((genre) => (
+                      <Badge
+                        key={genre.id}
+                        variant="secondary"
+                        className="text-[10px] font-medium"
+                      >
+                        {genre.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Tags */}
               {media.tags && media.tags.length > 0 && (
                 <div className="flex flex-col gap-1.5 py-1.5">
@@ -1392,7 +1411,7 @@ export function OverviewTab({
                 </div>
               )}
             </div>
-          </div>
+          </GlassCard>
 
           {/* 3. DATES CARD: [start, end, season, broadcast] */}
           {(startDateFormatted ||
@@ -1403,7 +1422,7 @@ export function OverviewTab({
             (isReleasing && nextAiring) ||
             (media.broadcastDays && media.broadcastDays.length > 0) ||
             media.broadcastTime) && (
-              <div className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+              <GlassCard variant="normal" className="flex flex-col gap-2 p-4 text-xs">
                 <div className="flex items-center justify-between border-b border-border/30 pb-2">
                   <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
                     Dates
@@ -1521,7 +1540,7 @@ export function OverviewTab({
                       </div>
                     )}
                 </div>
-              </div>
+              </GlassCard>
             )}
 
           {/* 4. EPISODE INFO CARD: [Episodes, duration] */}
@@ -1536,7 +1555,7 @@ export function OverviewTab({
             (typeof media.duration === "number" && media.duration > 0) ||
             (typeof media.totalTracks === "number" &&
               media.totalTracks > 0)) && (
-              <div className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+              <GlassCard variant="normal" className="flex flex-col gap-2 p-4 text-xs">
                 <div className="flex items-center justify-between border-b border-border/30 pb-2">
                   <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
                     {media.category === "manga" || media.category === "books"
@@ -1663,7 +1682,7 @@ export function OverviewTab({
                     </div>
                   )}
                 </div>
-              </div>
+              </GlassCard>
             )}
 
           {/* 5. PRODUCERS CARD: [Studios, Producers, Networks, Developers, Publishers] */}
@@ -1672,7 +1691,7 @@ export function OverviewTab({
             (media.networks && media.networks.length > 0) ||
             (media.developers && media.developers.length > 0) ||
             (media.publishers && media.publishers.length > 0)) && (
-              <div className="flex flex-col gap-2.5 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+              <GlassCard variant="normal" className="flex flex-col gap-2.5 p-4 text-xs">
                 <div className="flex items-center justify-between border-b border-border/30 pb-2">
                   <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
                     Producers
@@ -1789,12 +1808,14 @@ export function OverviewTab({
                     </div>
                   )}
                 </div>
-              </div>
+              </GlassCard>
             )}
 
           {/* 6. ALTERNATIVE TITLES CARD */}
-          {media.synonyms && media.synonyms.length > 0 && (
-            <div className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+          {(media.titleSecondary ||
+            media.titleNative ||
+            (media.synonyms && media.synonyms.length > 0)) && (
+            <GlassCard variant="normal" className="flex flex-col gap-2 p-4 text-xs">
               <div className="flex items-center justify-between border-b border-border/30 pb-2">
                 <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
                   Alternative Titles
@@ -1805,16 +1826,44 @@ export function OverviewTab({
                 />
               </div>
               <ul className="flex flex-col divide-y divide-border/15">
-                {media.synonyms.map((syn, idx) => (
-                  <li
-                    key={idx}
-                    className="py-1 text-end text-[11px] leading-snug break-words text-foreground/85"
-                  >
-                    {syn}
+                {media.titleSecondary &&
+                  media.titleSecondary !== media.titlePrimary && (
+                    <li className="flex items-baseline justify-between gap-3 py-1 text-[11px] leading-snug">
+                      <span className="shrink-0 text-muted-foreground">
+                        Secondary
+                      </span>
+                      <span className="text-end break-words text-foreground/85">
+                        {media.titleSecondary}
+                      </span>
+                    </li>
+                  )}
+                {media.titleNative && (
+                  <li className="flex items-baseline justify-between gap-3 py-1 text-[11px] leading-snug">
+                    <span className="shrink-0 text-muted-foreground">
+                      Native
+                    </span>
+                    <span className="font-japanese text-end break-words text-foreground/85">
+                      {media.titleNative}
+                    </span>
                   </li>
-                ))}
+                )}
+                {(media.synonyms ?? [])
+                  .filter(
+                    (syn) =>
+                      syn !== media.titlePrimary &&
+                      syn !== media.titleSecondary &&
+                      syn !== media.titleNative
+                  )
+                  .map((syn, idx) => (
+                    <li
+                      key={idx}
+                      className="py-1 text-end text-[11px] leading-snug break-words text-foreground/85"
+                    >
+                      {syn}
+                    </li>
+                  ))}
               </ul>
-            </div>
+            </GlassCard>
           )}
 
           {/* 7. EXTERNAL LINKS CARD */}
@@ -1828,7 +1877,7 @@ export function OverviewTab({
             media.buyLink ||
             media.previewLink ||
             media.infoLink) && (
-              <div className="flex flex-col gap-2.5 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+              <GlassCard variant="normal" className="flex flex-col gap-2.5 p-4 text-xs">
                 <div className="flex items-center justify-between border-b border-border/30 pb-2">
                   <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
                     External Links
@@ -1982,7 +2031,7 @@ export function OverviewTab({
                     </a>
                   ))}
                 </div>
-              </div>
+              </GlassCard>
             )}
 
           {/* 8. PROVIDER IDs CARD */}
@@ -2006,7 +2055,7 @@ export function OverviewTab({
             media.isbn13 ||
             media.openLibraryId ||
             media.deezerId) && (
-              <div className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+              <GlassCard variant="normal" className="flex flex-col gap-2 p-4 text-xs">
                 <div className="flex items-center justify-between border-b border-border/30 pb-2">
                   <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
                     IDs
@@ -2283,7 +2332,7 @@ export function OverviewTab({
                     </div>
                   )}
                 </div>
-              </div>
+              </GlassCard>
             )}
         </aside>
       </div>

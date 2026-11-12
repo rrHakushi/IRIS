@@ -110,26 +110,6 @@ const routes2 = new Elysia()
   )
 
   .get(
-    '/:tvId/relations',
-    {
-      params: BorealisTvModel.param,
-      response: {
-        200: BorealisTvModel.relationsResponse,
-        404: BorealisTvModel.notFoundError,
-        422: BorealisTvModel.validationError,
-      },
-      detail: {
-        summary: 'Get TV show relations',
-        description: 'Retrieves cross-media relations and franchise connections.',
-        tags: ['Borealis - TV'],
-      },
-    },
-    async ({ params: { tvId } }) => {
-      return await BorealisTvServ.getRelations(tvId)
-    }
-  )
-
-  .get(
     '/:tvId/characters',
     {
       params: BorealisTvModel.param,

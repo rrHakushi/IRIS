@@ -217,8 +217,8 @@ export class BorealisMoviesServ {
       throw new NotFound(`Movie with ID ${id} not found`)
     }
 
-    if (movie.imdbUpdatedAt == null && movie.imdbId) {
-      await MediaEntitySyncer.syncMovie(id, movie.imdbId).catch(() => {})
+    if (movie.tvdbUpdatedAt == null && movie.tvDBId) {
+      await MediaEntitySyncer.syncMovie(id, movie.tvDBId).catch(() => {})
       movie = (await load()) ?? movie
     }
 
@@ -252,7 +252,7 @@ export class BorealisMoviesServ {
     }
   }
   public static async refresh(id: number) {
-    const movie = await prisma.orm.public.Movie.where({ id }).select('id', 'imdbId', 'titlePrimary').first()
+    const movie = await prisma.orm.public.Movie.where({ id }).select('id', 'tvDBId', 'titlePrimary').first()
     if (!movie) {
       throw new NotFound(`Movie with ID ${id} not found`)
     }
@@ -260,7 +260,7 @@ export class BorealisMoviesServ {
     await prisma.orm.public.Movie.where({ id }).update({ updatedAt: new Date() })
 
     await MediaQueueManager.enqueueMediaUpdate('MOVIE', id, {
-      externalId: movie.imdbId,
+      externalId: movie.tvDBId,
       priority: 1,
       depth: 0,
       maxDepth: 0,

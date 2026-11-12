@@ -2,7 +2,13 @@ import { prisma, countOf, toDate, and, or, normalizeListStatus, type MediaType, 
 import { NotFound, BadRequest } from '../../lib/errors'
 import { hashPassword } from '../../utils/auth-crypto'
 import { ConnectionSyncQueueManager } from '../carina/connection-sync.queue'
-import { ActivityServ, type MediaListAction } from '../carina/activity.serv'
+import {
+  ActivityServ,
+  normalizeDisplayScore,
+  type ActivityDiffChange,
+  type MediaListAction,
+} from '../carina/activity.serv'
+import { CarinaUsersServ } from '../carina/users.serv'
 import { MediaStatsServ } from './media-stats.serv'
 import { mediaStatsService } from './user-stats.serv'
 
@@ -40,6 +46,20 @@ function formatEntry(entry: any) {
   }
 }
 
+const LIST_MODEL_BY_MEDIA_TYPE: Record<
+  'ANIME' | 'MANGA' | 'MOVIE' | 'TV' | 'GAME' | 'BOOK' | 'MUSIC' | 'OTHER',
+  'AnimeList' | 'MangaList' | 'MovieList' | 'TvList' | 'GameList' | 'BookList' | 'MusicList' | 'OtherList'
+> = {
+  ANIME: 'AnimeList',
+  MANGA: 'MangaList',
+  MOVIE: 'MovieList',
+  TV: 'TvList',
+  GAME: 'GameList',
+  BOOK: 'BookList',
+  MUSIC: 'MusicList',
+  OTHER: 'OtherList',
+}
+
 function emitListActivity(params: {
   userId: string
   mediaType: 'ANIME' | 'MANGA' | 'MOVIE' | 'TV' | 'GAME' | 'BOOK' | 'MUSIC' | 'OTHER'
@@ -53,6 +73,11 @@ function emitListActivity(params: {
     coverImage?: string | null
     bannerImage?: string | null
     format?: string | null
+    episodeCount?: number | null
+    chapterCount?: number | null
+    volumeCount?: number | null
+    pageCount?: number | null
+    unitLabel?: string | null
   } | null
   isDeleted?: boolean
 }) {
@@ -61,6 +86,10 @@ function emitListActivity(params: {
   const coverImage = media?.coverImage || null
   const bannerImage = media?.bannerImage || null
   const format = media?.format || null
+  const totalUnits = media?.episodeCount ?? media?.chapterCount ?? null
+  const totalVolumes = media?.volumeCount ?? null
+  const totalPages = media?.pageCount ?? null
+  const unitLabel = media?.unitLabel ?? null
 
   if (isDeleted) {
     ActivityServ.recordMediaListActivity({
@@ -73,9 +102,14 @@ function emitListActivity(params: {
       bannerImage,
       format,
       status: existing?.status || null,
-      progress: existing?.progress ?? existing?.chaptersProgress ?? null,
-      progressVolumes: existing?.volumesProgress ?? null,
+      progress:
+        mediaType === 'BOOK'
+          ? (existing?.progressChapters ?? null)
+          : (existing?.progress ?? existing?.chaptersProgress ?? null),
+      progressVolumes: existing?.volumesProgress ?? existing?.progressVolumes ?? null,
+      progressPages: existing?.progressPages ?? null,
       score: existing?.score ?? null,
+      unitLabel,
       isPrivate: existing?.private ?? false,
     })
     return
@@ -83,27 +117,60 @@ function emitListActivity(params: {
 
   const inc = incoming || {}
 
-  const currentProgress = inc.progress !== undefined
-    ? Number(inc.progress)
-    : inc.chaptersProgress !== undefined
-      ? Number(inc.chaptersProgress)
-      : inc.progressPages !== undefined
-        ? Number(inc.progressPages)
+  // Track each progress field independently so BOOK chapters and pages never cross-compare
+  const oldProgress =
+    mediaType === 'BOOK'
+      ? (existing?.progressChapters ?? 0)
+      : mediaType === 'MANGA'
+        ? (existing?.chaptersProgress ?? 0)
+        : (existing?.progress ?? 0)
+  const currentProgress =
+    inc.progress !== undefined
+      ? Number(inc.progress)
+      : inc.chaptersProgress !== undefined
+        ? Number(inc.chaptersProgress)
         : inc.progressChapters !== undefined
           ? Number(inc.progressChapters)
-          : (existing ? (existing.progress ?? existing.chaptersProgress ?? existing.progressPages ?? existing.progressChapters ?? 0) : 0)
+          : oldProgress
 
-  const currentVolumes = inc.volumesProgress !== undefined
-    ? Number(inc.volumesProgress)
-    : inc.progressVolumes !== undefined
-      ? Number(inc.progressVolumes)
-      : (existing ? (existing.volumesProgress ?? existing.progressVolumes ?? 0) : 0)
+  const oldVolumes = existing?.volumesProgress ?? existing?.progressVolumes ?? 0
+  const currentVolumes =
+    inc.volumesProgress !== undefined
+      ? Number(inc.volumesProgress)
+      : inc.progressVolumes !== undefined
+        ? Number(inc.progressVolumes)
+        : oldVolumes
+
+  const oldPages = existing?.progressPages ?? 0
+  const currentPages =
+    inc.progressPages !== undefined ? Number(inc.progressPages) : oldPages
 
   const currentStatus = inc.status ?? (existing ? existing.status : 'PLANNED')
   const currentScore = inc.score !== undefined ? inc.score : (existing ? existing.score : null)
   const isPrivate = inc.private !== undefined ? Boolean(inc.private) : (existing ? Boolean(existing.private) : false)
+  const oldRewatched = existing?.rewatched ?? existing?.reread ?? existing?.replayed ?? existing?.playCount ?? 0
+  const currentRewatched = inc.rewatched ?? inc.reread ?? inc.replayed ?? inc.playCount ?? oldRewatched
+  const listModel = LIST_MODEL_BY_MEDIA_TYPE[mediaType]
 
   if (!existing) {
+    const initialChanges: ActivityDiffChange[] = []
+    if (currentStatus) {
+      initialChanges.push({ field: 'status', from: null, to: currentStatus })
+    }
+    if (currentProgress > 0) {
+      initialChanges.push({ field: 'progress', from: 0, to: currentProgress })
+    }
+    if (currentVolumes > 0) {
+      initialChanges.push({ field: 'progressVolumes', from: 0, to: currentVolumes })
+    }
+    if (currentPages > 0) {
+      initialChanges.push({ field: 'progressPages', from: 0, to: currentPages })
+    }
+    const normalizedScore = normalizeDisplayScore(currentScore)
+    if (normalizedScore !== null) {
+      initialChanges.push({ field: 'score', from: null, to: normalizedScore })
+    }
+
     ActivityServ.recordMediaListActivity({
       userId,
       mediaType,
@@ -114,35 +181,65 @@ function emitListActivity(params: {
       bannerImage,
       format,
       status: currentStatus,
-      progress: currentProgress,
+      progress: mediaType === 'BOOK' && currentProgress === 0 && currentPages > 0 ? currentPages : currentProgress,
       progressVolumes: currentVolumes,
+      progressPages: currentPages,
       score: currentScore,
+      rewatched: currentRewatched,
+      totalUnits,
+      totalVolumes,
+      totalPages,
+      unitLabel,
+      changes: initialChanges,
       isPrivate,
+      listModel,
     })
+    CarinaUsersServ.evaluateBadgesNonBlocking(userId)
     return
   }
 
-  const oldProgress = existing.progress ?? existing.chaptersProgress ?? existing.progressPages ?? existing.progressChapters ?? 0
-  const oldVolumes = existing.volumesProgress ?? existing.progressVolumes ?? 0
   const oldStatus = existing.status
   const oldScore = existing.score
-  const oldRewatched = existing.rewatched ?? existing.reread ?? existing.replayed ?? existing.playCount ?? 0
-  const currentRewatched = inc.rewatched ?? inc.reread ?? inc.replayed ?? inc.playCount ?? oldRewatched
 
   const statusChanged = Boolean(inc.status && inc.status !== oldStatus)
-  const progressChanged = Boolean(
-    (inc.progress !== undefined && inc.progress !== oldProgress) ||
-    (inc.chaptersProgress !== undefined && inc.chaptersProgress !== oldProgress) ||
-    (inc.progressPages !== undefined && inc.progressPages !== oldProgress) ||
-    (inc.progressChapters !== undefined && inc.progressChapters !== oldProgress) ||
-    (inc.volumesProgress !== undefined && inc.volumesProgress !== oldVolumes) ||
-    (inc.progressVolumes !== undefined && inc.progressVolumes !== oldVolumes)
-  )
-  const scoreChanged = Boolean(inc.score !== undefined && inc.score !== oldScore)
+  const mainProgressChanged =
+    (inc.progress !== undefined || inc.chaptersProgress !== undefined || inc.progressChapters !== undefined) &&
+    currentProgress !== oldProgress
+  const volumesChanged =
+    (inc.volumesProgress !== undefined || inc.progressVolumes !== undefined) &&
+    currentVolumes !== oldVolumes
+  const pagesChanged =
+    inc.progressPages !== undefined && currentPages !== oldPages
+  const progressChanged = mainProgressChanged || volumesChanged || pagesChanged
+
+  const normNewScore = normalizeDisplayScore(currentScore)
+  const normOldScore = normalizeDisplayScore(oldScore)
+  const scoreChanged = inc.score !== undefined && normNewScore !== normOldScore
   const rewatchedChanged = Boolean(currentRewatched > oldRewatched)
 
-  let action: MediaListAction | null = null
+  const changes: ActivityDiffChange[] = []
+  if (statusChanged) {
+    changes.push({ field: 'status', from: oldStatus, to: currentStatus })
+  }
+  if (mainProgressChanged) {
+    changes.push({ field: 'progress', from: oldProgress, to: currentProgress })
+  }
+  if (volumesChanged) {
+    changes.push({ field: 'progressVolumes', from: oldVolumes, to: currentVolumes })
+  }
+  if (pagesChanged) {
+    changes.push({ field: 'progressPages', from: oldPages, to: currentPages })
+  }
+  if (scoreChanged) {
+    changes.push({ field: 'score', from: normOldScore, to: normNewScore })
+  }
+  if (rewatchedChanged) {
+    changes.push({ field: 'rewatched', from: oldRewatched, to: currentRewatched })
+  }
 
+  if (changes.length === 0) return
+
+  let action: MediaListAction
   if (statusChanged && currentStatus === 'COMPLETED') {
     action = 'COMPLETED'
   } else if (rewatchedChanged) {
@@ -151,30 +248,39 @@ function emitListActivity(params: {
     action = 'STATUS_CHANGED'
   } else if (progressChanged) {
     action = 'PROGRESS_CHANGED'
-  } else if (scoreChanged) {
+  } else {
     action = 'SCORE_CHANGED'
   }
 
-  if (action) {
-    ActivityServ.recordMediaListActivity({
-      userId,
-      mediaType,
-      mediaId,
-      action,
-      title,
-      coverImage,
-      bannerImage,
-      format,
-      status: currentStatus,
-      progress: currentProgress,
-      progressVolumes: currentVolumes,
-      score: currentScore,
-      prevStatus: oldStatus,
-      prevProgress: oldProgress,
-      prevScore: oldScore,
-      isPrivate,
-    })
-  }
+  ActivityServ.recordMediaListActivity({
+    userId,
+    mediaType,
+    mediaId,
+    action,
+    title,
+    coverImage,
+    bannerImage,
+    format,
+    status: currentStatus,
+    progress: mediaType === 'BOOK' && currentProgress === 0 && currentPages > 0 ? currentPages : currentProgress,
+    progressVolumes: currentVolumes,
+    progressPages: currentPages,
+    score: currentScore,
+    rewatched: currentRewatched,
+    prevStatus: oldStatus,
+    prevProgress: mediaType === 'BOOK' && !mainProgressChanged && pagesChanged ? oldPages : oldProgress,
+    prevProgressVolumes: oldVolumes,
+    prevProgressPages: oldPages,
+    prevScore: oldScore,
+    prevRewatched: oldRewatched,
+    totalUnits,
+    totalVolumes,
+    totalPages,
+    unitLabel,
+    changes,
+    isPrivate,
+    listModel,
+  })
 }
 
 function computeStats(items: any[], progressField: string) {
@@ -3597,6 +3703,7 @@ export class BorealisListsServ {
     await MediaStatsServ.recalculateMediaStats('OTHER', otherId)
 
     const prog = (entry.progressValues as any)?.[incKey] ?? 0
+    const incFieldSpec = ((item.progressFields as any[]) || []).find((f: any) => f.key === incKey)
 
     emitListActivity({
       userId,
@@ -3620,6 +3727,7 @@ export class BorealisListsServ {
         coverImage: item.coverImage,
         bannerImage: item.bannerImage,
         format: item.format,
+        unitLabel: incFieldSpec?.label || incFieldSpec?.unit || incKey,
       },
     })
 
@@ -3756,6 +3864,7 @@ export class BorealisListsServ {
         coverImage: item.coverImage,
         bannerImage: item.bannerImage,
         format: item.format,
+        unitLabel: fieldSpec?.label || fieldSpec?.unit || incKey,
       },
     })
 
@@ -4656,6 +4765,24 @@ export class BorealisListsServ {
       } catch (err: any) {
         console.error(`Failed to recalculate stats for ${item.type} #${item.id}:`, err?.message || err)
       }
+    }
+
+    if (!body?.suppressSummaryActivity && imported + updated > 0) {
+      const touchedTypes = Array.from(new Set(Array.from(touchedMedia.values()).map((t) => t.type)))
+      ActivityServ.recordImportOrSyncSummaryActivity({
+        userId,
+        source: 'BULK_IMPORT',
+        importedCount: imported,
+        updatedCount: updated,
+        mediaTypes: touchedTypes,
+        mediaType:
+          touchedTypes.length === 1 &&
+          ['ANIME', 'MANGA', 'MOVIE', 'TV', 'GAME', 'BOOK', 'MUSIC', 'OTHER'].includes(touchedTypes[0]!)
+            ? (touchedTypes[0] as MediaType)
+            : null,
+        isPrivate: false,
+      })
+      CarinaUsersServ.evaluateBadgesNonBlocking(userId)
     }
 
     return {

@@ -48,8 +48,6 @@ const CreateOtherItemDialog = dynamic(
 import { IconPlus } from "@tabler/icons-react"
 import { Button } from "@workspace/ui/components/button"
 import { invalidateClientStats } from "./stats/media-stats-tab"
-import { useEncryption } from "@/context/encryption-context"
-import { deriveVaultKey, safeDecryptText } from "@/lib/client-encryption"
 import type {
   MediaListType,
   StatusKey,
@@ -434,42 +432,6 @@ export function UserListView({
   const lastFetchedFacetsKeyRef = useRef<string | null>(null)
   const isFetchingFacetsRef = useRef(false)
 
-  // Client-side zero-knowledge decryption
-  const { secretKey, isActive: isVaultActive } = useEncryption()
-  const vaultKey = useMemo(
-    () => (isVaultActive && secretKey ? deriveVaultKey(secretKey) : null),
-    [isVaultActive, secretKey]
-  )
-
-  const decryptListItems = useCallback(
-    (rawItems: ListEntryData[]): ListEntryData[] => {
-      if (!vaultKey) return rawItems
-      return rawItems.map((item) => {
-        if (item.entry?.notes) {
-          const decrypted = safeDecryptText(item.entry.notes, vaultKey)
-          if (decrypted !== item.entry.notes) {
-            return {
-              ...item,
-              entry: {
-                ...item.entry,
-                notes: decrypted,
-              },
-            }
-          }
-        }
-        return item
-      })
-    },
-    [vaultKey]
-  )
-
-  // Re-decrypt items if vault is unlocked after data was already fetched
-  useEffect(() => {
-    if (vaultKey && items.length > 0) {
-      setItems((prev) => decryptListItems(prev))
-    }
-  }, [vaultKey, decryptListItems])
-
   // ---------------------------------------------------------------------------
   // 1. Fetch Filter Facets & Counts
   // ---------------------------------------------------------------------------
@@ -594,7 +556,7 @@ export function UserListView({
 
         if (!error && data && data.success) {
           const rawItems = (data.items as ListEntryData[]) || []
-          setItems(decryptListItems(rawItems))
+          setItems(rawItems)
           setPage(1)
           setHasMore(Boolean(data.pagination?.hasMore))
           setTotalCount(data.pagination?.total ?? 0)
@@ -624,7 +586,6 @@ export function UserListView({
       sortBy,
       sortOrder,
       debouncedSearch,
-      decryptListItems,
     ]
   )
 
@@ -692,7 +653,7 @@ export function UserListView({
 
       if (!error && data && data.success) {
         const newItems = (data.items as ListEntryData[]) || []
-        setItems((prev) => [...prev, ...decryptListItems(newItems)])
+        setItems((prev) => [...prev, ...newItems])
         setPage(nextPage)
         setHasMore(Boolean(data.pagination?.hasMore))
       } else {
@@ -719,7 +680,6 @@ export function UserListView({
     sortBy,
     sortOrder,
     targetUserId,
-    decryptListItems,
   ])
 
   // ---------------------------------------------------------------------------
@@ -997,10 +957,29 @@ export function UserListView({
           (item.entry as any)?.bookId
       )
 
+      const m: any = item.media ?? {}
+      const epMax =
+        newStatus === "COMPLETED" && typeof m.episodeCount === "number" && m.episodeCount > 0
+          ? m.episodeCount
+          : undefined
+      const chMax =
+        newStatus === "COMPLETED" && typeof m.chapterCount === "number" && m.chapterCount > 0
+          ? m.chapterCount
+          : newStatus === "COMPLETED" && typeof m.pageCount === "number" && m.pageCount > 0
+            ? m.pageCount
+            : undefined
+      const volMax =
+        newStatus === "COMPLETED" && typeof m.volumeCount === "number" && m.volumeCount > 0
+          ? m.volumeCount
+          : undefined
+
       handleItemUpdated(entryId, {
         ...item.entry,
         status: newStatus,
-      })
+        ...(epMax !== undefined ? { progress: epMax } : {}),
+        ...(chMax !== undefined ? { chaptersProgress: chMax, progressChapters: chMax, progress: chMax } : {}),
+        ...(volMax !== undefined ? { volumesProgress: volMax, progressVolumes: volMax } : {}),
+      } as any)
 
       try {
         let res: { error?: any }
@@ -1008,12 +987,16 @@ export function UserListView({
           case "anime":
             res = await elysia.borealis.lists
               .anime({ animeId: numMediaId })
-              .post({ status: newStatus })
+              .post({ status: newStatus, ...(epMax !== undefined ? { progress: epMax } : {}) })
             break
           case "manga":
             res = await elysia.borealis.lists
               .manga({ mangaId: numMediaId })
-              .post({ status: newStatus })
+              .post({
+                status: newStatus,
+                ...(chMax !== undefined ? { chaptersProgress: chMax } : {}),
+                ...(volMax !== undefined ? { volumesProgress: volMax } : {}),
+              })
             break
           case "movie":
             res = await elysia.borealis.lists
@@ -1023,7 +1006,7 @@ export function UserListView({
           case "tv":
             res = await elysia.borealis.lists
               .tv({ tvId: numMediaId })
-              .post({ status: newStatus })
+              .post({ status: newStatus, ...(epMax !== undefined ? { progress: epMax } : {}) })
             break
           case "game":
             res = await elysia.borealis.lists
@@ -1033,7 +1016,11 @@ export function UserListView({
           case "book":
             res = await elysia.borealis.lists
               .books({ bookId: numMediaId })
-              .post({ status: newStatus })
+              .post({
+                status: newStatus,
+                ...(chMax !== undefined ? { progressChapters: chMax } : {}),
+                ...(volMax !== undefined ? { progressVolumes: volMax } : {}),
+              })
             break
           case "other":
             res = await elysia.borealis.lists
@@ -1244,7 +1231,7 @@ export function UserListView({
       )
     }
 
-    // 10. Connections
+    // 10. Connections (Has / Doesn't have)
     if (filterState.connections.length > 0) {
       const connSet = new Set(
         filterState.connections.map((c) => c.toLowerCase())
@@ -1255,6 +1242,23 @@ export function UserListView({
         }
         return Object.entries(entry.connections).some(
           ([k, v]) => connSet.has(k.toLowerCase()) && Boolean(v)
+        )
+      })
+    }
+
+    if (
+      filterState.excludeConnections &&
+      filterState.excludeConnections.length > 0
+    ) {
+      const excSet = new Set(
+        filterState.excludeConnections.map((c) => c.toLowerCase())
+      )
+      result = result.filter(({ entry }) => {
+        if (!entry.connections || typeof entry.connections !== "object") {
+          return true
+        }
+        return !Object.entries(entry.connections).some(
+          ([k, v]) => excSet.has(k.toLowerCase()) && Boolean(v)
         )
       })
     }
@@ -1416,19 +1420,6 @@ export function UserListView({
         )
         return score <= filterState.seriesScoreMax!
       })
-    }
-
-    // 16c. Has Anime
-    if (filterState.hasAnime === "yes") {
-      result = result.filter(
-        ({ media }) =>
-          Boolean((media as any)?.hasAnime || (media as any)?.animeId)
-      )
-    } else if (filterState.hasAnime === "no") {
-      result = result.filter(
-        ({ media }) =>
-          !Boolean((media as any)?.hasAnime || (media as any)?.animeId)
-      )
     }
 
     // 16d. Licensed

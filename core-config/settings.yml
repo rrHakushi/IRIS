@@ -19,8 +19,6 @@ plugins:
     active: false
   searx.plugins.calculator.SXNGPlugin:
     active: false
-  searx.plugins.hash.SXNGPlugin:
-    active: false
   searx.plugins.self_info.SXNGPlugin:
     active: false
   searx.plugins.tor_check.SXNGPlugin:

@@ -8,6 +8,7 @@ import {
   getDisplayNameEffectClasses,
   type UserProfileCustomization,
 } from "@IRIS/shared"
+import { GlassCard } from "./glass-card"
 
 export interface UserListBannerProps {
   username?: string
@@ -78,8 +79,11 @@ export function UserListBanner({
       </div>
 
       {/* 2. Frosted Glass Profile Card overlaid directly over the banner */}
-      <div className="absolute bottom-3 sm:bottom-4 inset-x-4 sm:inset-x-6 lg:inset-x-8 z-10">
-        <div className="flex flex-col gap-3 rounded-2xl border border-white/15 bg-zinc-950/60 p-2.5 sm:p-3 shadow-2xl backdrop-blur-xl transition-all sm:flex-row sm:items-center sm:justify-between">
+      <div className="absolute bottom-3 sm:bottom-4 inset-x-4 sm:inset-x-6 lg:inset-x-8 z-10 flex justify-start">
+        <GlassCard
+          variant="tinted"
+          className="flex w-fit max-w-full flex-col gap-3 p-2.5 sm:p-3 transition-all sm:flex-row sm:items-center sm:justify-between"
+        >
           {/* Avatar & Identification */}
           <div className="flex items-center gap-3 sm:gap-3.5">
             {/* Avatar with Frame */}
@@ -123,7 +127,7 @@ export function UserListBanner({
                 <h1
                   style={nameStyle}
                   className={cn(
-                    "font-heading text-sm font-bold tracking-tight text-white sm:text-lg md:text-xl",
+                    "font-heading text-sm font-bold tracking-tight text-foreground sm:text-lg md:text-xl",
                     nameEffect
                   )}
                 >
@@ -139,7 +143,7 @@ export function UserListBanner({
                 {profile?.pronouns && (
                   <Badge
                     variant="secondary"
-                    className="rounded-lg border border-frost bg-frost/80 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground backdrop-blur-md"
+                    className="rounded-lg border border-border/60 bg-muted/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground backdrop-blur-md"
                   >
                     {profile.pronouns}
                   </Badge>
@@ -147,7 +151,7 @@ export function UserListBanner({
               </div>
 
               {profile?.statusText && (
-                <div className="inline-flex w-fit max-w-full items-center rounded-xl border border-frost bg-frost/50 px-2 py-0.5 text-[11px] text-zinc-200 shadow-xs backdrop-blur-md transition-colors hover:border-border/80 hover:bg-muted/40 sm:max-w-xl sm:text-xs">
+                <div className="inline-flex w-fit max-w-full items-center rounded-xl border border-border/60 bg-muted/40 px-2 py-0.5 text-[11px] text-foreground/90 shadow-xs backdrop-blur-md transition-colors hover:border-border/80 hover:bg-muted/60 sm:max-w-xl sm:text-xs">
                   <span className="line-clamp-1 leading-snug font-medium break-words">
                     {profile.statusText}
                   </span>
@@ -155,7 +159,7 @@ export function UserListBanner({
               )}
             </div>
           </div>
-        </div>
+        </GlassCard>
       </div>
     </div>
   )

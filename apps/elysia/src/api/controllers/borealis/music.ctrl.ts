@@ -110,26 +110,6 @@ const routes2 = new Elysia()
   )
 
   .get(
-    '/:musicId/relations',
-    {
-      params: BorealisMusicModel.param,
-      response: {
-        200: BorealisMusicModel.relationsResponse,
-        404: BorealisMusicModel.notFoundError,
-        422: BorealisMusicModel.validationError,
-      },
-      detail: {
-        summary: 'Get music relations',
-        description: 'Retrieves cross-media relations and album track connections.',
-        tags: ['Borealis - Music'],
-      },
-    },
-    async ({ params: { musicId } }) => {
-      return await BorealisMusicServ.getRelations(musicId)
-    }
-  )
-
-  .get(
     '/:musicId/tracks',
     {
       params: BorealisMusicModel.param,

@@ -16,8 +16,6 @@ import {
 import { resolveUserId } from "@/lib/user-profile"
 import { BorealisCard, BorealisCardGroup, BorealisSectionHeader } from "@Runa/borealis"
 import { saveListEntry } from "@/lib/save-list-entry"
-import { useEncryption } from "@/context/encryption-context"
-import { deriveVaultKey, safeDecryptText, safeEncryptText } from "@/lib/client-encryption"
 import {
   toNormalizedMedia,
   toMediaListEntry,
@@ -248,28 +246,6 @@ export function ListsTab({ username, userId, isOwner }: ListsTabProps): React.JS
     []
   )
 
-  const { secretKey, isActive: isVaultActive } = useEncryption()
-  const vaultKey = useMemo(
-    () => (isVaultActive && secretKey ? deriveVaultKey(secretKey) : null),
-    [isVaultActive, secretKey]
-  )
-
-  const prepareCardItem = useCallback(
-    (item: ListEntryData): ListEntryData => {
-      if (!item?.entry?.notes || !isOwner) return item
-      const decrypted = safeDecryptText(item.entry.notes, vaultKey)
-      if (decrypted === item.entry.notes) return item
-      return {
-        ...item,
-        entry: {
-          ...item.entry,
-          notes: decrypted,
-        },
-      }
-    },
-    [vaultKey, isOwner]
-  )
-
   const handleItemUpdated = useCallback(
     (type: MediaListType, entryId: number, updated: any) => {
       setListsData((prev) => {
@@ -315,9 +291,29 @@ export function ListsTab({ username, userId, isOwner }: ListsTabProps): React.JS
           (item.entry as any)?.bookId ||
           (item.entry as any)?.otherId
       )
-      handleItemUpdated(mediaType, entryId, { status: newStatus })
+      const m: any = item.media ?? {}
+      const epMax =
+        newStatus === "COMPLETED" && typeof m.episodeCount === "number" && m.episodeCount > 0
+          ? m.episodeCount
+          : undefined
+      const chMax =
+        newStatus === "COMPLETED" && typeof m.chapterCount === "number" && m.chapterCount > 0
+          ? m.chapterCount
+          : newStatus === "COMPLETED" && typeof m.pageCount === "number" && m.pageCount > 0
+            ? m.pageCount
+            : undefined
+      const volMax =
+        newStatus === "COMPLETED" && typeof m.volumeCount === "number" && m.volumeCount > 0
+          ? m.volumeCount
+          : undefined
+      const maxFields = {
+        ...(epMax !== undefined ? { progress: epMax } : {}),
+        ...(chMax !== undefined ? { chaptersProgress: chMax, progress: chMax } : {}),
+        ...(volMax !== undefined ? { volumesProgress: volMax } : {}),
+      }
+      handleItemUpdated(mediaType, entryId, { status: newStatus, ...maxFields })
       try {
-        await saveListEntry(mediaType, mediaId, { status: newStatus } as any)
+        await saveListEntry(mediaType, mediaId, { status: newStatus, ...maxFields } as any)
       } catch (err) {
         console.error("[ListsTab] Failed to update status:", err)
       }
@@ -362,16 +358,10 @@ export function ListsTab({ username, userId, isOwner }: ListsTabProps): React.JS
           (item.entry as any)?.bookId ||
           (item.entry as any)?.otherId
       )
-      const encryptedPayload = {
-        ...payload,
-        notes: payload.notes
-          ? safeEncryptText(payload.notes, vaultKey)
-          : payload.notes,
-      }
-      await saveListEntry(mediaType, mediaId, encryptedPayload)
+      await saveListEntry(mediaType, mediaId, payload)
       handleItemUpdated(mediaType, item.entry.id, payload)
     },
-    [isOwner, vaultKey, handleItemUpdated]
+    [isOwner, handleItemUpdated]
   )
 
   const totalItemsCount = Object.values(listsData).reduce(
@@ -471,13 +461,11 @@ export function ListsTab({ username, userId, isOwner }: ListsTabProps): React.JS
                                 {},
                             }
 
-                      const cardData = prepareCardItem(normalizedItem)
-
                       return (
                         <BorealisCard
                           key={`${normalizedItem.entry?.id ?? idx}-${normalizedItem.media?.id ?? idx}`}
                           type={config.id}
-                          data={cardData}
+                          data={normalizedItem}
                           showSubtitle={false}
                           showHoverSubtitle={false}
                           showTabNav={isOwner}
@@ -487,24 +475,24 @@ export function ListsTab({ username, userId, isOwner }: ListsTabProps): React.JS
                           onStatusChange={
                             isOwner
                               ? (newStatus) =>
-                                  handleStatusChange(cardData, newStatus, config.id)
+                                  handleStatusChange(normalizedItem, newStatus, config.id)
                               : undefined
                           }
                           onScoreChange={
                             isOwner
                               ? (newScore) =>
-                                  handleScoreChange(cardData, newScore, config.id)
+                                  handleScoreChange(normalizedItem, newScore, config.id)
                               : undefined
                           }
                           onEdit={
                             isOwner
-                              ? () => handleOpenEditModal(cardData, config.id)
+                              ? () => handleOpenEditModal(normalizedItem, config.id)
                               : undefined
                           }
                           onSaveEntry={
                             isOwner
                               ? (payload) =>
-                                  handleSaveEntry(cardData, payload, config.id)
+                                  handleSaveEntry(normalizedItem, payload, config.id)
                               : undefined
                           }
                           onIncrement={

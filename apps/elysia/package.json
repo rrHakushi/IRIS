@@ -15,8 +15,8 @@
     "dev": "infisical run --env=dev -- bun --watch src/index.ts",
     "build": "bun run codegen",
     "typecheck": "tsc --noEmit",
-    "codegen": "infisical run --env=${INFISICAL_ENV:-dev} -- bun src/plugins/controllers.ts",
-    "build:binary": "bun run codegen && infisical run --env=${INFISICAL_ENV:-dev} -- bun build --compile --minify-whitespace --minify-syntax --target bun-linux-x64 --outfile server src/index.ts",
+    "codegen": "bun -e \"process.exit(Bun.spawnSync(['infisical', 'run', '--env=' + (process.env.INFISICAL_ENV || 'dev'), '--', 'bun', 'src/plugins/controllers.ts'], { stdio: ['inherit', 'inherit', 'inherit'] }).exitCode ?? 1)\"",
+    "build:binary": "bun run codegen && bun -e \"process.exit(Bun.spawnSync(['infisical', 'run', '--env=' + (process.env.INFISICAL_ENV || 'dev'), '--', 'bun', 'build', '--compile', '--minify-whitespace', '--minify-syntax', '--target', 'bun-linux-x64', '--outfile', 'server', 'src/index.ts'], { stdio: ['inherit', 'inherit', 'inherit'] }).exitCode ?? 1)\"",
     "start": "./server",
     "test": "bun test"
   },

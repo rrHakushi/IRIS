@@ -55,14 +55,13 @@ import { elysia, API_URL } from "@/lib/elysia"
 import { getMediaDetailHref } from "@/lib/media-routes"
 import type { UserProfileCustomization } from "@IRIS/shared"
 import { cn } from "@workspace/ui/lib/utils"
-import { useEncryption } from "@/context/encryption-context"
-import { deriveVaultKey, safeDecryptText } from "@/lib/client-encryption"
 import {
   BorealisCard,
   BorealisCardGroup,
   UserListBanner,
   MultiSelectFilterPopover,
 } from "@Runa/borealis"
+import { ActivityFeed, type ActivityItem } from "../activity"
 import { ScoreDistributionChart } from "./stats/score-distribution-chart"
 import { YearTimelineChart } from "./stats/year-timeline-chart"
 import { GenreStudioBreakdown } from "./stats/genre-studio-breakdown"
@@ -142,19 +141,7 @@ export interface CustomListCommentItem {
   }
 }
 
-export interface CustomListActivityItem {
-  id: string
-  type: string
-  user: {
-    id: string
-    username: string
-    displayName: string | null
-    avatarUrl: string | null
-  }
-  content: string | null
-  metadata: any
-  createdAt: string
-}
+export type CustomListActivityItem = ActivityItem
 
 const MEDIA_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   ANIME: IconDeviceTv,
@@ -256,12 +243,6 @@ export function CustomListsView({
     session?.user?.username === username
   )
 
-  const { secretKey, isActive } = useEncryption()
-  const vaultKey = useMemo(
-    () => (isActive && secretKey ? deriveVaultKey(secretKey) : null),
-    [isActive, secretKey]
-  )
-
   // Navigation & Lists State
   const [lists, setLists] = useState<CustomListItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -300,10 +281,6 @@ export function CustomListsView({
   const [newCommentText, setNewCommentText] = useState("")
   const [newCommentSpoiler, setNewCommentSpoiler] = useState(false)
   const [submittingComment, setSubmittingComment] = useState(false)
-
-  // Activity State
-  const [activity, setActivity] = useState<CustomListActivityItem[]>([])
-  const [activityLoading, setActivityLoading] = useState(false)
 
   // Create List Dialog State
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
@@ -424,16 +401,9 @@ export function CustomListsView({
           .entries.get({ query: { limit: 100 } })
 
         if (!error && (data as any)?.items) {
-          const rawItems = (data as any).items
-          const decryptedItems: CustomListEntryItem[] = rawItems.map((item: any) => ({
-            ...item,
-            entry: {
-              ...item.entry,
-              customNotes: safeDecryptText(item.entry.customNotes, vaultKey),
-            },
-          }))
-          setEntries(decryptedItems)
-          setReorderedEntries(decryptedItems)
+          const rawItems: CustomListEntryItem[] = (data as any).items
+          setEntries(rawItems)
+          setReorderedEntries(rawItems)
           setHasUnsavedChanges(false)
         }
       } catch {
@@ -442,7 +412,7 @@ export function CustomListsView({
         setEntriesLoading(false)
       }
     },
-    [vaultKey]
+    []
   )
 
   useEffect(() => {
@@ -477,22 +447,33 @@ export function CustomListsView({
   // ---------------------------------------------------------------------------
   // Data Fetching: Activity
   // ---------------------------------------------------------------------------
-  const fetchActivity = useCallback(async (playlistId: string) => {
-    setActivityLoading(true)
-    try {
-      const res = await fetch(`${API_URL}/borealis/playlists/${playlistId}/activity`, {
-        credentials: "include",
-      })
-      const json = await res.json()
-      if (json?.activity) {
-        setActivity(json.activity)
+  const fetchPlaylistActivity = useCallback(
+    async (page: number, limit: number) => {
+      if (!selectedList?.id) {
+        return {
+          activities: [] as ActivityItem[],
+          pagination: { hasMore: false },
+        }
       }
-    } catch {
-      toast.error("Failed to load activity")
-    } finally {
-      setActivityLoading(false)
-    }
-  }, [])
+      const { data, error } = await elysia.borealis
+        .playlists({ playlistId: selectedList.id })
+        .activity.get({
+          query: { page, limit },
+        })
+      if (error || !data) {
+        throw new Error(
+          (error?.value as any)?.detail ||
+            (error?.value as any)?.message ||
+            "Failed to load list activity"
+        )
+      }
+      return {
+        activities: (data.activity || []) as ActivityItem[],
+        pagination: data.pagination,
+      }
+    },
+    [selectedList?.id]
+  )
 
   // ---------------------------------------------------------------------------
   // Data Fetching: Collaborators
@@ -518,10 +499,8 @@ export function CustomListsView({
     if (!selectedList) return
     if (activeTab === "comments") {
       fetchComments(selectedList.id)
-    } else if (activeTab === "activity") {
-      fetchActivity(selectedList.id)
     }
-  }, [activeTab, selectedList?.id, fetchComments, fetchActivity])
+  }, [activeTab, selectedList?.id, fetchComments])
 
   // ---------------------------------------------------------------------------
   // Create / Delete Custom List Handlers
@@ -2057,71 +2036,14 @@ export function CustomListsView({
             {/* ================================================================ */}
             {/* TAB 4: ACTIVITY (CHRONOLOGICAL STREAM)                           */}
             {/* ================================================================ */}
-            {activeTab === "activity" && (
-              <div className="max-w-2xl space-y-3">
-                {activityLoading ? (
-                  <div className="flex h-32 items-center justify-center text-muted-foreground">
-                    <IconLoader2 className="size-6 animate-spin text-primary" />
-                  </div>
-                ) : activity.length === 0 ? (
-                  <div className="rounded-2xl border border-frost bg-frost/40 p-8 text-center text-muted-foreground">
-                    <IconClockHour4 className="mx-auto size-8 opacity-40" />
-                    <p className="mt-2 text-xs">No recorded activity yet for this list.</p>
-                  </div>
-                ) : (
-                  <div className="relative border-s border-frost ps-5 ms-3 space-y-5">
-                    {activity.map((act) => (
-                      <div key={act.id} className="relative flex items-start gap-3">
-                        {/* Timeline dot */}
-                        <span className="absolute -start-[27px] top-1.5 size-3 rounded-full bg-primary ring-4 ring-background" />
-
-                        {/* User Avatar */}
-                        <div className="relative size-7 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
-                          {act.user?.avatarUrl ? (
-                            <Image
-                              src={act.user.avatarUrl}
-                              alt={act.user.username}
-                              fill
-                              className="object-cover"
-                              sizes="28px"
-                            />
-                          ) : (
-                            <div className="flex size-full items-center justify-center text-[10px] font-bold text-muted-foreground">
-                              {act.user?.username?.charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs text-foreground">
-                            <span className="font-bold">
-                              {act.user?.displayName || act.user?.username}
-                            </span>{" "}
-                            {act.metadata?.action === "COLLABORATOR_ADDED" ? (
-                              <>
-                                invited <span className="text-primary font-medium">@{act.metadata.targetUsername}</span> as {act.metadata.role}
-                              </>
-                            ) : act.metadata?.action === "ENTRY_ADDED" ? (
-                              <>added an item to the list</>
-                            ) : act.metadata?.action === "ENTRY_REMOVED" ? (
-                              <>removed an item from the list</>
-                            ) : act.metadata?.action === "REORDER_ENTRIES" || act.metadata?.action === "REORDERED_ENTRIES" ? (
-                              <>reordered entries</>
-                            ) : act.content ? (
-                              act.content
-                            ) : (
-                              "updated the list"
-                            )}
-                          </p>
-                          <span className="text-[10px] text-muted-foreground">
-                            {new Date(act.createdAt).toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+            {activeTab === "activity" && selectedList && (
+              <ActivityFeed
+                fetchPage={fetchPlaylistActivity}
+                resetKey={selectedList.id}
+                limit={20}
+                emptyTitle="No recorded activity yet"
+                emptyDescription="Changes, additions, and updates to this custom list will appear here."
+              />
             )}
           </div>
         )}

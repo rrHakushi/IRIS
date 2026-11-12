@@ -22,6 +22,8 @@ import {
 } from '@IRIS/connections'
 import { NotFound, BadRequest } from '../../lib/errors'
 import { BorealisListsServ } from '../borealis/lists.serv'
+import { ActivityServ } from './activity.serv'
+import { CarinaUsersServ } from './users.serv'
 import { GoogleBooksProvider, type GoogleBookPayload } from '../borealis/providers/google-books.provider'
 
 export class CarinaConnectionsServ {
@@ -701,10 +703,36 @@ export class CarinaConnectionsServ {
           }
         })
 
-        await BorealisListsServ.importUserLists(userId, {
+        const importSummary = await BorealisListsServ.importUserLists(userId, {
           items: mappedItems,
           skipExisting: false,
+          suppressSummaryActivity: true,
         })
+
+        const touchedTypes = Array.from(
+          new Set(
+            mappedItems
+              .map((i: any) => String(i.mediaType || '').toUpperCase())
+              .filter(Boolean)
+          )
+        )
+        ActivityServ.recordImportOrSyncSummaryActivity({
+          userId,
+          source: 'CONNECTION_SYNC',
+          provider: connection.provider,
+          importedCount: importSummary?.imported ?? 0,
+          updatedCount: importSummary?.updated ?? 0,
+          mediaTypes: touchedTypes,
+          mediaType:
+            touchedTypes.length === 1 &&
+            ['ANIME', 'MANGA', 'MOVIE', 'TV', 'GAME', 'BOOK', 'MUSIC', 'OTHER'].includes(
+              touchedTypes[0]!
+            )
+              ? (touchedTypes[0] as MediaType)
+              : null,
+          isPrivate: Boolean((connection.settings as any)?.isPrivate),
+        })
+        CarinaUsersServ.evaluateBadgesNonBlocking(userId)
       } catch (err) {
         console.error('Failed to import connection items to user lists:', err)
       }

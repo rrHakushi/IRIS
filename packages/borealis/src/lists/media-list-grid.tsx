@@ -33,8 +33,6 @@ import {
 } from "./types"
 import { BorealisCard, BorealisCardGroup, BorealisSectionHeader, type ListStatus } from "@Runa/borealis"
 import { saveListEntry } from "@/lib/save-list-entry"
-import { useEncryption } from "@/context/encryption-context"
-import { deriveVaultKey, safeDecryptText, safeEncryptText } from "@/lib/client-encryption"
 
 export function MediaListCardSkeleton({
   isMusic = false,
@@ -327,29 +325,6 @@ export function MediaListGrid({
     return map
   }, [facets?.statuses])
 
-  // Client-side zero-knowledge decryption/encryption
-  const { secretKey, isActive: isVaultActive } = useEncryption()
-  const vaultKey = useMemo(
-    () => (isVaultActive && secretKey ? deriveVaultKey(secretKey) : null),
-    [isVaultActive, secretKey]
-  )
-
-  const prepareCardItem = useCallback(
-    (item: ListEntryData): ListEntryData => {
-      if (!item?.entry?.notes) return item
-      const decrypted = safeDecryptText(item.entry.notes, vaultKey)
-      if (decrypted === item.entry.notes) return item
-      return {
-        ...item,
-        entry: {
-          ...item.entry,
-          notes: decrypted,
-        },
-      }
-    },
-    [vaultKey]
-  )
-
   // When All is selected, separate entries by status in this exact order:
   // 1. In Progress (Watching, Reading, Playing, etc.)
   // 2. On hold
@@ -557,7 +532,7 @@ export function MediaListGrid({
                       <BorealisCard
                         key={`${item.entry.id}-${item.media.id}`}
                         type={mediaType}
-                        data={prepareCardItem(item)}
+                        data={item}
                         titlePreference={mediaTitlePreference}
                         showSubtitle={false}
                         showHoverSubtitle={false}
@@ -590,13 +565,7 @@ export function MediaListGrid({
                         onSaveEntry={
                           isOwner
                             ? async (payload) => {
-                                const encryptedPayload = {
-                                  ...payload,
-                                  notes: payload.notes
-                                    ? safeEncryptText(payload.notes, vaultKey)
-                                    : payload.notes,
-                                }
-                                await saveListEntry(mediaType, item.media.id, encryptedPayload)
+                                await saveListEntry(mediaType, item.media.id, payload)
                                 onItemUpdated?.(item.entry.id, {
                                   ...item.entry,
                                   ...payload,
@@ -626,7 +595,7 @@ export function MediaListGrid({
             <BorealisCard
               key={`${item.entry.id}-${item.media.id}`}
               type={mediaType}
-              data={prepareCardItem(item)}
+              data={item}
               titlePreference={mediaTitlePreference}
               showSubtitle={false}
               showHoverSubtitle={false}
@@ -659,13 +628,7 @@ export function MediaListGrid({
               onSaveEntry={
                 isOwner
                   ? async (payload) => {
-                      const encryptedPayload = {
-                        ...payload,
-                        notes: payload.notes
-                          ? safeEncryptText(payload.notes, vaultKey)
-                          : payload.notes,
-                      }
-                      await saveListEntry(mediaType, item.media.id, encryptedPayload)
+                      await saveListEntry(mediaType, item.media.id, payload)
                       onItemUpdated?.(item.entry.id, {
                         ...item.entry,
                         ...payload,

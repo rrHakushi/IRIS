@@ -1,5 +1,7 @@
 "use client"
 
+import Link from "next/link"
+
 import React from "react"
 import Image from "next/image"
 import { useTranslations } from "next-intl"
@@ -452,6 +454,7 @@ export interface UserProfilePopoverProps {
   isOwner?: boolean
   children: React.ReactNode
   placement?: any
+  openOnHover?: boolean
   className?: string
   style?: React.CSSProperties
 }
@@ -464,33 +467,111 @@ export function UserProfilePopover({
   isOwner,
   children,
   placement = "right top",
+  openOnHover = false,
   className,
   style,
 }: UserProfilePopoverProps): React.JSX.Element {
   const [isPreviewModalOpen, setIsPreviewModalOpen] = React.useState(false)
+  const [isHoverOpen, setIsHoverOpen] = React.useState(false)
+  const triggerRef = React.useRef<HTMLSpanElement>(null)
+  const openTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const closeTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const clearHoverTimers = React.useCallback(() => {
+    if (openTimerRef.current) {
+      clearTimeout(openTimerRef.current)
+      openTimerRef.current = null
+    }
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
+  }, [])
+
+  React.useEffect(() => {
+    return () => {
+      clearHoverTimers()
+    }
+  }, [clearHoverTimers])
+
+  const handleMouseEnter = React.useCallback(() => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
+    if (isHoverOpen || openTimerRef.current) return
+    openTimerRef.current = setTimeout(() => {
+      openTimerRef.current = null
+      setIsHoverOpen(true)
+    }, 150)
+  }, [isHoverOpen])
+
+  const handleMouseLeave = React.useCallback(() => {
+    if (openTimerRef.current) {
+      clearTimeout(openTimerRef.current)
+      openTimerRef.current = null
+    }
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current)
+    }
+    closeTimerRef.current = setTimeout(() => {
+      closeTimerRef.current = null
+      setIsHoverOpen(false)
+    }, 180)
+  }, [])
+
+  const popoverClassName =
+    "w-[340px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[24px] border border-border/80 bg-card/95 p-0 text-card-foreground shadow-2xl ring-1 ring-white/10 backdrop-blur-2xl outline-none"
 
   return (
     <>
-      <PopoverTrigger>
-        <AriaButton
-          className={cn(
-            "cursor-pointer border-0 bg-transparent p-0 text-start outline-none",
-            className
-          )}
-          style={style}
-        >
-          {children}
-        </AriaButton>
-        <Popover
-          placement={placement}
-          offset={8}
-          className="w-[340px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[24px] border border-border/80 bg-card/95 p-0 text-card-foreground shadow-2xl ring-1 ring-white/10 backdrop-blur-2xl outline-none"
-        >
-          <AriaDialog
-            aria-label={`${username}'s profile`}
-            className="outline-none"
+      {openOnHover ? (
+        <>
+          <span
+            ref={triggerRef}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            className="inline-flex max-w-full align-middle"
           >
-            {({ close }) => (
+            {userId ? (
+              <Link
+                href={`/carina/users/${encodeURIComponent(userId)}`}
+                onClick={() => {
+                  clearHoverTimers()
+                  setIsHoverOpen(false)
+                }}
+                className={cn(
+                  "cursor-pointer text-start outline-none",
+                  className
+                )}
+                style={style}
+              >
+                {children}
+              </Link>
+            ) : (
+              <span className={cn("text-start", className)} style={style}>
+                {children}
+              </span>
+            )}
+          </span>
+          <Popover
+            triggerRef={triggerRef}
+            isOpen={isHoverOpen}
+            onOpenChange={(open) => {
+              clearHoverTimers()
+              setIsHoverOpen(open)
+            }}
+            isNonModal
+            placement={placement}
+            offset={8}
+            className={popoverClassName}
+          >
+            <div
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+              aria-label={`${username}'s profile`}
+              className="outline-none"
+            >
               <ProfilePreviewCard
                 profile={profile}
                 username={username}
@@ -500,14 +581,53 @@ export function UserProfilePopover({
                 variant="popover"
                 className="border-0 bg-transparent shadow-none"
                 onOpenPreviewModal={() => {
-                  close()
+                  clearHoverTimers()
+                  setIsHoverOpen(false)
                   setIsPreviewModalOpen(true)
                 }}
               />
+            </div>
+          </Popover>
+        </>
+      ) : (
+        <PopoverTrigger>
+          <AriaButton
+            className={cn(
+              "cursor-pointer border-0 bg-transparent p-0 text-start outline-none",
+              className
             )}
-          </AriaDialog>
-        </Popover>
-      </PopoverTrigger>
+            style={style}
+          >
+            {children}
+          </AriaButton>
+          <Popover
+            placement={placement}
+            offset={8}
+            className={popoverClassName}
+          >
+            <AriaDialog
+              aria-label={`${username}'s profile`}
+              className="outline-none"
+            >
+              {({ close }) => (
+                <ProfilePreviewCard
+                  profile={profile}
+                  username={username}
+                  userId={userId}
+                  email={email}
+                  isOwner={isOwner}
+                  variant="popover"
+                  className="border-0 bg-transparent shadow-none"
+                  onOpenPreviewModal={() => {
+                    close()
+                    setIsPreviewModalOpen(true)
+                  }}
+                />
+              )}
+            </AriaDialog>
+          </Popover>
+        </PopoverTrigger>
+      )}
 
       <UserPreviewModal
         isOpen={isPreviewModalOpen}

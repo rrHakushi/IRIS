@@ -3,6 +3,7 @@ import { getBadgeById, getProfileCustomization, setProfileCustomization } from '
 import { IRISBitField, IRISFlags } from '@IRIS/permissions'
 import { BadRequest, Forbidden, NotFound } from '../../lib/errors'
 import { uploadPublicAsset, deletePublicAsset, extractS3Key } from '../../utils/s3'
+import { ActivityServ } from './activity.serv'
 
 /**
  * Milestone thresholds for media consumption badges (11 tiers).
@@ -607,6 +608,9 @@ export class CarinaUsersServ {
       await prisma.orm.public.User.where({ id: target.id }).update({
         badges: updatedBadges,
       })
+      for (const badgeId of newlyAwardedBadgeIds) {
+        ActivityServ.recordBadgeMilestone(target.id, badgeId)
+      }
     }
 
     return {
@@ -619,6 +623,15 @@ export class CarinaUsersServ {
           ? `Successfully unlocked ${newlyAwardedBadgeIds.length} new badge(s)!`
           : 'All badge achievements are up to date.',
     }
+  }
+
+  /**
+   * Fires background badge evaluation for a user after list or playlist milestones.
+   */
+  public static evaluateBadgesNonBlocking(userId: string): void {
+    setImmediate(() => {
+      this.evaluateBadges({ id: userId, permissions: [] }, userId).catch(() => {})
+    })
   }
 
   /**
@@ -657,41 +670,10 @@ export class CarinaUsersServ {
     const totalPages = Math.max(1, Math.ceil(total / limit))
     const hasMore = page < totalPages
 
-    const activities = rawActivities.map((a) => {
-      const authorProfile = getProfileCustomization(a.user.customization)
-      return {
-        id: a.id,
-        userId: a.userId,
-        type: a.type,
-        mediaType: a.mediaType ?? null,
-        mediaId: a.mediaId ?? null,
-        status: a.status ?? null,
-        progress: a.progress ?? null,
-        progressVolumes: a.progressVolumes ?? null,
-        score: a.score ?? null,
-        title: a.title ?? null,
-        content: a.content ?? null,
-        metadata: a.metadata,
-        isPrivate: a.isPrivate,
-        isSpoiler: a.isSpoiler,
-        likeCount: a.likeCount,
-        replyCount: a.replyCount,
-        createdAt: toDate(a.createdAt).toISOString(),
-        user: {
-          id: a.user.id,
-          username: a.user.username,
-          displayName: authorProfile.displayName || null,
-          avatarUrl: authorProfile.avatarUrl || null,
-          avatarFrame: authorProfile.avatarFrame || null,
-          bannerUrl: authorProfile.bannerUrl || null,
-          nameplateUrl: authorProfile.nameplateUrl || null,
-          bio: authorProfile.bio || null,
-          statusText: authorProfile.statusText || null,
-          pronouns: authorProfile.pronouns || null,
-          displayNameStyle: authorProfile.displayNameStyle || null,
-        },
-        canDelete: isOwner || isAdmin,
-      }
+    const activities = await ActivityServ.formatActivityEntries(rawActivities, {
+      viewerUserId: sessionUser?.id ?? null,
+      isOwner,
+      isAdmin,
     })
 
     return {
@@ -719,11 +701,30 @@ export class CarinaUsersServ {
     const target = await this.resolveUser(targetIdentifier)
     const normCategory = category.toLowerCase().trim()
 
+    const allEnumKeys: ActivityType[] = [
+      'LIST_ITEM_ADDED',
+      'LIST_STATUS_UPDATED',
+      'LIST_PROGRESS_UPDATED',
+      'LIST_SCORE_UPDATED',
+      'LIST_COMPLETED',
+      'LIST_REWATCH_STARTED',
+      'LIST_ITEM_REMOVED',
+      'REVIEW_POSTED',
+      'REVIEW_VOTED',
+      'RECOMMENDATION_POSTED',
+      'WATCHLIST_CREATED',
+      'CUSTOM_LIST_CREATED',
+      'FAVORITE_ADDED',
+      'FAVORITE_REMOVED',
+      'FRIEND_ADDED',
+      'STATUS_POST',
+      'USER_MILESTONE',
+    ]
+
     let mediaTypeFilter: MediaType | undefined
     let allowedTypes: ActivityType[] | undefined
 
     if (normCategory === 'all' || normCategory === 'overview') {
-      // Return unrestricted activity stream across all types
       allowedTypes = undefined
     } else if (MEDIA_ACTIVITY_DOMAINS[normCategory]) {
       mediaTypeFilter = MEDIA_ACTIVITY_DOMAINS[normCategory]
@@ -737,32 +738,14 @@ export class CarinaUsersServ {
         'LIST_ITEM_REMOVED',
         'FAVORITE_ADDED',
         'FAVORITE_REMOVED',
+        'RECOMMENDATION_POSTED',
+        'USER_MILESTONE',
+        'STATUS_POST',
       ]
     } else if (ACTIVITY_CATEGORIES[normCategory]) {
       allowedTypes = ACTIVITY_CATEGORIES[normCategory]
     } else {
-      // Check if the category is an exact ActivityType enum member
       const upper = category.toUpperCase().trim() as ActivityType
-      const allEnumKeys: ActivityType[] = [
-        'LIST_ITEM_ADDED',
-        'LIST_STATUS_UPDATED',
-        'LIST_PROGRESS_UPDATED',
-        'LIST_SCORE_UPDATED',
-        'LIST_COMPLETED',
-        'LIST_REWATCH_STARTED',
-        'LIST_ITEM_REMOVED',
-        'REVIEW_POSTED',
-        'REVIEW_VOTED',
-        'RECOMMENDATION_POSTED',
-        'WATCHLIST_CREATED',
-        'CUSTOM_LIST_CREATED',
-        'FAVORITE_ADDED',
-        'FAVORITE_REMOVED',
-        'FRIEND_ADDED',
-        'STATUS_POST',
-        'USER_MILESTONE',
-      ]
-
       if (allEnumKeys.includes(upper)) {
         allowedTypes = [upper]
       } else {
@@ -772,14 +755,13 @@ export class CarinaUsersServ {
       }
     }
 
-    // Narrow down by action filter if specified (e.g. ADDED, PROGRESS, STATUS, COMPLETED, SCORE, REMOVED)
     if (query?.action) {
       const normAction = query.action.toLowerCase().trim()
       if (ACTION_TYPE_MAP[normAction]) {
         allowedTypes = ACTION_TYPE_MAP[normAction]
       } else {
         const upperAction = query.action.toUpperCase().trim() as ActivityType
-        if (allowedTypes && allowedTypes.includes(upperAction)) {
+        if (allEnumKeys.includes(upperAction) && (!allowedTypes || allowedTypes.includes(upperAction))) {
           allowedTypes = [upperAction]
         }
       }
@@ -818,41 +800,10 @@ export class CarinaUsersServ {
     const totalPages = Math.max(1, Math.ceil(total / limit))
     const hasMore = page < totalPages
 
-    const activities = rawActivities.map((a) => {
-      const authorProfile = getProfileCustomization(a.user.customization)
-      return {
-        id: a.id,
-        userId: a.userId,
-        type: a.type,
-        mediaType: a.mediaType ?? null,
-        mediaId: a.mediaId ?? null,
-        status: a.status ?? null,
-        progress: a.progress ?? null,
-        progressVolumes: a.progressVolumes ?? null,
-        score: a.score ?? null,
-        title: a.title ?? null,
-        content: a.content ?? null,
-        metadata: a.metadata,
-        isPrivate: a.isPrivate,
-        isSpoiler: a.isSpoiler,
-        likeCount: a.likeCount,
-        replyCount: a.replyCount,
-        createdAt: toDate(a.createdAt).toISOString(),
-        user: {
-          id: a.user.id,
-          username: a.user.username,
-          displayName: authorProfile.displayName || null,
-          avatarUrl: authorProfile.avatarUrl || null,
-          avatarFrame: authorProfile.avatarFrame || null,
-          bannerUrl: authorProfile.bannerUrl || null,
-          nameplateUrl: authorProfile.nameplateUrl || null,
-          bio: authorProfile.bio || null,
-          statusText: authorProfile.statusText || null,
-          pronouns: authorProfile.pronouns || null,
-          displayNameStyle: authorProfile.displayNameStyle || null,
-        },
-        canDelete: isOwner || isAdmin,
-      }
+    const activities = await ActivityServ.formatActivityEntries(rawActivities, {
+      viewerUserId: sessionUser?.id ?? null,
+      isOwner,
+      isAdmin,
     })
 
     return {

@@ -203,6 +203,26 @@ export class CarinaFriendsServ {
 
     const updated = await prisma.orm.public.Friend.where((f) => f.id.eq(existing.id)).update(data)
 
+    if (body.isPrivate !== undefined) {
+      const nextPrivate = Boolean(body.isPrivate)
+      setImmediate(async () => {
+        try {
+          const logs = await prisma.orm.public.ActivityLog
+            .where({ userId: currentUserId, type: 'FRIEND_ADDED' })
+            .select('id', 'metadata')
+            .all()
+          const matchingIds = logs
+            .filter((l: any) => (l.metadata as any)?.friendId === existing.friendId)
+            .map((l: any) => l.id)
+          if (matchingIds.length > 0) {
+            await prisma.orm.public.ActivityLog
+              .where((a: any) => a.id.in(matchingIds))
+              .update({ isPrivate: nextPrivate })
+          }
+        } catch {}
+      })
+    }
+
     return {
       success: true,
       friend: updated,

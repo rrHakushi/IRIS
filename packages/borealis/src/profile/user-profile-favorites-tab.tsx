@@ -22,12 +22,6 @@ import {
   type BorealisEntityType,
 } from "@Runa/borealis"
 import { saveListEntry } from "@/lib/save-list-entry"
-import { useEncryption } from "@/context/encryption-context"
-import {
-  deriveVaultKey,
-  safeDecryptText,
-  safeEncryptText,
-} from "@/lib/client-encryption"
 import {
   toNormalizedMedia,
   toMediaListEntry,
@@ -288,28 +282,6 @@ export function FavoritesTab({
     []
   )
 
-  const { secretKey, isActive: isVaultActive } = useEncryption()
-  const vaultKey = useMemo(
-    () => (isVaultActive && secretKey ? deriveVaultKey(secretKey) : null),
-    [isVaultActive, secretKey]
-  )
-
-  const prepareCardItem = useCallback(
-    (item: ListEntryData): ListEntryData => {
-      if (!item?.entry?.notes || !isOwner) return item
-      const decrypted = safeDecryptText(item.entry.notes, vaultKey)
-      if (decrypted === item.entry.notes) return item
-      return {
-        ...item,
-        entry: {
-          ...item.entry,
-          notes: decrypted,
-        },
-      }
-    },
-    [vaultKey, isOwner]
-  )
-
   const handleItemUpdated = useCallback(
     (type: MediaListType, mediaId: number, entryId: number, updated: any) => {
       setFavoritesData((prev) => {
@@ -362,9 +334,29 @@ export function FavoritesTab({
           (item.entry as any)?.bookId ||
           (item.entry as any)?.otherId
       )
-      handleItemUpdated(mediaType, mediaId, entryId, { status: newStatus })
+      const m: any = item.media ?? {}
+      const epMax =
+        newStatus === "COMPLETED" && typeof m.episodeCount === "number" && m.episodeCount > 0
+          ? m.episodeCount
+          : undefined
+      const chMax =
+        newStatus === "COMPLETED" && typeof m.chapterCount === "number" && m.chapterCount > 0
+          ? m.chapterCount
+          : newStatus === "COMPLETED" && typeof m.pageCount === "number" && m.pageCount > 0
+            ? m.pageCount
+            : undefined
+      const volMax =
+        newStatus === "COMPLETED" && typeof m.volumeCount === "number" && m.volumeCount > 0
+          ? m.volumeCount
+          : undefined
+      const maxFields = {
+        ...(epMax !== undefined ? { progress: epMax } : {}),
+        ...(chMax !== undefined ? { chaptersProgress: chMax, progress: chMax } : {}),
+        ...(volMax !== undefined ? { volumesProgress: volMax } : {}),
+      }
+      handleItemUpdated(mediaType, mediaId, entryId, { status: newStatus, ...maxFields })
       try {
-        await saveListEntry(mediaType, mediaId, { status: newStatus } as any)
+        await saveListEntry(mediaType, mediaId, { status: newStatus, ...maxFields } as any)
       } catch (err) {
         console.error("[FavoritesTab] Failed to update status:", err)
       }
@@ -413,16 +405,10 @@ export function FavoritesTab({
           (item.entry as any)?.bookId ||
           (item.entry as any)?.otherId
       )
-      const encryptedPayload = {
-        ...payload,
-        notes: payload.notes
-          ? safeEncryptText(payload.notes, vaultKey)
-          : payload.notes,
-      }
-      await saveListEntry(mediaType, mediaId, encryptedPayload)
+      await saveListEntry(mediaType, mediaId, payload)
       handleItemUpdated(mediaType, mediaId, item.entry.id, payload)
     },
-    [isOwner, vaultKey, handleItemUpdated]
+    [isOwner, handleItemUpdated]
   )
 
   const totalFavoritesCount = Object.values(favoritesData).reduce(
@@ -603,13 +589,11 @@ export function FavoritesTab({
                               },
                             }
 
-                      const cardData = prepareCardItem(normalizedItem)
-
                       return (
                         <BorealisCard
                           key={`${fav.id}-${fav.targetId}`}
                           type={cat.id as BorealisEntityType}
-                          data={cardData}
+                          data={normalizedItem}
                           showSubtitle={false}
                           showHoverSubtitle={false}
                           showTabNav={isOwner}
@@ -620,7 +604,7 @@ export function FavoritesTab({
                             isOwner
                               ? (newStatus) =>
                                   handleStatusChange(
-                                    cardData,
+                                    normalizedItem,
                                     newStatus,
                                     mediaType
                                   )
@@ -630,7 +614,7 @@ export function FavoritesTab({
                             isOwner
                               ? (newScore) =>
                                   handleScoreChange(
-                                    cardData,
+                                    normalizedItem,
                                     newScore,
                                     mediaType
                                   )
@@ -638,13 +622,13 @@ export function FavoritesTab({
                           }
                           onEdit={
                             isOwner
-                              ? () => handleOpenEditModal(cardData, mediaType)
+                              ? () => handleOpenEditModal(normalizedItem, mediaType)
                               : undefined
                           }
                           onSaveEntry={
                             isOwner
                               ? (payload) =>
-                                  handleSaveEntry(cardData, payload, mediaType)
+                                  handleSaveEntry(normalizedItem, payload, mediaType)
                               : undefined
                           }
                           onIncrement={

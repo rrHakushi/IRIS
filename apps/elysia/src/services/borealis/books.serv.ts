@@ -283,14 +283,14 @@ export class BorealisBooksServ {
       .first()
     if (!book) throw new NotFound(`Book with ID ${id} not found`)
 
-    const genreNames = (book.genres || [])
-      .flatMap((g: any) => (g.genre || []).map((ge: any) => ge.name))
+    const genreIds = (book.genres || [])
+      .map((g: any) => g.genreId ?? g.genre?.id)
       .filter(Boolean)
 
     let q = prisma.orm.public.Book.where((b) => b.id.neq(id))
-    if (genreNames.length > 0) {
+    if (genreIds.length > 0) {
       q = q.where((b) =>
-        b.genres.some((bg) => bg.genre.some((ge) => ge.name.in(genreNames)))
+        b.genres.some((bg) => bg.genreId.in(genreIds))
       )
     }
 
@@ -317,7 +317,7 @@ export class BorealisBooksServ {
       tags: flattenTags(m.tags),
     }))
 
-    return { success: true, sourceId: id, items: similar }
+    return { success: true, similar }
   }
 
   public static async getRelations(id: number) {
