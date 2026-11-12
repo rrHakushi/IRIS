@@ -11,14 +11,10 @@
             "id": "5339bc15b0f10c68",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Getting Started.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "Getting Started"
+              "title": "New tab"
             }
           }
         ]
@@ -189,42 +185,42 @@
   },
   "active": "5339bc15b0f10c68",
   "lastOpenFiles": [
-    "New api.md",
-    "plugins/akaromi-firefox/lib/crypto.md",
-    "plugins/akaromi-firefox/lib/icons.md",
-    "plugins/akaromi-firefox/lib/api.md",
-    "plugins/akaromi-firefox/README.md",
-    "plugins/akaromi-firefox.md",
+    "Getting Started.md",
     "plugins/akaromi-firefox/popup/js/vault.md",
     "plugins/akaromi-firefox/popup/js/state.md",
     "plugins/akaromi-firefox/popup/js/settings.md",
-    "plugins/akaromi-firefox/popup/js/popup.md",
     "plugins/akaromi-firefox/popup/js/generator.md",
-    "plugins/akaromi-firefox/popup/js/customization.md",
+    "plugins/akaromi-firefox/popup/js/popup.md",
     "plugins/akaromi-firefox/popup/js/editor.md",
+    "plugins/akaromi-firefox/popup/js/customization.md",
     "plugins/akaromi-firefox/popup/js/auth.md",
-    "plugins/akaromi-firefox/popup/js",
-    "plugins/akaromi-firefox/popup/popup.md",
     "plugins/akaromi-firefox/lib/totp.md",
     "plugins/akaromi-firefox/lib/storage.md",
     "plugins/akaromi-firefox/lib/qr-decoder.md",
-    "plugins/akaromi-firefox/lib/noble.md",
     "plugins/akaromi-firefox/lib/matching.md",
+    "plugins/akaromi-firefox/lib/noble.md",
+    "plugins/akaromi-firefox/lib/icons.md",
+    "plugins/akaromi-firefox/lib/crypto.md",
+    "plugins/akaromi-firefox/lib/api.md",
+    "plugins/akaromi-firefox/popup/popup.md",
+    "plugins/akaromi-firefox/popup/js",
     "plugins/akaromi-firefox/content/passkey-injected.md",
     "plugins/akaromi-firefox/content/menu.md",
     "plugins/akaromi-firefox/content/fill.md",
     "plugins/akaromi-firefox/content/detection.md",
     "plugins/akaromi-firefox/content/content.md",
+    "plugins/akaromi-firefox/content/badge.md",
     "plugins/akaromi-firefox/background/vault.md",
-    "plugins/akaromi-firefox/popup",
+    "plugins/akaromi-firefox/background/state.md",
     "plugins/akaromi-firefox/lib",
+    "plugins/akaromi-firefox/popup",
     "plugins/akaromi-firefox/content",
     "plugins/akaromi-firefox/background",
     "plugins/akaromi-firefox",
+    "plugins",
     "scripts",
     "packages",
     "apps/elysia",
-    "apps/web",
     "Untitled.canvas"
   ]
 }
