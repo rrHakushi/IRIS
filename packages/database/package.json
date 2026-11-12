@@ -15,12 +15,12 @@
   },
   "scripts": {
     "build": "bun run contract:emit && tsc && cp src/contract.d.ts dist/contract.d.ts",
-    "contract:emit": "infisical run --env=dev -- prisma contract emit",
-    "db:update": "infisical run --env=dev -- prisma db update",
-    "db:verify": "infisical run --env=dev -- prisma db verify",
-    "db:migrate": "infisical run --env=dev -- prisma db migrate",
-    "db:prepare-prisma8": "infisical run --env=dev -- bun run scripts/prepare-prisma8.ts",
-    "db:unify-status": "infisical run --env=dev -- bun run scripts/unify-status.ts"
+    "contract:emit": "infisical run --env=${INFISICAL_ENV:-dev} -- prisma contract emit",
+    "db:update": "infisical run --env=${INFISICAL_ENV:-dev} -- prisma db update",
+    "db:verify": "infisical run --env=${INFISICAL_ENV:-dev} -- prisma db verify",
+    "db:migrate": "infisical run --env=${INFISICAL_ENV:-dev} -- prisma db migrate",
+    "db:prepare-prisma8": "infisical run --env=${INFISICAL_ENV:-dev} -- bun run scripts/prepare-prisma8.ts",
+    "db:unify-status": "infisical run --env=${INFISICAL_ENV:-dev} -- bun run scripts/unify-status.ts"
   },
   "dependencies": {
     "@prisma/orm-postgres": "8.0.0-rc.21"

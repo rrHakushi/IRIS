@@ -7,8 +7,6 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
-    env_file:
-      - .env
     environment:
       POSTGRES_USER: ${POSTGRE_USER}
       POSTGRES_PASSWORD: ${POSTGRE_PASS}
@@ -39,8 +37,6 @@ services:
     security_opt:
       - no-new-privileges:true
     command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
-    env_file:
-      - .env
     volumes:
       - redis_data:/data
     networks:
@@ -61,8 +57,6 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
-    env_file:
-      - .env
     environment:
       ENCRYPTION_KEY: ${INFISICAL_ENCRYPTION_KEY}
       AUTH_SECRET: ${INFISICAL_AUTH_SECRET}
@@ -181,8 +175,10 @@ services:
       dockerfile: apps/web/Dockerfile
       args:
         APP_VERSION: ${APP_VERSION}
+        INFISICAL_SITE_URL: ${INFISICAL_SITE_URL}
       secrets:
         - app_env
+        - infisical_token
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -204,6 +200,8 @@ services:
 secrets:
   app_env:
     file: .env
+  infisical_token:
+    environment: INFISICAL_TOKEN
 
 networks:
   NamelessLiberty:

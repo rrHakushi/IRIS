@@ -87,7 +87,7 @@ steps:
         INFISICAL_AUTH_SECRET=$INFISICAL_AUTH_SECRET
         INFISICAL_SITE_URL=$INFISICAL_SITE_URL
         EOF
-      - docker compose up -d infisical
+      - docker compose up -d --no-deps infisical
       - |
         for i in $(seq 1 30); do
           if [ "$(docker inspect -f '{{.State.Running}}' NamelessLiberty-Infisical 2>/dev/null)" = "true" ]; then
@@ -106,10 +106,18 @@ steps:
         from_secret: INFISICAL_TOKEN
       INFISICAL_PROJECT_ID:
         from_secret: INFISICAL_PROJECT_ID
+      INFISICAL_SITE_URL:
+        from_secret: INFISICAL_SITE_URL
     commands:
-      - bunx @infisical/cli export --token="$INFISICAL_TOKEN" --projectId="$INFISICAL_PROJECT_ID" --env="prod" --domain="http://180.0.0.7:8080/api" --format=dotenv >> .env
+      - |
+        ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
+        bun -e "const r = await fetch('https://github.com/Infisical/cli/releases/download/v0.45.6/cli_0.45.6_linux_${ARCH}.tar.gz'); if (!r.ok) throw new Error('Failed to download infisical CLI: ' + r.statusText); await Bun.write('/tmp/infisical.tar.gz', r);"
+        tar -xzf /tmp/infisical.tar.gz -C /usr/local/bin infisical
+        rm -f /tmp/infisical.tar.gz
+        infisical export --token="$INFISICAL_TOKEN" --projectId="$INFISICAL_PROJECT_ID" --env="prod" --domain="${INFISICAL_SITE_URL%/}/api" --format=dotenv >> .env
       - chmod 600 .env
       - bun install --frozen-lockfile
+      - cp /usr/local/bin/infisical node_modules/.bin/infisical
     depends_on:
       - infisical
 
@@ -145,22 +153,40 @@ steps:
 
   - name: Prisma Contract
     image: oven/bun:latest
+    environment:
+      INFISICAL_TOKEN:
+        from_secret: INFISICAL_TOKEN
+      INFISICAL_SITE_URL:
+        from_secret: INFISICAL_SITE_URL
+      INFISICAL_ENV: prod
     commands:
-      - bun run --filter=@Iris/db contract:emit
+      - INFISICAL_API_URL="${INFISICAL_SITE_URL%/}/api" bun run --filter=@Iris/db contract:emit
     depends_on:
       - searxng
 
   - name: Prisma Update
     image: oven/bun:latest
+    environment:
+      INFISICAL_TOKEN:
+        from_secret: INFISICAL_TOKEN
+      INFISICAL_SITE_URL:
+        from_secret: INFISICAL_SITE_URL
+      INFISICAL_ENV: prod
     commands:
-      - POSTGRE_HOST=180.0.0.2 POSTGRE_PORT=5432 bun run --filter=@Iris/db db:update
+      - INFISICAL_API_URL="${INFISICAL_SITE_URL%/}/api" POSTGRE_HOST=180.0.0.2 POSTGRE_PORT=5432 bun run --filter=@Iris/db db:update
     depends_on:
       - Prisma Contract
 
   - name: Packages
     image: oven/bun:latest
+    environment:
+      INFISICAL_TOKEN:
+        from_secret: INFISICAL_TOKEN
+      INFISICAL_SITE_URL:
+        from_secret: INFISICAL_SITE_URL
+      INFISICAL_ENV: prod
     commands:
-      - bun x turbo run build --filter="./packages/*"
+      - INFISICAL_API_URL="${INFISICAL_SITE_URL%/}/api" bun x turbo run build --filter="./packages/*"
     depends_on:
       - Prisma Update
 
@@ -202,6 +228,11 @@ steps:
 
   - name: Next
     image: docker:latest
+    environment:
+      INFISICAL_TOKEN:
+        from_secret: INFISICAL_TOKEN
+      INFISICAL_SITE_URL:
+        from_secret: INFISICAL_SITE_URL
     volumes:
       - name: docker_sock
         path: /var/run/docker.sock

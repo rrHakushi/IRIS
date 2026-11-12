@@ -28,10 +28,19 @@ RUN bun install --frozen-lockfile
 
 # Copy full pruned source code and build Next.js application with BuildKit secret mount
 COPY --from=pruner /app/out/full/ .
+RUN ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/') && \
+    bun -e "const r = await fetch('https://github.com/Infisical/cli/releases/download/v0.45.6/cli_0.45.6_linux_${ARCH}.tar.gz'); if (!r.ok) throw new Error('Failed to download infisical CLI: ' + r.statusText); await Bun.write('/tmp/infisical.tar.gz', r);" && \
+    tar -xzf /tmp/infisical.tar.gz -C /usr/local/bin infisical && \
+    rm -f /tmp/infisical.tar.gz
+ARG INFISICAL_SITE_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV BUN_ENV=production
+ENV INFISICAL_ENV=prod
 RUN --mount=type=secret,id=app_env,target=/app/.env \
+    --mount=type=secret,id=infisical_token,target=/run/secrets/infisical_token \
     set -a && . /app/.env && set +a && \
+    export INFISICAL_TOKEN="$(cat /run/secrets/infisical_token)" && \
+    export INFISICAL_API_URL="${INFISICAL_SITE_URL%/}/api" && \
     bun x turbo run build --filter=web
 
 # ==========================================
