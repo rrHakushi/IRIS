@@ -14,7 +14,7 @@
     }
   },
   "scripts": {
-    "build": "bun run contract:emit && tsc && cp src/contract.d.ts dist/contract.d.ts",
+    "build": "bun run contract:emit && tsc && cp src/contract.d.ts src/contract.json dist/",
     "contract:emit": "infisical run --env=${INFISICAL_ENV:-dev} -- prisma contract emit",
     "db:update": "infisical run --env=${INFISICAL_ENV:-dev} -- prisma db update",
     "db:verify": "infisical run --env=${INFISICAL_ENV:-dev} -- prisma db verify",

@@ -189,7 +189,7 @@ steps:
         from_secret: INFISICAL_SITE_URL
       INFISICAL_ENV: prod
     commands:
-      - INFISICAL_API_URL="$(printf '%s' "$INFISICAL_SITE_URL" | sed 's|/$||')/api" bun x turbo run build --filter="./packages/*"
+      - INFISICAL_API_URL="$(printf '%s' "$INFISICAL_SITE_URL" | sed 's|/$||')/api" bun run build:packages
     depends_on:
       - Prisma Update
 

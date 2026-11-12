@@ -5,7 +5,9 @@
     "INFISICAL_TOKEN",
     "INFISICAL_API_URL",
     "INFISICAL_ENV",
-    "INFISICAL_PROJECT_ID"
+    "INFISICAL_PROJECT_ID",
+    "ELYSIA_URL",
+    "NEXT_PUBLIC_*"
   ],
   "tasks": {
     "build": {

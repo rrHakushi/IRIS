@@ -3,7 +3,7 @@ import { session } from '../../../plugins/session'
 import { ServarrModel } from '../../models/servarr/servarr.model'
 import { ServarrServ } from '../../../services/servarr/servarr.serv'
 
-function createServarrAppRouter<const T extends 'sonarr' | 'radarr'>(app: T) {
+function createServarrAppCoreRouter<const T extends 'sonarr' | 'radarr'>(app: T) {
   return new Elysia({ prefix: `/${app}` })
     .use(session())
     .get(
@@ -198,6 +198,11 @@ function createServarrAppRouter<const T extends 'sonarr' | 'radarr'>(app: T) {
         return await ServarrServ.bulkDelete(app, user.id, body)
       }
     )
+}
+
+function createServarrAppOpsRouter<const T extends 'sonarr' | 'radarr'>(app: T) {
+  return new Elysia({ prefix: `/${app}` })
+    .use(session())
     .get(
       '/manualimport',
       {
@@ -361,10 +366,8 @@ function createServarrAppRouter<const T extends 'sonarr' | 'radarr'>(app: T) {
     )
 }
 
-export const servarrController = new Elysia({ prefix: '/servarr' })
+const servarrGenericCoreRouter = new Elysia()
   .use(session())
-  .use(createServarrAppRouter('sonarr'))
-  .use(createServarrAppRouter('radarr'))
 
   // ===========================================================================
   // 1. Blocklist
@@ -687,6 +690,9 @@ export const servarrController = new Elysia({ prefix: '/servarr' })
   // 9. Manual Import
   // ===========================================================================
 
+const servarrGenericOpsRouter = new Elysia()
+  .use(session())
+
   // GET /servarr/:app/manualimport (Preview files for manual import)
   .get(
     '/:app/manualimport',
@@ -889,6 +895,9 @@ export const servarrController = new Elysia({ prefix: '/servarr' })
   // ===========================================================================
   // 13. Wanted (Cutoff & Missing)
   // ===========================================================================
+
+const servarrWantedRadarrRouter = new Elysia()
+  .use(session())
 
   // GET /servarr/:app/wanted/cutoff (List media not meeting cutoff profile)
   .get(
@@ -1175,6 +1184,9 @@ export const servarrController = new Elysia({ prefix: '/servarr' })
   // 15. Sonarr Specific (Series, Episodes & Feeds)
   // ===========================================================================
 
+const servarrSonarrRouter = new Elysia()
+  .use(session())
+
   // GET /servarr/sonarr/anime (List managed anime series)
   .get(
     '/sonarr/anime',
@@ -1455,6 +1467,16 @@ export const servarrController = new Elysia({ prefix: '/servarr' })
       return await ServarrServ.updateSonarrEpisode(user.id, Number(id), body)
     }
   )
+
+export const servarrController = new Elysia({ prefix: '/servarr' })
+  .use(createServarrAppCoreRouter('sonarr'))
+  .use(createServarrAppOpsRouter('sonarr'))
+  .use(createServarrAppCoreRouter('radarr'))
+  .use(createServarrAppOpsRouter('radarr'))
+  .use(servarrGenericCoreRouter)
+  .use(servarrGenericOpsRouter)
+  .use(servarrWantedRadarrRouter)
+  .use(servarrSonarrRouter)
 
 export default servarrController
 

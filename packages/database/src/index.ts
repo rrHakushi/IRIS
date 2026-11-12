@@ -1,10 +1,7 @@
-import { createRequire } from "node:module";
 import postgres from "@prisma/orm-postgres/runtime";
 import { contractFromJson } from "@prisma/orm-postgres/static";
 import type { Contract } from "./contract.js";
-
-const require = createRequire(import.meta.url);
-const contractJson = require("./contract.json");
+import contractJson from "./contract.json" with { type: "json" };
 
 export const contract = contractFromJson<Contract>(contractJson);
 
