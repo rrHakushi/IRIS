@@ -105,16 +105,33 @@ export function parseCategoryTag(input: string): {
 export interface VisitedMediaItem {
   id: number | string
   title: string
+  titlePrimary?: string | null
+  titleNative?: string | null
+  titleSecondary?: string | null
   coverImage?: string | null
+  bannerImage?: string | null
+  description?: string | null
   format?: string | null
+  status?: string | null
   year?: number | string | null
+  seasonYear?: number | null
+  averageScore?: number | null
+  chapterCount?: number | null
+  episodeCount?: number | null
+  volumeCount?: number | null
+  genres?: any[]
+  studios?: any[]
   queuedForFetch?: boolean
   visitedAt: number
   type?: "TRACK" | "ALBUM"
   artist?: string | null
   album?: string | null
+  duration?: number | null
   audioPreviewUrl?: string | null
   explicitLyrics?: boolean | null
+  gender?: string | null
+  age?: string | number | null
+  raw?: any
 }
 
 export interface CategoryBrowseHistory {
@@ -257,18 +274,59 @@ export function addBrowseVisitToStore(
 ): BrowseHistoryStore {
   const store = getStoredBrowseHistory()
   const catHistory = store[category] || createEmptyCategoryHistory()
+
+  const existingIndex = catHistory.recentBrowseVisits.findIndex(
+    (v) =>
+      String(v.id) === String(item.id) &&
+      (category !== "music" || v.type === item.type)
+  )
+  const previousItem =
+    existingIndex >= 0 ? catHistory.recentBrowseVisits[existingIndex] : null
+
   const visitedItem: VisitedMediaItem = {
     id: item.id,
-    title: item.title || "Untitled",
-    coverImage: item.coverImage ?? null,
-    format: item.format ?? null,
-    year: item.year ?? null,
+    title: item.title || previousItem?.title || "Untitled",
+    titlePrimary:
+      item.titlePrimary ?? previousItem?.titlePrimary ?? item.title ?? null,
+    titleNative: item.titleNative ?? previousItem?.titleNative ?? null,
+    titleSecondary: item.titleSecondary ?? previousItem?.titleSecondary ?? null,
+    coverImage: item.coverImage ?? previousItem?.coverImage ?? null,
+    bannerImage: item.bannerImage ?? previousItem?.bannerImage ?? null,
+    description: item.description ?? previousItem?.description ?? null,
+    format: item.format ?? previousItem?.format ?? null,
+    status: item.status ?? previousItem?.status ?? null,
+    year: item.year ?? previousItem?.year ?? null,
+    seasonYear:
+      item.seasonYear ??
+      previousItem?.seasonYear ??
+      (typeof item.year === "number" ? item.year : null),
+    averageScore: item.averageScore ?? previousItem?.averageScore ?? null,
+    chapterCount: item.chapterCount ?? previousItem?.chapterCount ?? null,
+    episodeCount: item.episodeCount ?? previousItem?.episodeCount ?? null,
+    volumeCount: item.volumeCount ?? previousItem?.volumeCount ?? null,
+    genres:
+      Array.isArray(item.genres) && item.genres.length > 0
+        ? item.genres
+        : (previousItem?.genres ?? []),
+    studios:
+      Array.isArray(item.studios) && item.studios.length > 0
+        ? item.studios
+        : (previousItem?.studios ?? []),
+    queuedForFetch: Boolean(
+      item.queuedForFetch ?? previousItem?.queuedForFetch
+    ),
     visitedAt: item.visitedAt ?? Date.now(),
-    type: item.type,
-    artist: item.artist ?? null,
-    album: item.album ?? null,
-    audioPreviewUrl: item.audioPreviewUrl ?? null,
-    explicitLyrics: item.explicitLyrics ?? null,
+    type: item.type ?? previousItem?.type,
+    artist: item.artist ?? previousItem?.artist ?? null,
+    album: item.album ?? previousItem?.album ?? null,
+    duration: item.duration ?? previousItem?.duration ?? null,
+    audioPreviewUrl:
+      item.audioPreviewUrl ?? previousItem?.audioPreviewUrl ?? null,
+    explicitLyrics:
+      item.explicitLyrics ?? previousItem?.explicitLyrics ?? null,
+    gender: item.gender ?? previousItem?.gender ?? null,
+    age: item.age ?? previousItem?.age ?? null,
+    raw: item.raw ?? previousItem?.raw,
   }
 
   const existing = catHistory.recentBrowseVisits.filter(

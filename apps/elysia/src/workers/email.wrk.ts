@@ -104,8 +104,15 @@ export function createEmailWorker(): Worker<EmailJobData> {
     logger.warn(`Job ${jobId} was detected as stalled and will be re-assigned`)
   })
 
-  worker.on('error', (err) => {
-    logger.warn(`Email worker connection error: ${err.message}`)
+  worker.on('error', (err: any) => {
+    const isSocketReset =
+      err?.code === 'ECONNRESET' ||
+      err?.code === 'EPIPE' ||
+      err?.code === 'ETIMEDOUT' ||
+      /ECONNRESET|EPIPE|ETIMEDOUT/i.test(err?.message || '')
+
+    if (isSocketReset) return
+    logger.warn(`Email worker connection error: ${err?.message || err}`)
   })
 
   return worker

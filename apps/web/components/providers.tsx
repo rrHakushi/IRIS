@@ -35,6 +35,10 @@ declare module "react-aria-components" {
   }
 }
 
+if (typeof window !== "undefined") {
+  ;(window as any).__IRIS_API_URL__ = `${window.location.origin}/elysia`
+}
+
 // Suppress false-positive React 19 / Next.js 16 warnings (script tag emitted by next-themes SSR inline script and extension attribute injection)
 if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
   const origError = console.error

@@ -6,6 +6,8 @@
  * Decrypts raw encrypted ciphers from local storage cache
  * (Ultra fast, zero API network calls)
  */
+// Step 1: Local Encrypted Cache Decryption
+// Step 1.1: Fast Offline Cache Decryption Pipeline
 async function decryptCachedVault(vaultKey) {
   const sData = await storage.get([
     "cachedEncryptedCiphers",
@@ -54,6 +56,8 @@ async function decryptCachedVault(vaultKey) {
 /**
  * Sync vault data from backend (hourly or on explicit "Sync Now" trigger)
  */
+// Step 2: Remote Server Synchronization
+// Step 2.1: Hourly & Force Sync Orchestrator
 async function syncVault(options = {}) {
   const { force = false } = options
   if (!inMemoryVaultKey) return { success: false, error: "Vault is locked" }

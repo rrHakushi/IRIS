@@ -104,9 +104,15 @@ export function getConnectionSyncQueue(
       },
     })
 
-    queue.on('error', (err) => {
+    queue.on('error', (err: any) => {
+      const isSocketReset =
+        err?.code === 'ECONNRESET' ||
+        err?.code === 'EPIPE' ||
+        err?.code === 'ETIMEDOUT' ||
+        /ECONNRESET|EPIPE|ETIMEDOUT/i.test(err?.message || '')
+      if (isSocketReset) return
       logger.warn(
-        `${c.red('⚠️ [ConnectionSync Queue Error]')}: (${provider}) ${err.message}`
+        `${c.red('⚠️ [ConnectionSync Queue Error]')}: (${provider}) ${err?.message || err}`
       )
     })
 

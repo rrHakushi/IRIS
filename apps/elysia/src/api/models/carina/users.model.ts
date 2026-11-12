@@ -358,6 +358,7 @@ export const CarinaUsersModel = {
     link: t.String(),
     format: t.Optional(t.Nullable(t.String())),
     score: t.Optional(t.Nullable(t.Number())),
+    raw: t.Optional(t.Nullable(t.Any())),
   }),
 
   favoriteItem: t.Object({
@@ -366,6 +367,8 @@ export const CarinaUsersModel = {
     type: t.String(),
     targetId: t.Number(),
     createdAt: t.String(),
+    entry: t.Optional(t.Nullable(t.Any())),
+    media: t.Optional(t.Nullable(t.Any())),
     entity: t.Optional(
       t.Nullable(
         t.Object({
@@ -376,6 +379,7 @@ export const CarinaUsersModel = {
           link: t.String(),
           format: t.Optional(t.Nullable(t.String())),
           score: t.Optional(t.Nullable(t.Number())),
+          raw: t.Optional(t.Nullable(t.Any())),
         })
       )
     ),
@@ -390,6 +394,8 @@ export const CarinaUsersModel = {
         type: t.String(),
         targetId: t.Number(),
         createdAt: t.String(),
+        entry: t.Optional(t.Nullable(t.Any())),
+        media: t.Optional(t.Nullable(t.Any())),
         entity: t.Optional(
           t.Nullable(
             t.Object({
@@ -400,12 +406,48 @@ export const CarinaUsersModel = {
               link: t.String(),
               format: t.Optional(t.Nullable(t.String())),
               score: t.Optional(t.Nullable(t.Number())),
+              raw: t.Optional(t.Nullable(t.Any())),
             })
           )
         ),
       })
     ),
     pagination: PaginationMetaSchema,
+  }),
+
+  allFavoritesQuery: t.Optional(
+    t.Object({
+      limit: t.Optional(t.Numeric({ default: 50, minimum: 1, maximum: 250, description: 'Limit per category' })),
+    })
+  ),
+
+  allFavoritesResponse: t.Object({
+    success: t.Boolean(),
+    favorites: t.Object({
+      anime: t.Array(t.Any()),
+      manga: t.Array(t.Any()),
+      movie: t.Array(t.Any()),
+      tv: t.Array(t.Any()),
+      game: t.Array(t.Any()),
+      book: t.Array(t.Any()),
+      character: t.Array(t.Any()),
+      person: t.Array(t.Any()),
+      studio: t.Array(t.Any()),
+      other: t.Array(t.Any()),
+    }),
+    counts: t.Object({
+      anime: t.Number(),
+      manga: t.Number(),
+      movie: t.Number(),
+      tv: t.Number(),
+      game: t.Number(),
+      book: t.Number(),
+      character: t.Number(),
+      person: t.Number(),
+      studio: t.Number(),
+      other: t.Number(),
+      total: t.Number(),
+    }),
   }),
 
   // --- GET /carina/users/me ---

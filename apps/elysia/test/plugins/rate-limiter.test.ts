@@ -140,4 +140,46 @@ describe('Rate Limiter Plugin Test Suite', () => {
       expect(res.status).toBe(200)
     }
   })
+
+  it('allocates 100 capacity for unauthenticated clients and 500 capacity for authenticated clients', async () => {
+    const app = new Elysia()
+      .use(rateLimiter())
+      .get('/api/test', () => ({ ok: true }))
+
+    // 1. Unauthenticated request -> capacity: 100
+    const unauthRes = await app.handle(
+      new Request('http://localhost:4000/api/test', {
+        headers: { 'cf-connecting-ip': '1.1.1.1' },
+      })
+    )
+    expect(unauthRes.status).toBe(200)
+    expect(unauthRes.headers.get('ratelimit-limit')).toBe('100')
+    expect(unauthRes.headers.get('ratelimit-remaining')).toBe('99')
+
+    // 2. Authenticated with Bearer token -> capacity: 500
+    const authRes = await app.handle(
+      new Request('http://localhost:4000/api/test', {
+        headers: {
+          'cf-connecting-ip': '1.1.1.2',
+          authorization: 'Bearer valid-jwt-token-12345',
+        },
+      })
+    )
+    expect(authRes.status).toBe(200)
+    expect(authRes.headers.get('ratelimit-limit')).toBe('500')
+    expect(authRes.headers.get('ratelimit-remaining')).toBe('499')
+
+    // 3. Authenticated with API key -> capacity: 500
+    const apiKeyRes = await app.handle(
+      new Request('http://localhost:4000/api/test', {
+        headers: {
+          'cf-connecting-ip': '1.1.1.3',
+          'x-api-key': 'test-iris-key',
+        },
+      })
+    )
+    expect(apiKeyRes.status).toBe(200)
+    expect(apiKeyRes.headers.get('ratelimit-limit')).toBe('500')
+    expect(apiKeyRes.headers.get('ratelimit-remaining')).toBe('499')
+  })
 })

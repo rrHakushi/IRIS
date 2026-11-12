@@ -49,11 +49,15 @@ export class AniListAdapter extends BaseConnectionAdapter {
   };
 
   private getClientId(): string {
-    return Bun.env.ANILIST_CLIENT_ID || "";
+    const id = Bun.env.ANILIST_CLIENT_ID;
+    if (!id) throw new Error("Missing required environment variable: ANILIST_CLIENT_ID");
+    return id;
   }
 
   private getClientSecret(): string {
-    return Bun.env.ANILIST_CLIENT_SECRET || "";
+    const secret = Bun.env.ANILIST_CLIENT_SECRET;
+    if (!secret) throw new Error("Missing required environment variable: ANILIST_CLIENT_SECRET");
+    return secret;
   }
 
   async getAuthUrl(options: AuthUrlOptions): Promise<AuthUrlResult> {
@@ -196,6 +200,20 @@ export class AniListAdapter extends BaseConnectionAdapter {
     credentials?: ConnectionCredentials,
     options?: SearchOptions
   ): Promise<MediaSearchResult[]> {
+    const cleanQuery = query.trim();
+    if (!cleanQuery) return [];
+
+    // 1. Check for explicit AniList ID prefixes or URLs (e.g., "id:21", "anilist:21", "al:21", "#21", or "https://anilist.co/anime/21/...")
+    const explicitIdMatch = cleanQuery.match(
+      /^(?:id:|anilist:|al:|#|https?:\/\/(?:www\.)?anilist\.co\/(?:anime|manga)\/)(\d+)/i
+    );
+    if (explicitIdMatch && explicitIdMatch[1]) {
+      const item = await this.getMediaById(explicitIdMatch[1], credentials, options);
+      return item ? [item] : [];
+    }
+
+    const isPlainNumeric = /^\d+$/.test(cleanQuery);
+
     const gql = `
       query ($search: String, $type: MediaType, $page: Int, $perPage: Int) {
         Page(page: $page, perPage: $perPage) {
@@ -234,9 +252,154 @@ export class AniListAdapter extends BaseConnectionAdapter {
     `;
 
     const type = options?.type === "MANGA" || options?.type === "BOOK" ? "MANGA" : "ANIME";
-    const data = await this.executeGraphQL<{
-      Page: {
-        media: Array<{
+    const fetchTextSearch = async (): Promise<MediaSearchResult[]> => {
+      const data = await this.executeGraphQL<{
+        Page: {
+          media: Array<{
+            id: number;
+            idMal?: number;
+            type: string;
+            format?: string;
+            status?: string;
+            episodes?: number;
+            chapters?: number;
+            volumes?: number;
+            duration?: number;
+            averageScore?: number;
+            popularity?: number;
+            seasonYear?: number;
+            genres?: string[];
+            siteUrl?: string;
+            title: {
+              userPreferred: string;
+              romaji?: string;
+              english?: string;
+              native?: string;
+            };
+            coverImage?: {
+              extraLarge?: string;
+              large?: string;
+              medium?: string;
+              color?: string;
+            };
+            bannerImage?: string;
+            description?: string;
+          }>;
+        };
+      }>(
+        gql,
+        {
+          search: cleanQuery,
+          type,
+          page: options?.page || 1,
+          perPage: options?.perPage || 20,
+        },
+        credentials?.accessToken
+      );
+
+      return (data?.Page?.media || []).map((item) => ({
+        id: String(item.id),
+        externalId: String(item.id),
+        provider: "ANILIST",
+        mediaType: item.type === "MANGA" ? "MANGA" : "ANIME",
+        title: {
+          userPreferred: item.title.userPreferred,
+          romaji: item.title.romaji,
+          english: item.title.english,
+          native: item.title.native,
+        },
+        description: item.description,
+        coverImage: item.coverImage,
+        bannerImage: item.bannerImage,
+        format: item.format,
+        status: item.status,
+        episodes: item.episodes,
+        chapters: item.chapters,
+        volumes: item.volumes,
+        durationMinutes: item.duration,
+        averageScore: item.averageScore,
+        popularity: item.popularity,
+        releaseYear: item.seasonYear,
+        genres: item.genres,
+        url: item.siteUrl,
+      }));
+    };
+
+    if (isPlainNumeric) {
+      const [idResult, textResults] = await Promise.all([
+        this.getMediaById(cleanQuery, credentials, options).catch(() => null),
+        fetchTextSearch().catch(() => [] as MediaSearchResult[]),
+      ]);
+
+      if (idResult) {
+        const deduped = textResults.filter((r) => r.externalId !== idResult.externalId);
+        return [idResult, ...deduped];
+      }
+      return textResults;
+    }
+
+    return fetchTextSearch();
+  }
+
+  async getMediaById(
+    externalId: string,
+    credentials?: ConnectionCredentials,
+    options?: SearchOptions
+  ): Promise<MediaSearchResult | null> {
+    const cleanId = externalId
+      .trim()
+      .replace(/^(?:id:|anilist:|al:|#)/i, "")
+      .replace(/^https?:\/\/(?:www\.)?anilist\.co\/(?:anime|manga)\/(\d+).*$/i, "$1")
+      .trim();
+
+    const numId = Number(cleanId);
+    if (Number.isNaN(numId) || numId <= 0) return null;
+
+    const gql = `
+      query ($id: Int, $type: MediaType) {
+        Media(id: $id, type: $type) {
+          id
+          idMal
+          type
+          format
+          status
+          episodes
+          chapters
+          volumes
+          duration
+          averageScore
+          popularity
+          seasonYear
+          genres
+          siteUrl
+          title {
+            userPreferred
+            romaji
+            english
+            native
+          }
+          coverImage {
+            extraLarge
+            large
+            medium
+            color
+          }
+          bannerImage
+          description(asHtml: false)
+        }
+      }
+    `;
+
+    const preferredType =
+      options?.type === "MANGA" || options?.type === "BOOK"
+        ? "MANGA"
+        : options?.type === "ANIME"
+          ? "ANIME"
+          : undefined;
+
+    const queryById = async (mediaType?: string) => {
+      const data = await this.executeGraphQL<{
+        Media?: {
           id: number;
           idMal?: number;
           type: string;
@@ -265,45 +428,51 @@ export class AniListAdapter extends BaseConnectionAdapter {
           };
           bannerImage?: string;
           description?: string;
-        }>;
-      };
-    }>(
-      gql,
-      {
-        search: query,
-        type,
-        page: options?.page || 1,
-        perPage: options?.perPage || 20,
-      },
-      credentials?.accessToken
-    );
+        };
+      }>(
+        gql,
+        mediaType ? { id: numId, type: mediaType } : { id: numId },
+        credentials?.accessToken
+      );
+      return data?.Media || null;
+    };
 
-    return (data?.Page?.media || []).map((item) => ({
-      id: String(item.id),
-      externalId: String(item.id),
-      provider: "ANILIST",
-      mediaType: item.type === "MANGA" ? "MANGA" : "ANIME",
-      title: {
-        userPreferred: item.title.userPreferred,
-        romaji: item.title.romaji,
-        english: item.title.english,
-        native: item.title.native,
-      },
-      description: item.description,
-      coverImage: item.coverImage,
-      bannerImage: item.bannerImage,
-      format: item.format,
-      status: item.status,
-      episodes: item.episodes,
-      chapters: item.chapters,
-      volumes: item.volumes,
-      durationMinutes: item.duration,
-      averageScore: item.averageScore,
-      popularity: item.popularity,
-      releaseYear: item.seasonYear,
-      genres: item.genres,
-      url: item.siteUrl,
-    }));
+    try {
+      let item = await queryById(preferredType).catch(() => null);
+      if (!item && preferredType) {
+        item = await queryById(undefined).catch(() => null);
+      }
+      if (!item) return null;
+
+      return {
+        id: String(item.id),
+        externalId: String(item.id),
+        provider: "ANILIST",
+        mediaType: item.type === "MANGA" ? "MANGA" : "ANIME",
+        title: {
+          userPreferred: item.title.userPreferred,
+          romaji: item.title.romaji,
+          english: item.title.english,
+          native: item.title.native,
+        },
+        description: item.description,
+        coverImage: item.coverImage,
+        bannerImage: item.bannerImage,
+        format: item.format,
+        status: item.status,
+        episodes: item.episodes,
+        chapters: item.chapters,
+        volumes: item.volumes,
+        durationMinutes: item.duration,
+        averageScore: item.averageScore,
+        popularity: item.popularity,
+        releaseYear: item.seasonYear,
+        genres: item.genres,
+        url: item.siteUrl || `https://anilist.co/${item.type === "MANGA" ? "manga" : "anime"}/${item.id}`,
+      };
+    } catch {
+      return null;
+    }
   }
 
   async getLibrary(

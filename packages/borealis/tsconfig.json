@@ -1,0 +1,19 @@
+{
+  "extends": "@workspace/typescript-config/react-library.json",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "paths": {
+      "@workspace/ui/*": ["../ui/src/*"],
+      "@Runa/borealis": ["./src/index.ts"],
+      "@Runa/borealis/*": ["./src/*"],
+      "@IRIS/shared": ["../shared/src/index.ts"],
+      "@IRIS/shared/*": ["../shared/src/*"],
+      "@IRIS/elysia": ["../../apps/elysia/src/index.ts"],
+      "@IRIS/elysia/*": ["../../apps/elysia/src/*"],
+      "@/*": ["../../apps/web/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
+

@@ -741,7 +741,7 @@ export function PassCipherModal({
                 onChange={(e) => setNoteContent(e.target.value)}
                 placeholder="Write your encrypted notes here..."
                 rows={10}
-                className="resize-y rounded-xl font-mono text-xs"
+                className="resize-y rounded-xl font-mono text-xs blur-[3px] focus:blur-none transition-all duration-200"
               />
             </div>
           )}
@@ -1096,7 +1096,7 @@ export function PassCipherModal({
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Optional encrypted notes..."
                   rows={3}
-                  className="rounded-xl text-xs"
+                  className="rounded-xl text-xs blur-[3px] focus:blur-none transition-all duration-200"
                 />
               </div>
             </div>

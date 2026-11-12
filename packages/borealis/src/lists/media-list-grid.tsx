@@ -1,0 +1,716 @@
+"use client"
+
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
+import dynamic from "next/dynamic"
+import {
+  IconInbox,
+  IconChevronDown,
+  IconChevronRight,
+} from "@tabler/icons-react"
+import { cn } from "@workspace/ui/lib/utils"
+import { Button } from "@workspace/ui/components/button"
+import { Spinner } from "@workspace/ui/components/spinner"
+import type { NormalizedMediaData } from "../media/media-types"
+
+const MediaListModal = dynamic(
+  () =>
+    import("../media/list/media-list-modal").then(
+      (m) => m.MediaListModal
+    ),
+  { ssr: false }
+)
+import {
+  type MediaListEntryData,
+  type MediaListStatus,
+  parseRewatchHistory,
+} from "../media/list/types"
+import {
+  type ListEntryData,
+  type MediaListType,
+  type StatusKey,
+  type ListFilterFacets,
+  MEDIA_CATEGORIES,
+} from "./types"
+import { BorealisCard, BorealisCardGroup, BorealisSectionHeader, type ListStatus } from "@Runa/borealis"
+import { saveListEntry } from "@/lib/save-list-entry"
+import { useEncryption } from "@/context/encryption-context"
+import { deriveVaultKey, safeDecryptText, safeEncryptText } from "@/lib/client-encryption"
+
+export function MediaListCardSkeleton({
+  isMusic = false,
+}: {
+  isMusic?: boolean
+}): React.JSX.Element {
+  return (
+    <div className="relative flex flex-col overflow-hidden rounded-xl border border-border/40 bg-card/60 animate-pulse">
+      <div
+        className={cn(
+          "w-full bg-muted/60",
+          isMusic ? "aspect-square" : "aspect-2/3"
+        )}
+      />
+      <div className="flex flex-col gap-1.5 p-2.5">
+        <div className="h-3.5 w-3/4 rounded bg-muted/70" />
+        <div className="h-2.5 w-1/2 rounded bg-muted/40" />
+      </div>
+    </div>
+  )
+}
+
+export interface MediaListGridProps {
+  mediaType: MediaListType
+  activeStatus?: StatusKey
+  items: ListEntryData[]
+  isLoading: boolean
+  isLoadingMore?: boolean
+  hasMore?: boolean
+  onLoadMore?: () => void
+  isOwner?: boolean
+  viewMode?: "standard" | "compact" | "covers"
+  onItemUpdated?: (
+    entryId: number,
+    updatedEntry: MediaListEntryData | null
+  ) => void
+  onIncrementProgress?: (item: ListEntryData, count: number) => Promise<void>
+  onIncrementVolume?: (item: ListEntryData, count: number) => Promise<void>
+  onStatusChange?: (item: ListEntryData, newStatus: ListStatus) => Promise<void>
+  onScoreChange?: (item: ListEntryData, newScore: number | null) => Promise<void>
+  mediaTitlePreference?: "primary" | "secondary" | "native"
+  searchQuery?: string
+  facets?: ListFilterFacets
+  totalCount?: number
+  className?: string
+}
+
+export function toNormalizedMedia(
+  media: ListEntryData["media"],
+  category: MediaListType
+): NormalizedMediaData {
+  const normCat =
+    category === "movie"
+      ? ("movies" as const)
+      : category === "game"
+        ? ("games" as const)
+        : category === "book"
+          ? ("books" as const)
+          : category === "music"
+            ? ("music" as const)
+            : category === "other"
+              ? ("other" as const)
+              : (category as "anime" | "manga" | "tv")
+
+  return {
+    id: media.id,
+    category: normCat,
+    titlePrimary:
+      media.titlePrimary ||
+      media.titleEnglish ||
+      media.titleRomaji ||
+      media.title ||
+      media.name ||
+      "Untitled",
+    titleSecondary:
+      media.titleSecondary || media.titleEnglish || media.titleRomaji || null,
+    titleNative: media.titleNative || null,
+    coverImage:
+      media.coverImage || media.posterImage || media.bannerImage || null,
+    bannerImage: media.bannerImage || null,
+    description: media.description || null,
+    format: media.format || null,
+    status: media.status || null,
+    isAdult: Boolean((media as any).isAdult),
+    genres: Array.isArray(media.genres)
+      ? media.genres.map((g: any, idx: number) =>
+          typeof g === "string"
+            ? { id: idx, name: g, slug: g.toLowerCase().replace(/\s+/g, "-") }
+            : {
+                id: g.id || idx,
+                name: g.name,
+                slug: (g.slug || g.name || "")
+                  .toLowerCase()
+                  .replace(/\s+/g, "-"),
+              }
+        )
+      : [],
+    tags: [],
+    studios: [],
+    characters: [],
+    staff: [],
+    relations: [],
+    episodeCount:
+      typeof media.episodeCount === "number" && media.episodeCount > 0
+        ? media.episodeCount
+        : Array.isArray((media as any).episodes) &&
+            (media as any).episodes.length > 0
+          ? (media as any).episodes.length
+          : null,
+    seasonCount: (media as any).seasonCount ?? null,
+    chapterCount: media.chapters ?? media.chapterCount ?? null,
+    volumeCount: media.volumes ?? media.volumeCount ?? null,
+    startDateYear: media.startDateYear ?? media.year ?? null,
+    releaseDateYear: media.releaseDateYear ?? media.year ?? null,
+    seasons: Array.isArray((media as any).seasons)
+      ? (media as any).seasons.map((s: any) => ({
+          id: s.id,
+          seasonNumber: s.seasonNumber,
+          title: s.titlePrimary || s.title || null,
+          titlePrimary: s.titlePrimary || null,
+          titleSecondary: s.titleSecondary || null,
+          episodeCount: s.episodeCount || null,
+        }))
+      : undefined,
+    episodes: Array.isArray((media as any).episodes)
+      ? (media as any).episodes.map((ep: any) => ({
+          id: ep.id,
+          number: ep.number ?? ep.episodeNumber,
+          seasonNumber: ep.seasonNumber ?? ep.season ?? null,
+          titlePrimary: ep.titlePrimary || ep.title || null,
+          titleSecondary: ep.titleSecondary || null,
+        }))
+      : undefined,
+    progressFields: (media as any).progressFields || undefined,
+    incrementFieldKey: (media as any).incrementFieldKey || undefined,
+    updatedAt: (media as any).updatedAt
+      ? new Date((media as any).updatedAt)
+      : new Date(),
+  }
+}
+
+export function toMediaListEntry(
+  entry: ListEntryData["entry"]
+): MediaListEntryData {
+  const e = entry as any
+  let raw = entry.status?.toUpperCase() || "PLANNED"
+  let status: MediaListStatus = "PLANNED"
+  if (
+    raw === "IN_PROGRESS" ||
+    raw === "WATCHING" ||
+    raw === "READING" ||
+    raw === "PLAYING" ||
+    raw === "LISTENING" ||
+    raw === "CURRENT" ||
+    raw === "TRACKING"
+  ) {
+    status = "IN_PROGRESS"
+  } else if (raw === "ON_HOLD" || raw === "HOLD" || raw === "PAUSED") {
+    status = "ON_HOLD"
+  } else if (raw === "COMPLETED" || raw === "FINISHED") {
+    status = "COMPLETED"
+  } else if (raw === "DROPPED") {
+    status = "DROPPED"
+  } else if (raw === "MAYBE" || raw === "CONSIDERING") {
+    status = "MAYBE"
+  } else {
+    status = "PLANNED"
+  }
+  const rewatchedCount =
+    entry.rewatched ??
+    entry.reread ??
+    e.replayed ??
+    entry.playCount ??
+    e.relistens ??
+    0
+  const history = parseRewatchHistory(
+    e.rewatchHistory ??
+      e.rereadHistory ??
+      e.replayHistory ??
+      e.listenHistory
+  )
+  return {
+    id: entry.id,
+    status,
+    priority: (entry as any).priority || "LOW",
+    progress: entry.progress ?? entry.playCount ?? entry.chaptersProgress ?? 0,
+    chaptersProgress: entry.chaptersProgress,
+    volumesProgress: entry.volumesProgress,
+    progressValues: e.progressValues || null,
+    score: entry.score ?? null,
+    notes: entry.notes || "",
+    rewatched: rewatchedCount,
+    reread: entry.reread ?? rewatchedCount,
+    replayed: e.replayed ?? rewatchedCount,
+    private: Boolean(entry.private),
+    startedAt: entry.startedAt || null,
+    completedAt: entry.completedAt || null,
+    rewatchHistory: history.length > 0 ? history : null,
+    rereadHistory: history.length > 0 ? history : null,
+    replayHistory: history.length > 0 ? history : null,
+    connections: e.connections || null,
+    watchedEpisodes: Array.isArray(e.watchedEpisodes) ? e.watchedEpisodes : [],
+    seasons: Array.isArray(e.seasons) ? e.seasons : [],
+  } as MediaListEntryData
+}
+
+export function MediaListGrid({
+  mediaType,
+  activeStatus,
+  items,
+  isLoading,
+  isLoadingMore = false,
+  hasMore = false,
+  onLoadMore,
+  isOwner = false,
+  viewMode = "standard",
+  onItemUpdated,
+  onIncrementProgress,
+  onIncrementVolume,
+  onStatusChange,
+  onScoreChange,
+  mediaTitlePreference = "primary",
+  searchQuery,
+  facets,
+  totalCount,
+  className,
+}: MediaListGridProps): React.JSX.Element {
+  const currentCategory = MEDIA_CATEGORIES.find((c) => c.key === mediaType)
+  const progressUnit = currentCategory?.progressLabel || "Ep"
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
+
+  // Edit Modal State
+  const [editingItem, setEditingItem] = useState<ListEntryData | null>(null)
+  // Collapsed sections in grouped view
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({})
+
+  const toggleSection = useCallback((key: string) => {
+    setCollapsedSections((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }))
+  }, [])
+
+  const handleOpenEditModal = useCallback((target: ListEntryData) => {
+    setEditingItem(target)
+  }, [])
+
+  // Compute status badge counts from facets
+  const statusExpectedCounts = useMemo(() => {
+    const map: Record<string, number> = {
+      IN_PROGRESS: 0,
+      ON_HOLD: 0,
+      COMPLETED: 0,
+      DROPPED: 0,
+      PLANNED: 0,
+      MAYBE: 0,
+    }
+
+    if (!facets?.statuses) return map
+
+    facets.statuses.forEach((item) => {
+      const upper = item.value.toUpperCase()
+      if (
+        upper === "IN_PROGRESS" ||
+        upper === "WATCHING" ||
+        upper === "READING" ||
+        upper === "PLAYING" ||
+        upper === "LISTENING" ||
+        upper === "CURRENT" ||
+        upper === "TRACKING"
+      ) {
+        map.IN_PROGRESS = (map.IN_PROGRESS || 0) + item.count
+      } else if (
+        upper === "ON_HOLD" ||
+        upper === "HOLD" ||
+        upper === "PAUSED"
+      ) {
+        map.ON_HOLD = (map.ON_HOLD || 0) + item.count
+      } else if (upper === "COMPLETED" || upper === "FINISHED") {
+        map.COMPLETED = (map.COMPLETED || 0) + item.count
+      } else if (upper === "DROPPED") {
+        map.DROPPED = (map.DROPPED || 0) + item.count
+      } else if (upper === "PLANNED" || upper === "PLANNING") {
+        map.PLANNED = (map.PLANNED || 0) + item.count
+      } else if (upper === "MAYBE" || upper === "CONSIDERING") {
+        map.MAYBE = (map.MAYBE || 0) + item.count
+      }
+    })
+
+    return map
+  }, [facets?.statuses])
+
+  // Client-side zero-knowledge decryption/encryption
+  const { secretKey, isActive: isVaultActive } = useEncryption()
+  const vaultKey = useMemo(
+    () => (isVaultActive && secretKey ? deriveVaultKey(secretKey) : null),
+    [isVaultActive, secretKey]
+  )
+
+  const prepareCardItem = useCallback(
+    (item: ListEntryData): ListEntryData => {
+      if (!item?.entry?.notes) return item
+      const decrypted = safeDecryptText(item.entry.notes, vaultKey)
+      if (decrypted === item.entry.notes) return item
+      return {
+        ...item,
+        entry: {
+          ...item.entry,
+          notes: decrypted,
+        },
+      }
+    },
+    [vaultKey]
+  )
+
+  // When All is selected, separate entries by status in this exact order:
+  // 1. In Progress (Watching, Reading, Playing, etc.)
+  // 2. On hold
+  // 3. Completed
+  // 4. Dropped
+  // 5. Planned
+  // 6. Maybe
+  const groupedSections = useMemo(() => {
+    if (activeStatus && activeStatus !== "ALL") {
+      return null
+    }
+
+    const inProgressSection = {
+      key: "IN_PROGRESS",
+      title: currentCategory?.activeVerb || "Watching",
+      expectedCount: statusExpectedCounts.IN_PROGRESS ?? 0,
+      items: [] as ListEntryData[],
+    }
+    const onHoldSection = {
+      key: "ON_HOLD",
+      title: "On hold",
+      expectedCount: statusExpectedCounts.ON_HOLD ?? 0,
+      items: [] as ListEntryData[],
+    }
+    const completedSection = {
+      key: "COMPLETED",
+      title: "Completed",
+      expectedCount: statusExpectedCounts.COMPLETED ?? 0,
+      items: [] as ListEntryData[],
+    }
+    const droppedSection = {
+      key: "DROPPED",
+      title: "Dropped",
+      expectedCount: statusExpectedCounts.DROPPED ?? 0,
+      items: [] as ListEntryData[],
+    }
+    const plannedSection = {
+      key: "PLANNED",
+      title: "Planning",
+      expectedCount: statusExpectedCounts.PLANNED ?? 0,
+      items: [] as ListEntryData[],
+    }
+    const maybeSection = {
+      key: "MAYBE",
+      title: "Maybe",
+      expectedCount: statusExpectedCounts.MAYBE ?? 0,
+      items: [] as ListEntryData[],
+    }
+
+    for (const item of items) {
+      const upperStatus = (item.entry.status || "").toUpperCase()
+      if (
+        upperStatus === "IN_PROGRESS" ||
+        upperStatus === "WATCHING" ||
+        upperStatus === "READING" ||
+        upperStatus === "PLAYING" ||
+        upperStatus === "CURRENT" ||
+        upperStatus === "LISTENING" ||
+        upperStatus === "TRACKING"
+      ) {
+        inProgressSection.items.push(item)
+      } else if (
+        upperStatus === "ON_HOLD" ||
+        upperStatus === "HOLD" ||
+        upperStatus === "PAUSED"
+      ) {
+        onHoldSection.items.push(item)
+      } else if (upperStatus === "COMPLETED" || upperStatus === "FINISHED") {
+        completedSection.items.push(item)
+      } else if (upperStatus === "DROPPED") {
+        droppedSection.items.push(item)
+      } else if (upperStatus === "MAYBE" || upperStatus === "CONSIDERING") {
+        maybeSection.items.push(item)
+      } else {
+        plannedSection.items.push(item)
+      }
+    }
+
+    const sections = [
+      inProgressSection,
+      onHoldSection,
+      completedSection,
+      droppedSection,
+      plannedSection,
+      maybeSection,
+    ]
+
+    const hasFilter = Boolean(searchQuery?.trim())
+
+    return sections.filter((sec) => {
+      // If a search query is active, only show sections that contain matching loaded items
+      if (hasFilter) {
+        return sec.items.length > 0
+      }
+
+      // If we have loaded items for this section, always keep it
+      if (sec.items.length > 0) return true
+
+      // If items are still streaming/loading and this status exists in user's library, keep section visible
+      if (sec.expectedCount > 0 && (hasMore || isLoadingMore)) {
+        return true
+      }
+
+      return false
+    })
+  }, [
+    items,
+    activeStatus,
+    currentCategory?.activeVerb,
+    statusExpectedCounts,
+    searchQuery,
+    hasMore,
+    isLoadingMore,
+  ])
+
+  // Infinite Scroll IntersectionObserver with generous rootMargin
+  useEffect(() => {
+    if (!hasMore || isLoading || isLoadingMore || !onLoadMore) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0]
+        if (first?.isIntersecting) {
+          onLoadMore()
+        }
+      },
+      { rootMargin: "1200px" }
+    )
+
+    const el = sentinelRef.current
+    if (el) observer.observe(el)
+
+    return () => {
+      if (el) observer.unobserve(el)
+    }
+  }, [hasMore, isLoading, isLoadingMore, onLoadMore])
+
+  // Initial Loading Skeleton Grid
+  if (isLoading) {
+    const isMusic = mediaType === "music"
+    return (
+      <div
+        className={cn(
+          "grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3 sm:gap-4 w-full",
+          className
+        )}
+      >
+        {Array.from({ length: 18 }).map((_, i) => (
+          <MediaListCardSkeleton key={i} isMusic={isMusic} />
+        ))}
+      </div>
+    )
+  }
+
+  // Empty State with Frosted Glass Container
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-frost bg-frost/60 p-12 text-center backdrop-blur-xl shadow-xl">
+        <div className="flex size-14 items-center justify-center rounded-2xl border border-frost bg-zinc-900/80 text-zinc-400">
+          <IconInbox className="size-7" />
+        </div>
+        <h3 className="mt-4 font-heading text-base font-semibold text-zinc-100">
+          {searchQuery
+            ? `No entries found matching "${searchQuery}"`
+            : "No entries found"}
+        </h3>
+        <p className="mt-1 max-w-sm text-xs text-zinc-400">
+          {searchQuery
+            ? "No items in this list match your search query or synonyms. Try another keyword or clear the search."
+            : "There are no items matching the selected status or filters in this list."}
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className={cn("flex flex-col gap-6", className)}>
+      {groupedSections ? (
+        <div className="flex flex-col gap-8">
+          {groupedSections.map((section, sectionIdx) => {
+            const isCollapsed = Boolean(collapsedSections[section.key])
+            const displayCount =
+              section.expectedCount > 0 && (hasMore || isLoadingMore)
+                ? section.expectedCount
+                : section.items.length
+
+            return (
+              <div key={section.key} className="flex flex-col gap-3">
+                <BorealisSectionHeader
+                  title={section.title}
+                  count={displayCount}
+                  isCollapsed={isCollapsed}
+                  onToggle={() => toggleSection(section.key)}
+                />
+
+                {/* Items Grid (if not collapsed) */}
+                {!isCollapsed && (
+                  <BorealisCardGroup
+                    grid
+                    variant="none"
+                    gap={viewMode === "compact" ? "sm" : "md"}
+                    className="w-full"
+                  >
+                    {section.items.map((item, idx) => (
+                      <BorealisCard
+                        key={`${item.entry.id}-${item.media.id}`}
+                        type={mediaType}
+                        data={prepareCardItem(item)}
+                        titlePreference={mediaTitlePreference}
+                        showSubtitle={false}
+                        showHoverSubtitle={false}
+                        showTabNav={true}
+                        showExtras={true}
+                        statusIconOnly={true}
+                        size={viewMode === "compact" ? "sm" : "md"}
+                        canEdit={isOwner}
+                        onEdit={isOwner ? () => handleOpenEditModal(item) : undefined}
+                        onStatusChange={
+                          isOwner && onStatusChange
+                            ? (newStatus) => onStatusChange(item, newStatus)
+                            : undefined
+                        }
+                        onIncrement={
+                          isOwner && onIncrementProgress
+                            ? (count) => onIncrementProgress(item, count)
+                            : undefined
+                        }
+                        onIncrementVolume={
+                          isOwner && onIncrementVolume
+                            ? (count) => onIncrementVolume(item, count)
+                            : undefined
+                        }
+                        onScoreChange={
+                          isOwner && onScoreChange
+                            ? (newScore) => onScoreChange(item, newScore)
+                            : undefined
+                        }
+                        onSaveEntry={
+                          isOwner
+                            ? async (payload) => {
+                                const encryptedPayload = {
+                                  ...payload,
+                                  notes: payload.notes
+                                    ? safeEncryptText(payload.notes, vaultKey)
+                                    : payload.notes,
+                                }
+                                await saveListEntry(mediaType, item.media.id, encryptedPayload)
+                                onItemUpdated?.(item.entry.id, {
+                                  ...item.entry,
+                                  ...payload,
+                                  private: payload.isPrivate ?? item.entry.private,
+                                } as any)
+                              }
+                            : undefined
+                        }
+                        priority={sectionIdx === 0 && idx < 6}
+                        className="w-full"
+                      />
+                    ))}
+                  </BorealisCardGroup>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <BorealisCardGroup
+          grid
+          variant="none"
+          gap={viewMode === "compact" ? "sm" : "md"}
+          className="w-full"
+        >
+          {items.map((item, idx) => (
+            <BorealisCard
+              key={`${item.entry.id}-${item.media.id}`}
+              type={mediaType}
+              data={prepareCardItem(item)}
+              titlePreference={mediaTitlePreference}
+              showSubtitle={false}
+              showHoverSubtitle={false}
+              showTabNav={true}
+              showExtras={true}
+              statusIconOnly={true}
+              size={viewMode === "compact" ? "sm" : "md"}
+              canEdit={isOwner}
+              onEdit={isOwner ? () => handleOpenEditModal(item) : undefined}
+              onStatusChange={
+                isOwner && onStatusChange
+                  ? (newStatus) => onStatusChange(item, newStatus)
+                  : undefined
+              }
+              onIncrement={
+                isOwner && onIncrementProgress
+                  ? (count) => onIncrementProgress(item, count)
+                  : undefined
+              }
+              onIncrementVolume={
+                isOwner && onIncrementVolume
+                  ? (count) => onIncrementVolume(item, count)
+                  : undefined
+              }
+              onScoreChange={
+                isOwner && onScoreChange
+                  ? (newScore) => onScoreChange(item, newScore)
+                  : undefined
+              }
+              onSaveEntry={
+                isOwner
+                  ? async (payload) => {
+                      const encryptedPayload = {
+                        ...payload,
+                        notes: payload.notes
+                          ? safeEncryptText(payload.notes, vaultKey)
+                          : payload.notes,
+                      }
+                      await saveListEntry(mediaType, item.media.id, encryptedPayload)
+                      onItemUpdated?.(item.entry.id, {
+                        ...item.entry,
+                        ...payload,
+                        private: payload.isPrivate ?? item.entry.private,
+                      } as any)
+                    }
+                  : undefined
+              }
+              priority={idx < 8}
+              className="w-full"
+            />
+          ))}
+        </BorealisCardGroup>
+      )}
+
+      {/* Edit List Modal */}
+      {editingItem && (
+        <MediaListModal
+          isOpen={Boolean(editingItem)}
+          onOpenChange={(open) => {
+            if (!open) setEditingItem(null)
+          }}
+          media={toNormalizedMedia(editingItem.media, mediaType)}
+          initialEntry={toMediaListEntry(editingItem.entry)}
+          onEntryUpdated={(updated) => {
+            if (onItemUpdated && editingItem) {
+              onItemUpdated(editingItem.entry.id, updated)
+            }
+            setEditingItem(null)
+          }}
+        />
+      )}
+
+      {/* Infinite Scroll Sentinel & Loading Indicator */}
+      <div
+        ref={sentinelRef}
+        className="flex h-12 w-full items-center justify-center"
+      >
+        {isLoadingMore && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Spinner className="size-4" />
+            <span>Loading more items…</span>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

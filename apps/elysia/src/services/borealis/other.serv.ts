@@ -1,11 +1,153 @@
-import { prisma, and, not, countOf, toDate } from '@Iris/db'
+import { prisma, and, or, not, countOf, toDate } from '@Iris/db'
 import { IRISFlags } from '@IRIS/permissions'
 import { BadRequest, Forbidden, NotFound, Conflict } from '../../lib/errors'
 import { uploadPublicAsset } from '../../utils/s3'
 import { CarinaNotificationsServ } from '../carina/notifications.serv'
-import type { CreateOtherBody, UpdateOtherBody } from '../../api/models/borealis/other.model'
+import { getProfileCustomization } from '@IRIS/shared'
+import type {
+  CreateOtherBody,
+  UpdateOtherBody,
+  OtherCatalogQuery,
+} from '../../api/models/borealis/other.model'
+
+function parseList(val?: unknown): string[] {
+  if (!val || typeof val !== 'string') return []
+  return val
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+}
 
 export class BorealisOtherServ {
+  /**
+   * Get public catalog of custom items with pagination and filters.
+   */
+  public static async getCatalog(query?: OtherCatalogQuery) {
+    const page = Math.max(1, Number(query?.page ?? 1))
+    const limit = Math.max(1, Math.min(100, Number(query?.limit ?? 50)))
+    const skip = query?.cursor ? 0 : (page - 1) * limit
+
+    const search = query?.search?.trim()
+    const formats = parseList(query?.formats)
+    const sortBy = query?.sortBy ?? 'popularity'
+    const sortOrder = query?.sortOrder ?? (sortBy === 'title' ? 'asc' : 'desc')
+
+    let q = prisma.orm.public.Other.where({ isPublished: true })
+    if (search) {
+      q = q.where((m) =>
+        or(
+          m.titlePrimary.ilike(`%${search}%`),
+          m.titleSecondary.ilike(`%${search}%`)
+        )
+      )
+    }
+    if (formats.length > 0) {
+      q = q.where((m) => m.format.in(formats))
+    }
+    if (query?.cursor) {
+      q = q.where((m) =>
+        sortOrder === 'asc' ? m.id.gt(query.cursor!) : m.id.lt(query.cursor!)
+      )
+    }
+
+    let itemsQ = q
+    if (sortBy === 'score') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.averageScore.asc() : x.averageScore.desc()
+      )
+    } else if (sortBy === 'title') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.titlePrimary.asc() : x.titlePrimary.desc()
+      )
+    } else if (sortBy === 'releaseDate') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.startDate.asc() : x.startDate.desc()
+      )
+    } else if (sortBy === 'favorites') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else if (sortBy === 'updatedAt') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.updatedAt.asc() : x.updatedAt.desc()
+      )
+    } else {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.popularity.asc() : x.popularity.desc()
+      )
+    }
+
+    const [total, rawItems] = await Promise.all([
+      countOf(q),
+      itemsQ.offset(skip).limit(limit).all(),
+    ])
+
+    const items = rawItems.map((m: any) => ({
+      id: m.id,
+      titlePrimary: m.titlePrimary,
+      titleSecondary: m.titleSecondary ?? null,
+      titleNative: m.titleSecondary ?? null,
+      coverImage: m.coverImage ?? null,
+      bannerImage: m.bannerImage ?? null,
+      averageScore: m.averageScore ?? null,
+      format: m.format ?? null,
+      status: m.isPublished ? 'PUBLISHED' : 'DRAFT',
+      startDateYear: m.startDate ? toDate(m.startDate).getFullYear() : null,
+      description: m.description ?? null,
+      genres: [],
+      tags: [],
+    }))
+
+    const nextCursor = items.length === limit ? items[items.length - 1]!.id : null
+    const hasMore = query?.cursor ? nextCursor !== null : skip + limit < total
+
+    return {
+      success: true,
+      items,
+      nextCursor,
+      hasMore,
+      total,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasMore,
+      },
+    }
+  }
+
+  /**
+   * Get available catalog filters for other items.
+   */
+  public static async getFilters() {
+    const allPublished = await prisma.orm.public.Other
+      .where({ isPublished: true })
+      .select('format', 'startDate')
+      .all()
+
+    const formatCounts: Record<string, number> = {}
+    const yearCounts: Record<number, number> = {}
+
+    for (const item of allPublished) {
+      if (item.format) formatCounts[item.format] = (formatCounts[item.format] || 0) + 1
+      if (item.startDate) {
+        const y = toDate(item.startDate).getFullYear()
+        yearCounts[y] = (yearCounts[y] || 0) + 1
+      }
+    }
+
+    return {
+      success: true,
+      statuses: [{ value: 'PUBLISHED', count: allPublished.length }],
+      formats: Object.entries(formatCounts).map(([value, count]) => ({ value, count })),
+      genres: [],
+      years: Object.entries(yearCounts)
+        .map(([value, count]) => ({ value: Number(value), count }))
+        .sort((a, b) => b.value - a.value),
+    }
+  }
+
   /**
    * Create a custom trackable catalog item.
    * Standard users are capped at 500 created items; ADMINISTRATOR users are unlimited.
@@ -353,7 +495,6 @@ export class BorealisOtherServ {
       .first()
 
     if (existingListEntry) {
-      // Delete old entry and create/update to new cloned item
       await prisma.orm.public.OtherList.where({ id: existingListEntry.id }).delete()
 
       updatedEntry = await prisma.orm.public.OtherList.create({
@@ -410,5 +551,156 @@ export class BorealisOtherServ {
       success: true,
       url: publicUrl,
     }
+  }
+
+  /**
+   * Get stats for custom item.
+   */
+  public static async getStats(otherId: number) {
+    const item = await prisma.orm.public.Other.where({ id: otherId })
+      .select('averageScore', 'favorites', 'popularity', 'scoreDistribution', 'statusDistribution')
+      .first()
+    if (!item) throw new NotFound(`Custom item with ID ${otherId} not found`)
+
+    return {
+      success: true,
+      stats: {
+        averageScore: item.averageScore ?? null,
+        favorites: item.favorites ?? 0,
+        popularity: item.popularity ?? 0,
+        scoreDistribution: item.scoreDistribution ?? {},
+        statusDistribution: item.statusDistribution ?? {},
+      },
+    }
+  }
+
+  /**
+   * Get friends tracking this custom item.
+   */
+  public static async getFriends(otherId: number, currentUserId?: string) {
+    if (!currentUserId) return { success: true, friends: [] }
+
+    const item = await prisma.orm.public.Other.where({ id: otherId })
+      .select('id', 'incrementFieldKey')
+      .first()
+    if (!item) throw new NotFound(`Custom item with ID ${otherId} not found`)
+
+    const userFriends = await prisma.orm.public.Friend
+      .where({ userId: currentUserId })
+      .select('friendId')
+      .all()
+
+    const friendIds = userFriends.map((f) => f.friendId)
+    if (friendIds.length === 0) return { success: true, friends: [] }
+
+    const rawEntries = await prisma.orm.public.OtherList
+      .where((l) => and(l.otherId.eq(otherId), l.private.eq(false), l.userId.in(friendIds)))
+      .include('user', (u: any) => u.select('id', 'username', 'customization'))
+      .all()
+
+    const friends = rawEntries.map((raw: any) => {
+      const profile = getProfileCustomization(raw.user?.customization)
+      const primary = item.incrementFieldKey
+        ? (raw.progressValues as any)?.[item.incrementFieldKey] ?? null
+        : null
+      return {
+        id: raw.id,
+        userId: raw.userId,
+        status: raw.status,
+        score: raw.score,
+        primaryProgress: primary,
+        secondaryProgress: null,
+        progress: primary,
+        volumesProgress: null,
+        updatedAt: toDate(raw.updatedAt).toISOString(),
+        user: {
+          id: raw.user?.id || raw.userId,
+          username: raw.user?.username || 'Unknown',
+          customization: raw.user?.customization || null,
+          displayName: profile.displayName || raw.user?.username || 'Unknown',
+          avatarUrl: profile.avatarUrl || null,
+          avatarFrame: profile.avatarFrame || null,
+          displayNameStyle: profile.displayNameStyle || null,
+        },
+      }
+    })
+
+    return { success: true, friends }
+  }
+
+  /**
+   * Get all public users tracking this custom item.
+   */
+  public static async getPeople(
+    otherId: number,
+    query?: { page?: number; limit?: number; status?: string }
+  ) {
+    const item = await prisma.orm.public.Other.where({ id: otherId })
+      .select('id', 'incrementFieldKey')
+      .first()
+    if (!item) throw new NotFound(`Custom item with ID ${otherId} not found`)
+
+    const page = Math.max(1, Number(query?.page ?? 1))
+    const limit = Math.max(1, Math.min(100, Number(query?.limit ?? 40)))
+    const skip = (page - 1) * limit
+    const filterStatus = query?.status?.toUpperCase()?.trim()
+
+    let q = prisma.orm.public.OtherList.where({ otherId, private: false })
+    if (filterStatus) q = q.where({ status: filterStatus as any })
+
+    const [total, rawEntries] = await Promise.all([
+      countOf(q),
+      q
+        .orderBy((entry: any) => entry.updatedAt.desc())
+        .offset(skip)
+        .limit(limit)
+        .include('user', (u: any) => u.select('id', 'username', 'customization'))
+        .all(),
+    ])
+
+    const people = rawEntries.map((raw: any) => {
+      const profile = getProfileCustomization(raw.user?.customization)
+      const primary = item.incrementFieldKey
+        ? (raw.progressValues as any)?.[item.incrementFieldKey] ?? null
+        : null
+      return {
+        id: raw.id,
+        userId: raw.userId,
+        status: raw.status,
+        score: raw.score,
+        primaryProgress: primary,
+        secondaryProgress: null,
+        progress: primary,
+        volumesProgress: null,
+        updatedAt: toDate(raw.updatedAt).toISOString(),
+        user: {
+          id: raw.user?.id || raw.userId,
+          username: raw.user?.username || 'Unknown',
+          customization: raw.user?.customization || null,
+          displayName: profile.displayName || raw.user?.username || 'Unknown',
+          avatarUrl: profile.avatarUrl || null,
+          avatarFrame: profile.avatarFrame || null,
+          displayNameStyle: profile.displayNameStyle || null,
+        },
+      }
+    })
+
+    return {
+      success: true,
+      mediaType: 'other',
+      mediaId: otherId,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+      people,
+    }
+  }
+
+  /**
+   * Get recommendations for this custom item.
+   */
+  public static async getRecommendations(_otherId: number) {
+    return { success: true, recommendations: [] }
   }
 }

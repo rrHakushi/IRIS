@@ -9,8 +9,10 @@ import { IrisSettingsModal } from "@/components/navigation/iris-settings-modal"
 import { UserProfileHeader } from "./user-profile-header"
 import { OverviewTab } from "./tabs/overview-tab"
 import { ActivityTab } from "./tabs/activity-tab"
-import { ListsTab } from "./tabs/lists-tab"
-import { FavoritesTab } from "./tabs/favorites-tab"
+import {
+  UserProfileListsTab as ListsTab,
+  UserProfileFavoritesTab as FavoritesTab,
+} from "@Runa/borealis"
 import { StatsTab } from "./tabs/stats-tab"
 import { ProfileFriendsTab } from "./tabs/friends-tab"
 import { useTranslations } from "next-intl"

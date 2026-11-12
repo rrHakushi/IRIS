@@ -1,11 +1,15 @@
-import { prisma, countOf, toDate, type MediaType } from '@Iris/db'
+import { prisma, countOf, toDate, or, type MediaType } from '@Iris/db'
 import { NotFound, BadRequest, Forbidden } from '../../lib/errors'
+import { getProfileCustomization } from '@IRIS/shared'
+import { IRISBitField, IRISFlags } from '@IRIS/permissions'
 
 export interface ListPlaylistsQuery {
   page?: number
   limit?: number
   q?: string
   isPrivate?: boolean
+  mediaType?: string
+  mediaId?: number
 }
 
 export interface GetEntriesQuery {
@@ -17,17 +21,21 @@ export interface GetEntriesQuery {
   order?: 'asc' | 'desc'
 }
 
-function encryptNotes(notes: string | null | undefined, _userId?: string): string | null {
-  if (!notes) return null
-  return notes
+
+
+function formatUser(user: { id: string; username: string; customization?: any } | null | undefined) {
+  if (!user) return null
+  const profile = getProfileCustomization(user.customization)
+  const trimmed = typeof profile.displayName === 'string' ? profile.displayName.trim() : ''
+  return {
+    id: user.id,
+    username: user.username,
+    displayName: trimmed !== '' ? trimmed : null,
+    avatarUrl: profile.avatarUrl ?? null,
+  }
 }
 
-function decryptNotes(notes: string | null | undefined, _userId?: string): string | null {
-  if (!notes) return null
-  return notes
-}
-
-function formatPlaylist(p: any, entriesCount?: number) {
+function formatPlaylist(p: any, entriesCount?: number, role?: string, isOwner?: boolean, owner?: any, covers?: string[]) {
   const count =
     entriesCount !== undefined
       ? entriesCount
@@ -43,8 +51,12 @@ function formatPlaylist(p: any, entriesCount?: number) {
     isDefault: p.isDefault,
     isPrivate: p.isPrivate,
     coverImage: p.coverImage ?? null,
+    covers: covers ?? p.covers ?? [],
     order: p.order,
     entriesCount: count,
+    role: role ?? 'OWNER',
+    isOwner: isOwner !== undefined ? isOwner : true,
+    owner: owner ?? null,
     createdAt: toDate(p.createdAt).toISOString(),
     updatedAt: toDate(p.updatedAt).toISOString(),
   }
@@ -57,21 +69,70 @@ function formatEntry(e: any, userId?: string) {
     mediaType: e.mediaType,
     mediaId: e.mediaId,
     order: e.order,
-    customNotes: userId ? decryptNotes(e.customNotes, userId) : (e.customNotes ?? null),
+    customNotes: e.customNotes ?? null,
     addedAt: toDate(e.addedAt).toISOString(),
   }
 }
 
 export class BorealisPlaylistsServ {
   /**
-   * List custom playlists belonging to the user.
+   * Helper to check access levels (Owner, Editor, Viewer) for a custom playlist.
+   */
+  public static async getPlaylistAccess(playlistId: string, userId: string) {
+    const playlist = await prisma.orm.public.CustomList
+      .where({ id: playlistId })
+      .include('user', (u) => u.select('id', 'username', 'customization'))
+      .include('collaborators', (c) => c.select('id', 'userId', 'role'))
+      .first()
+
+    if (!playlist) {
+      return { playlist: null, canView: false, canEdit: false, isOwner: false, role: null }
+    }
+
+    const isOwner = playlist.userId === userId
+    const collab = (playlist.collaborators as any[])?.find((c: any) => c.userId === userId)
+    const role: 'OWNER' | 'EDITOR' | 'VIEWER' | null = isOwner
+      ? 'OWNER'
+      : collab
+      ? (collab.role as 'EDITOR' | 'VIEWER')
+      : null
+
+    const canEdit = isOwner || role === 'EDITOR'
+    const canView = isOwner || !!role || !playlist.isPrivate
+
+    return {
+      playlist,
+      canView,
+      canEdit,
+      isOwner,
+      role,
+    }
+  }
+
+  /**
+   * List custom playlists belonging to the user or where user is a collaborator.
    */
   public static async listPlaylists(userId: string, query?: ListPlaylistsQuery) {
     const page = Math.max(1, Number(query?.page ?? 1))
     const limit = Math.max(1, Math.min(100, Number(query?.limit ?? 20)))
     const skip = (page - 1) * limit
 
-    let q = prisma.orm.public.CustomList.where({ userId })
+    // Find lists where user is a collaborator
+    const collabRecords = await prisma.orm.public.CustomListCollaborator
+      .where({ userId })
+      .all()
+    const collabListIds = collabRecords.map((c: any) => c.listId)
+    const collabRoleMap = new Map<string, string>(
+      collabRecords.map((c: any) => [c.listId, c.role])
+    )
+
+    let q = prisma.orm.public.CustomList
+    if (collabListIds.length > 0) {
+      q = q.where((cl) => or(cl.userId.eq(userId), cl.id.in(collabListIds)))
+    } else {
+      q = q.where({ userId })
+    }
+
     if (query?.q) {
       q = q.where((cl) => cl.name.ilike(`%${query.q!.trim()}%`))
     }
@@ -88,13 +149,78 @@ export class BorealisPlaylistsServ {
           (cl) => cl.order.asc(),
           (cl) => cl.createdAt.desc(),
         ])
+        .include('user', (u) => u.select('id', 'username', 'customization'))
         .include('entries', (e) => e.count())
         .all(),
     ])
 
+    const playlistIds = playlists.map((p: any) => p.id)
+    const coversMap = new Map<string, string[]>()
+
+    if (playlistIds.length > 0) {
+      try {
+        const topEntries = await prisma.orm.public.CustomListEntry
+          .where((cle) => cle.listId.in(playlistIds))
+          .orderBy((cle) => cle.order.asc())
+          .include('anime', (a) => a.select('coverImage'))
+          .include('manga', (m) => m.select('coverImage'))
+          .include('movie', (m) => m.select('coverImage'))
+          .include('tv', (t) => t.select('coverImage'))
+          .include('game', (g) => g.select('coverImage'))
+          .include('book', (b) => b.select('coverImage'))
+          .include('music', (mu) => mu.select('coverImage'))
+          .all()
+
+        for (const entry of topEntries) {
+          const cover =
+            (entry as any).anime?.coverImage ||
+            (entry as any).manga?.coverImage ||
+            (entry as any).movie?.coverImage ||
+            (entry as any).tv?.coverImage ||
+            (entry as any).game?.coverImage ||
+            (entry as any).book?.coverImage ||
+            (entry as any).music?.coverImage ||
+            null
+
+          if (cover) {
+            const list = coversMap.get((entry as any).listId) || []
+            if (list.length < 5) {
+              list.push(cover)
+              coversMap.set((entry as any).listId, list)
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[PlaylistsServ] Failed to fetch top entries for covers:', err)
+      }
+    }
+
+    let containing = new Set<string>()
+    if (query?.mediaType && query?.mediaId && playlists.length > 0) {
+      const mType = String(query.mediaType).toUpperCase() as MediaType
+      const mId = Number(query.mediaId)
+      const entries = await prisma.orm.public.CustomListEntry
+        .where({ mediaType: mType, mediaId: mId })
+        .all()
+      const ids = new Set(playlists.map((p: any) => p.id))
+      containing = new Set(
+        entries.map((e: any) => e.listId).filter((id: string) => ids.has(id))
+      )
+    }
+    const checkMembership = Boolean(query?.mediaType && query?.mediaId)
+
     return {
       success: true,
-      playlists: playlists.map((p) => formatPlaylist(p)),
+      playlists: playlists.map((p: any) => {
+        const isOwner = p.userId === userId
+        const role = isOwner ? 'OWNER' : (collabRoleMap.get(p.id) || 'VIEWER')
+        const owner = formatUser(p.user)
+
+        return {
+          ...formatPlaylist(p, undefined, role, isOwner, owner, coversMap.get(p.id) || []),
+          ...(checkMembership ? { containsMedia: containing.has(p.id) } : {}),
+        }
+      }),
       pagination: {
         page,
         limit,
@@ -132,15 +258,27 @@ export class BorealisPlaylistsServ {
       order: body.order ?? 0,
     })
 
+    // Log activity
+    prisma.orm.public.ActivityLog.create({
+      userId,
+      type: 'CUSTOM_LIST_CREATED',
+      title: name,
+      metadata: {
+        customListId: created.id,
+        listName: name,
+        action: 'LIST_CREATED',
+      },
+    }).catch(() => {})
+
     return {
       success: true,
       message: 'Playlist created successfully',
-      playlist: formatPlaylist(created, 0),
+      playlist: formatPlaylist(created, 0, 'OWNER', true),
     }
   }
 
   /**
-   * Update details of an existing playlist owned by user.
+   * Update details of an existing playlist (owner or editor).
    */
   public static async updatePlaylist(
     userId: string,
@@ -153,13 +291,12 @@ export class BorealisPlaylistsServ {
       order?: number
     }
   ) {
-    const existing = await prisma.orm.public.CustomList
-      .where({ id: playlistId, userId })
-      .include('entries', (e) => e.count())
-      .first()
-
-    if (!existing) {
+    const access = await this.getPlaylistAccess(playlistId, userId)
+    if (!access.playlist) {
       throw new NotFound(`Playlist with ID ${playlistId} not found`)
+    }
+    if (!access.canEdit) {
+      throw new Forbidden('You do not have permission to edit this playlist')
     }
 
     const updateData: any = {}
@@ -169,7 +306,13 @@ export class BorealisPlaylistsServ {
       updateData.name = trimmed
     }
     if (body.description !== undefined) updateData.description = body.description
-    if (body.isPrivate !== undefined) updateData.isPrivate = Boolean(body.isPrivate)
+    if (body.isPrivate !== undefined) {
+      // Only owner can change privacy
+      if (!access.isOwner) {
+        throw new Forbidden('Only the list owner can change playlist privacy')
+      }
+      updateData.isPrivate = Boolean(body.isPrivate)
+    }
     if (body.coverImage !== undefined) updateData.coverImage = body.coverImage
     if (body.order !== undefined) updateData.order = Number(body.order)
 
@@ -177,26 +320,31 @@ export class BorealisPlaylistsServ {
       .where({ id: playlistId })
       .update(updateData)
 
-    const entriesCount =
-      typeof existing.entries === 'number' ? existing.entries : 0
+    const count = await prisma.orm.public.CustomListEntry
+      .where({ listId: playlistId })
+      .all()
 
     return {
       success: true,
       message: 'Playlist updated successfully',
-      playlist: formatPlaylist(updated, entriesCount),
+      playlist: formatPlaylist(updated, count.length, access.role || 'EDITOR', access.isOwner),
     }
   }
 
   /**
-   * Delete a playlist owned by user.
+   * Delete a playlist (strictly owner only).
    */
   public static async deletePlaylist(userId: string, playlistId: string) {
     const existing = await prisma.orm.public.CustomList
-      .where({ id: playlistId, userId })
+      .where({ id: playlistId })
       .first()
 
     if (!existing) {
       throw new NotFound(`Playlist with ID ${playlistId} not found`)
+    }
+
+    if (existing.userId !== userId) {
+      throw new Forbidden('Only the list owner can delete this playlist')
     }
 
     await prisma.orm.public.CustomList.where({ id: playlistId }).delete()
@@ -215,19 +363,15 @@ export class BorealisPlaylistsServ {
     playlistId: string,
     query?: GetEntriesQuery
   ) {
-    const playlist = await prisma.orm.public.CustomList
-      .where({ id: playlistId })
-      .include('entries', (e) => e.count())
-      .first()
-
-    if (!playlist) {
+    const access = await this.getPlaylistAccess(playlistId, userId)
+    if (!access.playlist) {
       throw new NotFound(`Playlist with ID ${playlistId} not found`)
     }
-
-    // Access control: private playlists can only be viewed by the owner
-    if (playlist.isPrivate && playlist.userId !== userId) {
+    if (!access.canView) {
       throw new Forbidden('Access to this playlist is denied')
     }
+
+    const playlist = access.playlist
 
     const page = Math.max(1, Number(query?.page ?? 1))
     const limit = Math.max(1, Math.min(100, Number(query?.limit ?? 40)))
@@ -339,9 +483,6 @@ export class BorealisPlaylistsServ {
         .all(),
     ])
 
-    const entriesCount =
-      typeof playlist.entries === 'number' ? playlist.entries : 0
-
     return {
       success: true,
       playlist: {
@@ -350,7 +491,9 @@ export class BorealisPlaylistsServ {
         description: playlist.description ?? null,
         isPrivate: playlist.isPrivate,
         coverImage: playlist.coverImage ?? null,
-        entriesCount,
+        entriesCount: total,
+        role: access.role || 'VIEWER',
+        isOwner: access.isOwner,
       },
       items: entries.map((item) => {
         const media =
@@ -379,7 +522,7 @@ export class BorealisPlaylistsServ {
   }
 
   /**
-   * Add a media entry to the playlist.
+   * Add a media entry to the playlist (owner or editor).
    */
   public static async addPlaylistEntry(
     userId: string,
@@ -391,12 +534,12 @@ export class BorealisPlaylistsServ {
       customNotes?: string | null
     }
   ) {
-    const playlist = await prisma.orm.public.CustomList
-      .where({ id: playlistId, userId })
-      .first()
-
-    if (!playlist) {
+    const access = await this.getPlaylistAccess(playlistId, userId)
+    if (!access.playlist) {
       throw new NotFound(`Playlist with ID ${playlistId} not found`)
+    }
+    if (!access.canEdit) {
+      throw new Forbidden('You do not have permission to add entries to this playlist')
     }
 
     const mediaType = body.mediaType.toUpperCase() as MediaType
@@ -429,7 +572,7 @@ export class BorealisPlaylistsServ {
         .update({
           order,
           ...(body.customNotes !== undefined
-            ? { customNotes: encryptNotes(body.customNotes, userId) }
+            ? { customNotes: body.customNotes }
             : {}),
         })
     } else {
@@ -439,7 +582,7 @@ export class BorealisPlaylistsServ {
         mediaId,
         order,
         customNotes: body.customNotes
-          ? encryptNotes(body.customNotes, userId)
+          ? body.customNotes
           : null,
         animeId: mediaType === 'ANIME' ? mediaId : null,
         mangaId: mediaType === 'MANGA' ? mediaId : null,
@@ -450,6 +593,19 @@ export class BorealisPlaylistsServ {
         musicId: isMusic ? mediaId : null,
       })
     }
+
+    // Record activity
+    prisma.orm.public.ActivityLog.create({
+      userId,
+      type: 'LIST_ITEM_ADDED',
+      mediaType,
+      mediaId,
+      metadata: {
+        customListId: playlistId,
+        listName: access.playlist.name,
+        action: 'ENTRY_ADDED',
+      },
+    }).catch(() => {})
 
     return {
       success: true,
@@ -473,12 +629,12 @@ export class BorealisPlaylistsServ {
       reorder?: Array<{ id: string; order: number }>
     }
   ) {
-    const playlist = await prisma.orm.public.CustomList
-      .where({ id: playlistId, userId })
-      .first()
-
-    if (!playlist) {
+    const access = await this.getPlaylistAccess(playlistId, userId)
+    if (!access.playlist) {
       throw new NotFound(`Playlist with ID ${playlistId} not found`)
+    }
+    if (!access.canEdit) {
+      throw new Forbidden('You do not have permission to modify entries in this playlist')
     }
 
     // Handle batch reorder
@@ -518,7 +674,7 @@ export class BorealisPlaylistsServ {
     const updateData: any = {}
     if (body.order !== undefined) updateData.order = Number(body.order)
     if (body.customNotes !== undefined)
-      updateData.customNotes = encryptNotes(body.customNotes, userId)
+      updateData.customNotes = body.customNotes
 
     const updated = await prisma.orm.public.CustomListEntry
       .where({ id: entry.id })
@@ -543,12 +699,12 @@ export class BorealisPlaylistsServ {
       mediaId?: number
     }
   ) {
-    const playlist = await prisma.orm.public.CustomList
-      .where({ id: playlistId, userId })
-      .first()
-
-    if (!playlist) {
+    const access = await this.getPlaylistAccess(playlistId, userId)
+    if (!access.playlist) {
       throw new NotFound(`Playlist with ID ${playlistId} not found`)
+    }
+    if (!access.canEdit) {
+      throw new Forbidden('You do not have permission to remove entries from this playlist')
     }
 
     let entry: any = null
@@ -572,9 +728,458 @@ export class BorealisPlaylistsServ {
 
     await prisma.orm.public.CustomListEntry.where({ id: entry.id }).delete()
 
+    // Record activity
+    prisma.orm.public.ActivityLog.create({
+      userId,
+      type: 'LIST_ITEM_REMOVED',
+      mediaType: entry.mediaType,
+      mediaId: entry.mediaId,
+      metadata: {
+        customListId: playlistId,
+        listName: access.playlist.name,
+        action: 'ENTRY_REMOVED',
+      },
+    }).catch(() => {})
+
     return {
       success: true,
       message: 'Entry removed from playlist successfully',
+    }
+  }
+
+  /**
+   * Reorder entries in bulk by passing ordered array of entry IDs.
+   */
+  public static async reorderEntries(userId: string, playlistId: string, entryIds: string[]) {
+    const access = await this.getPlaylistAccess(playlistId, userId)
+    if (!access.playlist) {
+      throw new NotFound(`Playlist with ID ${playlistId} not found`)
+    }
+    if (!access.canEdit) {
+      throw new Forbidden('You do not have permission to reorder this playlist')
+    }
+
+    for (let i = 0; i < entryIds.length; i++) {
+      await prisma.orm.public.CustomListEntry
+        .where({ id: entryIds[i], listId: playlistId })
+        .update({ order: i })
+    }
+
+    prisma.orm.public.ActivityLog.create({
+      userId,
+      type: 'LIST_ITEM_ADDED',
+      metadata: {
+        customListId: playlistId,
+        listName: access.playlist.name,
+        action: 'REORDERED_ENTRIES',
+        count: entryIds.length,
+      },
+    }).catch(() => {})
+
+    return {
+      success: true,
+      message: 'Playlist entries reordered successfully',
+    }
+  }
+
+  /**
+   * List collaborators of a playlist.
+   */
+  public static async listCollaborators(userId: string, playlistId: string) {
+    const access = await this.getPlaylistAccess(playlistId, userId)
+    if (!access.playlist) {
+      throw new NotFound(`Playlist with ID ${playlistId} not found`)
+    }
+    if (!access.canView) {
+      throw new Forbidden('Access denied')
+    }
+
+    const collabs = await prisma.orm.public.CustomListCollaborator
+      .where({ listId: playlistId })
+      .include('user', (u) => u.select('id', 'username', 'customization'))
+      .all()
+
+    return {
+      success: true,
+      collaborators: collabs.map((c: any) => ({
+        id: c.id,
+        userId: c.userId,
+        role: c.role,
+        createdAt: toDate(c.createdAt).toISOString(),
+        user: formatUser(c.user) || {
+          id: c.userId,
+          username: 'Unknown',
+          displayName: null,
+          avatarUrl: null,
+        },
+      })),
+    }
+  }
+
+  /**
+   * Add a collaborator by username (Owner only).
+   */
+  public static async addCollaborator(
+    userId: string,
+    playlistId: string,
+    body: { username: string; role?: 'EDITOR' | 'VIEWER' }
+  ) {
+    const access = await this.getPlaylistAccess(playlistId, userId)
+    if (!access.playlist) {
+      throw new NotFound(`Playlist with ID ${playlistId} not found`)
+    }
+    if (!access.isOwner) {
+      throw new Forbidden('Only the list owner can add collaborators')
+    }
+
+    const username = body.username.trim()
+    const target = await prisma.orm.public.User
+      .where((u) => u.username.ilike(username))
+      .select('id', 'username', 'customization')
+      .first()
+
+    if (!target) {
+      throw new NotFound(`User @${username} not found`)
+    }
+
+    if (target.id === userId) {
+      throw new BadRequest('You cannot add yourself as a collaborator')
+    }
+
+    const existing = await prisma.orm.public.CustomListCollaborator
+      .where({ listId: playlistId, userId: target.id })
+      .first()
+
+    if (existing) {
+      throw new BadRequest(`@${target.username} is already a collaborator on this list`)
+    }
+
+    const role = body.role || 'EDITOR'
+    const collab = await prisma.orm.public.CustomListCollaborator.create({
+      listId: playlistId,
+      userId: target.id,
+      role,
+    })
+
+    prisma.orm.public.ActivityLog.create({
+      userId,
+      type: 'CUSTOM_LIST_CREATED',
+      metadata: {
+        customListId: playlistId,
+        listName: access.playlist.name,
+        action: 'COLLABORATOR_ADDED',
+        targetUsername: target.username,
+        role,
+      },
+    }).catch(() => {})
+
+    return {
+      success: true,
+      message: `Added @${target.username} as collaborator`,
+      collaborator: {
+        id: collab.id,
+        userId: collab.userId,
+        role: collab.role,
+        createdAt: toDate(collab.createdAt).toISOString(),
+        user: formatUser(target)!,
+      },
+    }
+  }
+
+  /**
+   * Update a collaborator's role (Owner only).
+   */
+  public static async updateCollaborator(
+    userId: string,
+    playlistId: string,
+    collaboratorId: string,
+    role: 'EDITOR' | 'VIEWER'
+  ) {
+    const access = await this.getPlaylistAccess(playlistId, userId)
+    if (!access.playlist) {
+      throw new NotFound(`Playlist with ID ${playlistId} not found`)
+    }
+    if (!access.isOwner) {
+      throw new Forbidden('Only the list owner can update collaborator roles')
+    }
+
+    const collab = await prisma.orm.public.CustomListCollaborator
+      .where({ id: collaboratorId, listId: playlistId })
+      .first()
+
+    if (!collab) {
+      throw new NotFound('Collaborator not found')
+    }
+
+    const updated = await prisma.orm.public.CustomListCollaborator
+      .where({ id: collaboratorId })
+      .update({ role })
+
+    if (!updated) {
+      throw new NotFound('Failed to update collaborator')
+    }
+
+    return {
+      success: true,
+      message: 'Collaborator role updated successfully',
+      collaborator: {
+        id: updated.id,
+        userId: updated.userId,
+        role: updated.role,
+        createdAt: toDate(updated.createdAt).toISOString(),
+      },
+    }
+  }
+
+  /**
+   * Remove a collaborator (Owner or the collaborator leaving).
+   */
+  public static async removeCollaborator(
+    userId: string,
+    playlistId: string,
+    collaboratorId: string
+  ) {
+    const access = await this.getPlaylistAccess(playlistId, userId)
+    if (!access.playlist) {
+      throw new NotFound(`Playlist with ID ${playlistId} not found`)
+    }
+
+    const collab = await prisma.orm.public.CustomListCollaborator
+      .where({ id: collaboratorId, listId: playlistId })
+      .first()
+
+    if (!collab) {
+      throw new NotFound('Collaborator not found')
+    }
+
+    if (!access.isOwner && collab.userId !== userId) {
+      throw new Forbidden('You do not have permission to remove this collaborator')
+    }
+
+    await prisma.orm.public.CustomListCollaborator
+      .where({ id: collaboratorId })
+      .delete()
+
+    return {
+      success: true,
+      message: 'Collaborator removed successfully',
+    }
+  }
+
+  /**
+   * List comments on a custom playlist.
+   */
+  public static async listComments(
+    userId: string,
+    playlistId: string,
+    query?: { page?: number; limit?: number }
+  ) {
+    const access = await this.getPlaylistAccess(playlistId, userId)
+    if (!access.playlist) {
+      throw new NotFound(`Playlist with ID ${playlistId} not found`)
+    }
+    if (!access.canView) {
+      throw new Forbidden('Access denied')
+    }
+
+    const page = Math.max(1, Number(query?.page ?? 1))
+    const limit = Math.max(1, Math.min(50, Number(query?.limit ?? 20)))
+    const skip = (page - 1) * limit
+
+    const commentQ = prisma.orm.public.ListComment.where({ customListId: playlistId })
+
+    const [total, rawComments] = await Promise.all([
+      countOf(commentQ),
+      commentQ
+        .orderBy((c) => c.createdAt.desc())
+        .offset(skip)
+        .limit(limit)
+        .include('author', (u) => u.select('id', 'username', 'customization'))
+        .include('reply', (r) =>
+          r.include('author', (u) => u.select('id', 'username', 'customization'))
+        )
+        .all(),
+    ])
+
+    const comments = rawComments.map((c: any) => ({
+      id: c.id,
+      listOwnerId: c.listOwnerId,
+      customListId: c.customListId,
+      authorId: c.authorId,
+      content: c.content,
+      isSpoiler: c.isSpoiler,
+      createdAt: toDate(c.createdAt).toISOString(),
+      updatedAt: toDate(c.updatedAt).toISOString(),
+      author: formatUser(c.author),
+      reply: c.reply
+        ? {
+            id: c.reply.id,
+            commentId: c.reply.commentId,
+            authorId: c.reply.authorId,
+            content: c.reply.content,
+            createdAt: toDate(c.reply.createdAt).toISOString(),
+            updatedAt: toDate(c.reply.updatedAt).toISOString(),
+            author: formatUser(c.reply.author),
+          }
+        : null,
+    }))
+
+    return {
+      success: true,
+      comments,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1,
+        hasMore: page * limit < total,
+      },
+    }
+  }
+
+  /**
+   * Post a comment on a custom playlist.
+   */
+  public static async createComment(
+    userId: string,
+    playlistId: string,
+    body: { content: string; isSpoiler?: boolean }
+  ) {
+    const access = await this.getPlaylistAccess(playlistId, userId)
+    if (!access.playlist) {
+      throw new NotFound(`Playlist with ID ${playlistId} not found`)
+    }
+    if (!access.canView) {
+      throw new Forbidden('Access denied')
+    }
+
+    const trimmed = body.content.trim()
+    if (!trimmed) {
+      throw new BadRequest('Comment content cannot be empty')
+    }
+
+    const created = await prisma.orm.public.ListComment.create({
+      listOwnerId: access.playlist.userId,
+      customListId: playlistId,
+      mediaType: 'custom',
+      authorId: userId,
+      content: trimmed,
+      isSpoiler: Boolean(body.isSpoiler),
+    })
+
+    const comment = await prisma.orm.public.ListComment
+      .where({ id: created.id })
+      .include('author', (u) => u.select('id', 'username', 'customization'))
+      .first()
+
+    return {
+      success: true,
+      comment: {
+        id: comment!.id,
+        listOwnerId: comment!.listOwnerId,
+        customListId: comment!.customListId,
+        authorId: comment!.authorId,
+        content: comment!.content,
+        isSpoiler: comment!.isSpoiler,
+        createdAt: toDate(comment!.createdAt).toISOString(),
+        updatedAt: toDate(comment!.updatedAt).toISOString(),
+        author: formatUser((comment as any).author),
+        reply: null,
+      },
+    }
+  }
+
+  /**
+   * Delete a comment on a custom playlist.
+   */
+  public static async deleteComment(
+    user: { id: string; permissions: number[] },
+    playlistId: string,
+    commentId: string
+  ) {
+    const access = await this.getPlaylistAccess(playlistId, user.id)
+    if (!access.playlist) {
+      throw new NotFound(`Playlist with ID ${playlistId} not found`)
+    }
+
+    const comment = await prisma.orm.public.ListComment
+      .where({ id: commentId, customListId: playlistId })
+      .first()
+
+    if (!comment) {
+      throw new NotFound('Comment not found')
+    }
+
+    const isAuthor = comment.authorId === user.id
+    const isOwner = access.isOwner
+    const isAdmin = new IRISBitField(user.permissions).has(IRISFlags.ADMINISTRATOR)
+
+    if (!isAuthor && !isOwner && !isAdmin) {
+      throw new Forbidden('You do not have permission to delete this comment')
+    }
+
+    await prisma.orm.public.ListComment.where({ id: comment.id }).delete()
+
+    return {
+      success: true,
+      message: 'Comment deleted successfully',
+    }
+  }
+
+  /**
+   * Get chronological activity log for a custom playlist.
+   */
+  public static async listActivity(userId: string, playlistId: string) {
+    const access = await this.getPlaylistAccess(playlistId, userId)
+    if (!access.playlist) {
+      throw new NotFound(`Playlist with ID ${playlistId} not found`)
+    }
+    if (!access.canView) {
+      throw new Forbidden('Access denied')
+    }
+
+    const recentLogs = await prisma.orm.public.ActivityLog
+      .orderBy((a) => a.createdAt.desc())
+      .limit(200)
+      .include('user', (u) => u.select('id', 'username', 'customization'))
+      .all()
+
+    const listLogs = recentLogs
+      .filter((l: any) => l.metadata && (l.metadata as any).customListId === playlistId)
+      .map((l: any) => ({
+        id: l.id,
+        type: l.type,
+        user: formatUser(l.user) || {
+          id: l.userId,
+          username: 'Unknown',
+          displayName: null,
+          avatarUrl: null,
+        },
+        content: l.content ?? null,
+        metadata: l.metadata ?? null,
+        createdAt: toDate(l.createdAt).toISOString(),
+      }))
+
+    // If no explicit logs yet, show playlist creation event as initial activity
+    if (listLogs.length === 0) {
+      listLogs.push({
+        id: `created-${access.playlist.id}`,
+        type: 'CUSTOM_LIST_CREATED',
+        user: formatUser(access.playlist.user) || {
+          id: access.playlist.userId,
+          username: 'Owner',
+          displayName: null,
+          avatarUrl: null,
+        },
+        content: `Created playlist "${access.playlist.name}"`,
+        metadata: { action: 'LIST_CREATED', listName: access.playlist.name },
+        createdAt: toDate(access.playlist.createdAt).toISOString(),
+      })
+    }
+
+    return {
+      success: true,
+      activity: listLogs,
     }
   }
 }

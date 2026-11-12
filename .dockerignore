@@ -61,6 +61,11 @@ Thumbs.db
 # CI/CD & Compose
 .drone.yml
 docker-compose*.yml
+core-config
+plugins
+releases
+uploads
+Docs
 
 # Docs & metadata
 README.md

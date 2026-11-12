@@ -29,7 +29,11 @@ export class GoogleBooksProvider {
   private readonly minDelayMs = 500 // 2 req/s
 
   private getApiKey(): string {
-    return Bun.env.GOOGLE_BOOKS_API_KEY || ''
+    const key = Bun.env.GOOGLE_BOOKS_API_KEY
+    if (!key) {
+      throw new Error('[GoogleBooksProvider] Missing required environment variable: GOOGLE_BOOKS_API_KEY')
+    }
+    return key
   }
 
   private async waitForRateLimit(): Promise<void> {

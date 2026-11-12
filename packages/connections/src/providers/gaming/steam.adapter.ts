@@ -36,7 +36,9 @@ export class SteamAdapter extends BaseConnectionAdapter {
   };
 
   private getSteamApiKey(): string {
-    return Bun.env.STEAM_API_KEY || "";
+    const key = Bun.env.STEAM_API_KEY;
+    if (!key) throw new Error("Missing required environment variable: STEAM_API_KEY");
+    return key;
   }
 
   async getAuthUrl(options: AuthUrlOptions): Promise<AuthUrlResult> {

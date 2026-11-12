@@ -1,20 +1,21 @@
 # Borealis [Media tracker]
     - Stremio plugin for borealis
     - In media pages (anime, manga etc) add tab People in which it will list all users who have that media in list (that is public and media is not private)
-    - Movies are not fetching/saving full data
-   
+    - Link manga list entries to books since its kinda the same
+    - test phone/touch experience with new borealisCard
+
+
+
+    
 # Akaromi [Password manager]
-    - Clicking unlock in the inline fill doesnt open the modal on android
-    - Fix scan QR code (doesnt detect them)
-    - make dashboard page (/), move current / page to /vault
     - password sharing, to another user's vault, by url (one time use / expiry time), custom expiration times
-    - add sensitive notes (content visible on focus/active input)
     
 # Kiroshi [Web search]
     - 
 
 # Carina [Account management]
     - Web extension for managing and using bookmarks
+    - Update login/register pages
 
 
 # Lynx [Discord bot]
@@ -25,7 +26,10 @@
     - Dev tools (floating popup like nextjs has), onclick open sidebar with tools [metadata viewer, send notification, trigger events/workers... ]
     - .md version of every single page
     - mcp server for all the apps
-    - Default banner image for all apps (each different) to be used in server metadata 
+    - Switch to https://github.com/Infisical/infisical for secret management
+    - update docker compose to include all needed services (postgres, redis etc) and already be preconfigured and ready to go
+
+    - migrate to namelessliberty.com
 
 
 # Apertune [Music player]
@@ -65,7 +69,8 @@
 
 # Elysia [Backend powering all this]
     --- Elysia 2 docs https://next.elysiajs.com/at-glance/
-    - disable ws and public route logs (show only in dev)
+
+    - RE existing elysia openapi plugin and create custom version of it
 
 # Next
     - pnpm add @elysia/eden@next if not already
@@ -82,9 +87,16 @@
     - Add support for other list (idk we'll see)
     - detect music button in the player ui (next to borealis icon) to detect currently playing music in the playback
 
+# BorealisReader
+    - cross-platform epub reader
+    - folders
+    - sync reading progress with borealis
+        - when a book is opened, prompt with a search to link it to a borealis entry (if not already)
+        - select on which chapters/page to actually increment progress
+        - when finished reading show a popup to either increment volume or set status to finished
+        - if a folder is linked to entry instead then all books in that folder will be linked to the same entry 
+
 # Akaromi For Firefox
-    - inline fill doesnt filter by detection method
-    - add search ti inline fill which will not filter out by website (just search normally like in the ui)
     - 
 
 # Borealis Extra

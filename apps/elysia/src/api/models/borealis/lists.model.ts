@@ -11,6 +11,18 @@ export const ListStatusSchema = t.Union([
   t.Literal('DROPPED'),
   t.Literal('COMPLETED'),
   t.Literal('PLANNED'),
+  t.Literal('MAYBE'),
+])
+
+/**
+ * Unified entry priority accepted/returned by every list type.
+ * LOW, MEDIUM, HIGH, ULTRA
+ */
+export const EntryPrioritySchema = t.Union([
+  t.Literal('LOW'),
+  t.Literal('MEDIUM'),
+  t.Literal('HIGH'),
+  t.Literal('ULTRA'),
 ])
 
 /**
@@ -64,10 +76,18 @@ export const BorealisListsModel = {
     genre: t.Optional(t.String({ description: 'Filter by genre(s) comma-separated' })),
     year: t.Optional(t.String({ description: 'Filter by release year(s) comma-separated' })),
     mediaStatus: t.Optional(t.String({ description: 'Filter by media status(es) comma-separated' })),
-    sortBy: t.Optional(t.String({ description: 'Sort field (updatedAt, createdAt, score, progress, title)' })),
+    sortBy: t.Optional(t.String({ description: 'Sort field (updatedAt, createdAt, score, progress, title, priority)' })),
     order: t.Optional(t.Union([t.Literal('asc'), t.Literal('desc')], { default: 'desc' })),
     q: t.Optional(t.String({ description: 'Search title within list' })),
     userId: t.Optional(t.String({ description: 'Target user ID (for public profile lists)' })),
+    priority: t.Optional(t.String({ description: 'Filter by priority (LOW, MEDIUM, HIGH, ULTRA) comma-separated' })),
+    privacy: t.Optional(t.String({ description: 'Filter by privacy (public, private)' })),
+    hasNotes: t.Optional(t.String({ description: 'Filter by notes presence (true/false)' })),
+    connection: t.Optional(t.String({ description: 'Filter by connection provider (e.g. anilist, mal, kitsu) comma-separated' })),
+    company: t.Optional(t.String({ description: 'Filter by studio/publisher/developer/label comma-separated' })),
+    season: t.Optional(t.String({ description: 'Filter by season (WINTER, SPRING, SUMMER, FALL) comma-separated' })),
+    country: t.Optional(t.String({ description: 'Filter by origin country comma-separated' })),
+    isAdult: t.Optional(t.String({ description: 'Filter by adult (sfw, nsfw)' })),
   }),
 
   // --- Stats / Filters Query Schema ---
@@ -80,9 +100,18 @@ export const BorealisListsModel = {
     })
   ),
 
+  // --- Watching All Lists Query Schema ---
+  watchingQuery: t.Optional(
+    t.Object({
+      userId: t.Optional(t.String({ description: 'Target user ID' })),
+      limit: t.Optional(t.Numeric({ default: 50, minimum: 1, maximum: 250, description: 'Limit per category' })),
+    })
+  ),
+
   // --- Mutation Body Schemas ---
   animeBody: t.Object({
     status: t.Optional(ListStatusSchema),
+    priority: t.Optional(EntryPrioritySchema),
     progress: t.Optional(t.Number({ minimum: 0, description: 'Episodes watched' })),
     score: t.Optional(t.Nullable(t.Number({ minimum: 0, maximum: 10, description: 'Rating score (0-10)' }))),
     notes: t.Optional(t.Nullable(t.String({ description: 'Personal notes' }))),
@@ -104,6 +133,7 @@ export const BorealisListsModel = {
 
   mangaBody: t.Object({
     status: t.Optional(ListStatusSchema),
+    priority: t.Optional(EntryPrioritySchema),
     chaptersProgress: t.Optional(t.Number({ minimum: 0, description: 'Chapters read' })),
     volumesProgress: t.Optional(t.Number({ minimum: 0, description: 'Volumes read' })),
     score: t.Optional(t.Nullable(t.Number({ minimum: 0, maximum: 10, description: 'Rating score (0-10)' }))),
@@ -127,6 +157,7 @@ export const BorealisListsModel = {
 
   movieBody: t.Object({
     status: t.Optional(ListStatusSchema),
+    priority: t.Optional(EntryPrioritySchema),
     score: t.Optional(t.Nullable(t.Number({ minimum: 0, maximum: 10, description: 'Rating score (0-10)' }))),
     notes: t.Optional(t.Nullable(t.String({ description: 'Personal notes' }))),
     rewatched: t.Optional(t.Number({ minimum: 0, description: 'Rewatch count' })),
@@ -146,6 +177,7 @@ export const BorealisListsModel = {
 
   tvBody: t.Object({
     status: t.Optional(ListStatusSchema),
+    priority: t.Optional(EntryPrioritySchema),
     progress: t.Optional(t.Number({ minimum: 0, description: 'Episodes watched' })),
     score: t.Optional(t.Nullable(t.Number({ minimum: 0, maximum: 10, description: 'Rating score (0-10)' }))),
     notes: t.Optional(t.Nullable(t.String({ description: 'Personal notes' }))),
@@ -167,6 +199,7 @@ export const BorealisListsModel = {
 
   gameBody: t.Object({
     status: t.Optional(ListStatusSchema),
+    priority: t.Optional(EntryPrioritySchema),
     progress: t.Optional(t.Number({ minimum: 0, description: 'Hours or playtime progress' })),
     score: t.Optional(t.Nullable(t.Number({ minimum: 0, maximum: 10, description: 'Rating score (0-10)' }))),
     notes: t.Optional(t.Nullable(t.String({ description: 'Personal notes' }))),
@@ -188,6 +221,7 @@ export const BorealisListsModel = {
 
   bookBody: t.Object({
     status: t.Optional(ListStatusSchema),
+    priority: t.Optional(EntryPrioritySchema),
     progressPages: t.Optional(t.Number({ minimum: 0, description: 'Pages read' })),
     progressChapters: t.Optional(t.Number({ minimum: 0, description: 'Chapters read' })),
     progressVolumes: t.Optional(t.Number({ minimum: 0, description: 'Volumes read' })),
@@ -212,6 +246,7 @@ export const BorealisListsModel = {
 
   musicBody: t.Object({
     status: t.Optional(ListStatusSchema),
+    priority: t.Optional(EntryPrioritySchema),
     score: t.Optional(t.Nullable(t.Number({ minimum: 0, maximum: 10, description: 'Rating score (0-10)' }))),
     playCount: t.Optional(t.Number({ minimum: 0, description: 'Number of times listened' })),
     notes: t.Optional(t.Nullable(t.String({ description: 'Personal notes' }))),
@@ -230,6 +265,7 @@ export const BorealisListsModel = {
 
   otherBody: t.Object({
     status: t.Optional(ListStatusSchema),
+    priority: t.Optional(EntryPrioritySchema),
     progress: t.Optional(t.Number({ minimum: 0, description: 'Single progress value for backwards-compat' })),
     progressValues: t.Optional(t.Any({ description: 'Key-value map of progress values: { [fieldKey]: number }' })),
     score: t.Optional(t.Nullable(t.Number({ minimum: 0, maximum: 10, description: 'Rating score (0-10)' }))),
@@ -257,6 +293,29 @@ export const BorealisListsModel = {
       })
     ),
     pagination: PaginationMetaSchema,
+  }),
+
+  watchingResponse: t.Object({
+    success: t.Boolean(),
+    lists: t.Object({
+      anime: t.Array(t.Object({ entry: t.Any(), media: t.Any() })),
+      tv: t.Array(t.Object({ entry: t.Any(), media: t.Any() })),
+      movie: t.Array(t.Object({ entry: t.Any(), media: t.Any() })),
+      manga: t.Array(t.Object({ entry: t.Any(), media: t.Any() })),
+      game: t.Array(t.Object({ entry: t.Any(), media: t.Any() })),
+      book: t.Array(t.Object({ entry: t.Any(), media: t.Any() })),
+      other: t.Array(t.Object({ entry: t.Any(), media: t.Any() })),
+    }),
+    counts: t.Object({
+      anime: t.Number(),
+      tv: t.Number(),
+      movie: t.Number(),
+      manga: t.Number(),
+      game: t.Number(),
+      book: t.Number(),
+      other: t.Number(),
+      total: t.Number(),
+    }),
   }),
 
   singleResponse: t.Object({
@@ -305,6 +364,14 @@ export const BorealisListsModel = {
     mediaStatuses: t.Optional(t.Array(t.Object({ value: t.String(), count: t.Number() }))),
     genres: t.Array(t.Object({ value: t.String(), count: t.Number() })),
     years: t.Array(t.Object({ value: t.Number(), count: t.Number() })),
+    priorities: t.Optional(t.Any()),
+    connections: t.Optional(t.Any()),
+    companies: t.Optional(t.Any()),
+    seasons: t.Optional(t.Any()),
+    countries: t.Optional(t.Any()),
+    privacyCounts: t.Optional(t.Any()),
+    notesCounts: t.Optional(t.Any()),
+    adultCounts: t.Optional(t.Any()),
   }),
 
   // --- Global List Operations Schemas ---

@@ -55,7 +55,10 @@ export class KiroshiSearchServ {
     }
 
     // 4. Proxy to SearXNG core
-    const searxBase = Bun.env.SEARXNG_URL || 'http://192.168.0.44:4500'
+    const searxBase = Bun.env.SEARXNG_URL
+    if (!searxBase) {
+      throw new Error('Missing required environment variable: SEARXNG_URL')
+    }
     const url = new URL('/search', searxBase)
     url.searchParams.set('q', q)
     url.searchParams.set('format', 'json')
@@ -210,7 +213,10 @@ export class KiroshiSearchServ {
       return { suggestions: cached }
     }
 
-    const searxBase = Bun.env.SEARXNG_URL || 'http://192.168.0.44:4500'
+    const searxBase = Bun.env.SEARXNG_URL
+    if (!searxBase) {
+      throw new Error('Missing required environment variable: SEARXNG_URL')
+    }
     const url = new URL('/autocompleter', searxBase)
     url.searchParams.set('q', q)
 

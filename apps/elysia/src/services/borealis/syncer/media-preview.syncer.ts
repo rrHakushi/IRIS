@@ -373,11 +373,14 @@ export class MediaPreviewSyncer {
     const info = item.volumeInfo || {}
     const titlePrimary = info.title || 'Unknown Book'
     const titleSecondary = info.subtitle || null
-    const coverImage =
+    let coverImage =
       info.imageLinks?.large ||
       info.imageLinks?.medium ||
       info.imageLinks?.thumbnail ||
       null
+    if (coverImage && coverImage.startsWith('http://')) {
+      coverImage = coverImage.replace('http://', 'https://')
+    }
     const authors = info.authors || []
     let releaseDateYear: number | undefined
     if (info.publishedDate) {

@@ -913,3 +913,15 @@
   font-size: 12px;
   margin: 10px 14px 0;
 }
+
+
+/* Sensitive Notes blur when unfocused in editor */
+#edit-general-notes:not(:focus),
+#edit-note-body:not(:focus) {
+  filter: blur(4px);
+  transition: filter 0.15s ease;
+}
+#edit-general-notes:focus,
+#edit-note-body:focus {
+  filter: none;
+}

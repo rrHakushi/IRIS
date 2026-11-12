@@ -1,0 +1,230 @@
+{
+  "main": {
+    "id": "94f304ed7fa45d9b",
+    "type": "split",
+    "children": [
+      {
+        "id": "dfeb4ebdeede563b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "5339bc15b0f10c68",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Getting Started.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Getting Started"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "e11ac9d96f10839f",
+    "type": "split",
+    "children": [
+      {
+        "id": "56895248018cbff2",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "0506bbc6cb500299",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "db7a151679d9ac08",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "2b9d3bc45b8d1d1f",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "459b38970b367b10",
+    "type": "split",
+    "children": [
+      {
+        "id": "ffdbe8ce0951842c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "f21817178646c9a2",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks"
+            }
+          },
+          {
+            "id": "366deb7779bbc112",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "75a6b14a90725b06",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "149eec67c129c3e3",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "8705202e17872558",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false,
+      "obsidian-excalidraw-plugin:New drawing": false,
+      "obsidian-kanban:Create new board": false
+    }
+  },
+  "active": "5339bc15b0f10c68",
+  "lastOpenFiles": [
+    "New api.md",
+    "plugins/akaromi-firefox/lib/crypto.md",
+    "plugins/akaromi-firefox/lib/icons.md",
+    "plugins/akaromi-firefox/lib/api.md",
+    "plugins/akaromi-firefox/README.md",
+    "plugins/akaromi-firefox.md",
+    "plugins/akaromi-firefox/popup/js/vault.md",
+    "plugins/akaromi-firefox/popup/js/state.md",
+    "plugins/akaromi-firefox/popup/js/settings.md",
+    "plugins/akaromi-firefox/popup/js/popup.md",
+    "plugins/akaromi-firefox/popup/js/generator.md",
+    "plugins/akaromi-firefox/popup/js/customization.md",
+    "plugins/akaromi-firefox/popup/js/editor.md",
+    "plugins/akaromi-firefox/popup/js/auth.md",
+    "plugins/akaromi-firefox/popup/js",
+    "plugins/akaromi-firefox/popup/popup.md",
+    "plugins/akaromi-firefox/lib/totp.md",
+    "plugins/akaromi-firefox/lib/storage.md",
+    "plugins/akaromi-firefox/lib/qr-decoder.md",
+    "plugins/akaromi-firefox/lib/noble.md",
+    "plugins/akaromi-firefox/lib/matching.md",
+    "plugins/akaromi-firefox/content/passkey-injected.md",
+    "plugins/akaromi-firefox/content/menu.md",
+    "plugins/akaromi-firefox/content/fill.md",
+    "plugins/akaromi-firefox/content/detection.md",
+    "plugins/akaromi-firefox/content/content.md",
+    "plugins/akaromi-firefox/background/vault.md",
+    "plugins/akaromi-firefox/popup",
+    "plugins/akaromi-firefox/lib",
+    "plugins/akaromi-firefox/content",
+    "plugins/akaromi-firefox/background",
+    "plugins/akaromi-firefox",
+    "scripts",
+    "packages",
+    "apps/elysia",
+    "apps/web",
+    "Untitled.canvas"
+  ]
+}

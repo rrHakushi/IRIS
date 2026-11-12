@@ -55,6 +55,9 @@ public class BorealisWebController : ControllerBase
         Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0";
         Response.Headers["Pragma"] = "no-cache";
         Response.Headers["Expires"] = "0";
+        Response.Headers["Access-Control-Allow-Origin"] = "*";
+        Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS";
+        Response.Headers["Access-Control-Allow-Headers"] = "*";
 
         var assembly = Assembly.GetExecutingAssembly();
         using var stream = assembly.GetManifestResourceStream("Jellyfin.Plugin.Borealis.Web.borealis-web-injection.js");
@@ -66,6 +69,17 @@ public class BorealisWebController : ControllerBase
 
         using var reader = new StreamReader(stream, Encoding.UTF8);
         var js = reader.ReadToEnd();
+
+        // Also embed the modal CSS directly into the script execution context so styling is immediate and network/CORS resilient
+        using var cssStream = assembly.GetManifestResourceStream("Jellyfin.Plugin.Borealis.Web.borealis-modal.css");
+        if (cssStream != null)
+        {
+            using var cssReader = new StreamReader(cssStream, Encoding.UTF8);
+            var css = cssReader.ReadToEnd();
+            var escapedCss = System.Text.Json.JsonSerializer.Serialize(css);
+            js = $"window.__BOREALIS_MODAL_CSS__ = {escapedCss};\n" + js;
+        }
+
         return Content(js, "application/javascript", Encoding.UTF8);
     }
 
@@ -82,6 +96,9 @@ public class BorealisWebController : ControllerBase
         Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0";
         Response.Headers["Pragma"] = "no-cache";
         Response.Headers["Expires"] = "0";
+        Response.Headers["Access-Control-Allow-Origin"] = "*";
+        Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS";
+        Response.Headers["Access-Control-Allow-Headers"] = "*";
 
         var assembly = Assembly.GetExecutingAssembly();
         using var stream = assembly.GetManifestResourceStream("Jellyfin.Plugin.Borealis.Web.borealis-modal.css");
@@ -107,6 +124,7 @@ public class BorealisWebController : ControllerBase
     public IActionResult GetIcon()
     {
         Response.Headers["Cache-Control"] = "public, max-age=86400";
+        Response.Headers["Access-Control-Allow-Origin"] = "*";
         var assembly = Assembly.GetExecutingAssembly();
         var stream = assembly.GetManifestResourceStream("Jellyfin.Plugin.Borealis.thumb.png");
         if (stream == null)
@@ -471,5 +489,18 @@ public class BorealisWebController : ControllerBase
     {
         var count = await _mappingStore.RemoveAllMappingsAsync(userId).ConfigureAwait(false);
         return Ok(new { success = true, count });
+    }
+
+    /// <summary>
+    /// Handles CORS preflight requests for any Borealis plugin API route.
+    /// </summary>
+    [HttpOptions("{*path}")]
+    [AllowAnonymous]
+    public IActionResult PreflightOptions()
+    {
+        Response.Headers["Access-Control-Allow-Origin"] = "*";
+        Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS";
+        Response.Headers["Access-Control-Allow-Headers"] = "*";
+        return Ok();
     }
 }

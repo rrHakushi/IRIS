@@ -1,0 +1,2424 @@
+"use client"
+
+import React, { useMemo, useRef } from "react"
+import Link from "next/link"
+import {
+  IconArrowRight,
+  IconBuildingCommunity,
+  IconCalendarEvent,
+  IconChartBar,
+  IconChevronLeft,
+  IconChevronRight,
+  IconClock,
+  IconCpu,
+  IconDeviceTv,
+  IconDisc,
+  IconExternalLink,
+  IconFlame,
+  IconHash,
+  IconHeartFilled,
+  IconInfoCircle,
+  IconLanguage,
+  IconLink,
+  IconPhotoOff,
+  IconSparkles,
+  IconStarFilled,
+  IconTrophy,
+  IconWorld,
+  IconMicrophone,
+  IconPlayerPlay,
+  IconPlayerPause,
+} from "@tabler/icons-react"
+import { Badge } from "@workspace/ui/components/badge"
+import { Button, buttonVariants } from "@workspace/ui/components/button"
+import { cn } from "@workspace/ui/lib/utils"
+import { useUser } from "@/context/user-context"
+import {
+  getMediaPreferences,
+  parseMalThemeSong,
+  getDeezerFallbackSearchUrl,
+} from "@IRIS/shared"
+import { formatMediaTitle } from "@/lib/browse-search"
+import { getMediaDetailHref } from "@/lib/media-routes"
+import type {
+  CharacterItem,
+  NormalizedMediaData,
+  RelationItem,
+  SimilarMediaCardItem,
+  ThemeSongItem,
+} from "../media-types"
+import { MusicTracklist } from "../music/music-tracklist"
+import { MusicPlayerPreview } from "../music/music-player-preview"
+import { MusicLyrics } from "../music/music-lyrics"
+import { BorealisCard, BorealisCardGroup } from "@Runa/borealis"
+
+interface OverviewTabProps {
+  media: NormalizedMediaData
+  similarList: SimilarMediaCardItem[]
+  onViewAllCharacters?: () => void
+  onViewAllTracks?: () => void
+  onViewAllLyrics?: () => void
+}
+
+export function OverviewTab({
+  media,
+  similarList,
+  onViewAllCharacters,
+  onViewAllTracks,
+  onViewAllLyrics,
+}: OverviewTabProps) {
+  const { user } = useUser()
+  const titlePref = getMediaPreferences(user?.customization).title || "primary"
+
+  const artistDisplay =
+    typeof media.artist === "object" && media.artist !== null
+      ? (media.artist as any).namePrimary
+      : typeof media.artist === "string"
+        ? media.artist
+        : null
+
+  const albumDisplay =
+    typeof media.album === "object" && media.album !== null
+      ? (media.album as any).titlePrimary
+      : typeof media.album === "string"
+        ? media.album
+        : null
+
+  const similarScrollRef = useRef<HTMLDivElement>(null)
+  const similarListItems = useMemo(
+    () => similarList.slice(0, 24),
+    [similarList]
+  )
+
+  const scrollSimilar = (direction: "left" | "right") => {
+    if (similarScrollRef.current) {
+      const scrollAmount =
+        direction === "left"
+          ? -similarScrollRef.current.clientWidth
+          : similarScrollRef.current.clientWidth
+      similarScrollRef.current.scrollBy({
+        left: scrollAmount,
+        behavior: "smooth",
+      })
+    }
+  }
+
+  // Top 16 characters prioritized by MAIN, with native/first available VA
+  const featuredCharacters = useMemo(() => {
+    const isAnime = media.category === "anime"
+
+    // Group character items by characterId to aggregate all voice actors for each character
+    const charMap = new Map<
+      number,
+      {
+        character: CharacterItem
+        japaneseEntry: CharacterItem | null
+        firstEntry: CharacterItem | null
+      }
+    >()
+
+    for (const item of media.characters) {
+      let existing = charMap.get(item.characterId)
+      if (!existing) {
+        existing = {
+          character: item,
+          japaneseEntry: null,
+          firstEntry: null,
+        }
+        charMap.set(item.characterId, existing)
+      }
+
+      if (item.actor) {
+        const lang = item.actor.language?.trim().toLowerCase()
+        const isJapanese =
+          lang === "japanese" ||
+          lang === "ja" ||
+          lang === "jpn" ||
+          (lang ? lang.includes("japanese") : false)
+
+        if (isJapanese && !existing.japaneseEntry) {
+          existing.japaneseEntry = item
+        }
+        if (!existing.firstEntry) {
+          existing.firstEntry = item
+        }
+      }
+    }
+
+    // Build unique character list
+    const uniqueList: CharacterItem[] = []
+    for (const { character, japaneseEntry, firstEntry } of charMap.values()) {
+      if (isAnime) {
+        // For anime: show Japanese voice actor if available, otherwise first available voice actor or fallback
+        const entryToUse = japaneseEntry ?? firstEntry ?? character
+        uniqueList.push({
+          ...entryToUse,
+          actor: entryToUse.actor ?? null,
+        })
+      } else {
+        // For other media (movies, TV, etc.): use the actor on the character entry or first available actor
+        const entryToUse = character.actor ? character : (firstEntry ?? character)
+        uniqueList.push(entryToUse)
+      }
+    }
+
+    // Sort: MAIN first, characters with actor, then by order
+    uniqueList.sort((a, b) => {
+      if (a.role === "MAIN" && b.role !== "MAIN") return -1
+      if (b.role === "MAIN" && a.role !== "MAIN") return 1
+
+      const aHasActor = a.actor ? 1 : 0
+      const bHasActor = b.actor ? 1 : 0
+      if (aHasActor !== bHasActor) return bHasActor - aHasActor
+
+      return (a.order ?? 999) - (b.order ?? 999)
+    })
+
+    return uniqueList.slice(0, 16)
+  }, [media.characters, media.category])
+
+  // Parse description cleanly
+  const cleanDescription = useMemo(() => {
+    if (!media.description) return null
+    return media.description
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<[^>]*>/g, "")
+      .trim()
+  }, [media.description])
+
+  // Helper to format full dates
+  const formatFullDate = (
+    year?: number | null,
+    month?: number | null,
+    day?: number | null
+  ) => {
+    if (!year) return null
+    if (!month) return `${year}`
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ]
+    const monthStr = monthNames[month - 1] || `${month}`
+    if (!day) return `${monthStr} ${year}`
+    return `${monthStr} ${day}, ${year}`
+  }
+
+  const startDateFormatted = formatFullDate(
+    media.startDateYear,
+    media.startDateMonth,
+    media.startDateDay
+  )
+  const endDateFormatted = formatFullDate(
+    media.endDateYear,
+    media.endDateMonth,
+    media.endDateDay
+  )
+
+  const airedRange = useMemo(() => {
+    if (
+      media.category === "movies" ||
+      media.category === "games" ||
+      media.category === "books" ||
+      media.format === "MOVIE" ||
+      media.format === "GAME" ||
+      media.format === "BOOK"
+    ) {
+      return startDateFormatted ?? null
+    }
+    if (startDateFormatted && endDateFormatted) {
+      return `${startDateFormatted} to ${endDateFormatted}`
+    }
+    if (startDateFormatted) {
+      if (
+        media.status?.toUpperCase() === "FINISHED" ||
+        media.status?.toUpperCase() === "RELEASED" ||
+        media.status?.toUpperCase() === "PUBLISHED"
+      ) {
+        return startDateFormatted
+      }
+      return `${startDateFormatted} to ?`
+    }
+    return null
+  }, [
+    media.category,
+    media.format,
+    media.status,
+    startDateFormatted,
+    endDateFormatted,
+  ])
+
+  const opSongs = media.themeSongs?.op ?? []
+  const edSongs = media.themeSongs?.ed ?? []
+  const hasThemeSongs = opSongs.length > 0 || edSongs.length > 0
+
+  // Theme songs 30s audio preview playback state
+  const [playingThemeAudio, setPlayingThemeAudio] = React.useState<
+    string | null
+  >(null)
+  const themeAudioRef = React.useRef<HTMLAudioElement | null>(null)
+
+  React.useEffect(() => {
+    return () => {
+      if (themeAudioRef.current) {
+        themeAudioRef.current.pause()
+        themeAudioRef.current = null
+      }
+    }
+  }, [])
+
+  const handleToggleThemeAudio = React.useCallback(
+    (audioUrl: string | null) => {
+      if (!audioUrl) return
+
+      if (playingThemeAudio === audioUrl) {
+        if (themeAudioRef.current) {
+          themeAudioRef.current.pause()
+        }
+        setPlayingThemeAudio(null)
+      } else {
+        if (themeAudioRef.current) {
+          themeAudioRef.current.pause()
+        }
+        const audio = new Audio(audioUrl)
+        themeAudioRef.current = audio
+        setPlayingThemeAudio(audioUrl)
+        audio.play().catch(() => {
+          setPlayingThemeAudio(null)
+        })
+        audio.addEventListener("ended", () => {
+          setPlayingThemeAudio(null)
+        })
+      }
+    },
+    [playingThemeAudio]
+  )
+
+  // Studios breakdown
+  const animationStudios = media.studios
+    .filter((s) => s.studio.isAnimationStudio || s.isMain)
+    .map((s) => s.studio)
+
+  const producerStudios = media.studios
+    .filter((s) => !s.studio.isAnimationStudio && !s.isMain)
+    .map((s) => s.studio)
+
+  const isReleasing = media.status?.toUpperCase() === "RELEASING"
+
+  // Resolve next airing episode if status is releasing:
+  // If nextAiringDate is older than current date/time say "airing now", if older than 1 day, show when next episode
+  const nextAiring = useMemo(() => {
+    if (!isReleasing) return null
+
+    const now = Date.now()
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000
+
+    const evaluateCandidate = (
+      epNum: number,
+      dateVal: string | Date | null | undefined
+    ) => {
+      if (!dateVal)
+        return { episodeNumber: epNum, date: null, isAiringNow: false }
+      const d = new Date(dateVal)
+      if (isNaN(d.getTime()))
+        return { episodeNumber: epNum, date: null, isAiringNow: false }
+
+      const diff = now - d.getTime()
+
+      // If older than 1 day, it has already passed: move on to the next episode
+      if (diff >= ONE_DAY_MS) {
+        return null
+      }
+
+      // If older than current time (< 1 day old), it's currently airing
+      if (diff >= 0) {
+        return {
+          episodeNumber: epNum,
+          date: d,
+          isAiringNow: true,
+        }
+      }
+
+      // In the future
+      return {
+        episodeNumber: epNum,
+        date: d,
+        isAiringNow: false,
+      }
+    }
+
+    // 1. Direct nextAiringEpisodeNumber & nextAiringAt
+    if (media.nextAiringEpisodeNumber && media.nextAiringAt) {
+      const candidate = evaluateCandidate(
+        media.nextAiringEpisodeNumber,
+        media.nextAiringAt
+      )
+      if (candidate) {
+        return candidate
+      }
+      // If direct next airing is older than 1 day, fall through to dig up the actual next episode
+    }
+
+    // 2. Dig up from airingSchedule by current date
+    if (media.airingSchedule && media.airingSchedule.length > 0) {
+      const sortedSchedule = media.airingSchedule
+        .slice()
+        .sort((a, b) => a.episodeNumber - b.episodeNumber)
+
+      // First check if an episode is "airing now" (aired within the last 24h)
+      const airingNowItem = sortedSchedule.find((item) => {
+        const t = new Date(item.airingAt).getTime()
+        if (isNaN(t)) return false
+        const diff = now - t
+        return diff >= 0 && diff < ONE_DAY_MS
+      })
+
+      if (airingNowItem) {
+        return {
+          episodeNumber: airingNowItem.episodeNumber,
+          date: new Date(airingNowItem.airingAt),
+          isAiringNow: true,
+        }
+      }
+
+      // Otherwise find the first upcoming episode strictly in the future (airingAt > now)
+      const futureItem = sortedSchedule.find((item) => {
+        const t = new Date(item.airingAt).getTime()
+        return !isNaN(t) && t > now
+      })
+
+      if (futureItem) {
+        return {
+          episodeNumber: futureItem.episodeNumber,
+          date: new Date(futureItem.airingAt),
+          isAiringNow: false,
+        }
+      }
+    }
+
+    // 3. Dig up from episodes airDate
+    if (media.episodes && media.episodes.length > 0) {
+      const sortedEps = media.episodes
+        .filter((ep) => ep.airDate)
+        .sort((a, b) => a.number - b.number)
+
+      const airingNowEp = sortedEps.find((ep) => {
+        const t = new Date(ep.airDate!).getTime()
+        if (isNaN(t)) return false
+        const diff = now - t
+        return diff >= 0 && diff < ONE_DAY_MS
+      })
+
+      if (airingNowEp) {
+        return {
+          episodeNumber: airingNowEp.number,
+          date: new Date(airingNowEp.airDate!),
+          isAiringNow: true,
+        }
+      }
+
+      const futureEp = sortedEps.find((ep) => {
+        const t = new Date(ep.airDate!).getTime()
+        return !isNaN(t) && t > now
+      })
+
+      if (futureEp) {
+        return {
+          episodeNumber: futureEp.number,
+          date: new Date(futureEp.airDate!),
+          isAiringNow: false,
+        }
+      }
+
+      // 4. Fallback: next episode after current highest
+      const maxEp = Math.max(...media.episodes.map((e) => e.number))
+      return {
+        episodeNumber: maxEp + 1,
+        date: null,
+        isAiringNow: false,
+      }
+    }
+
+    return null
+  }, [
+    isReleasing,
+    media.nextAiringEpisodeNumber,
+    media.nextAiringAt,
+    media.airingSchedule,
+    media.episodes,
+  ])
+
+  const formatTimeUntil = (targetDate: Date) => {
+    const diffMs = targetDate.getTime() - Date.now()
+    if (diffMs <= 0) return "Airing now"
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+    const days = Math.floor(diffHours / 24)
+    const hours = diffHours % 24
+    if (days > 0) {
+      return `in ${days}d ${hours}h`
+    }
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+    return `in ${hours}h ${minutes}m`
+  }
+
+  const formatCurrency = (val: number | bigint | string | null | undefined) => {
+    if (val === null || val === undefined) return null
+    const num =
+      typeof val === "bigint"
+        ? Number(val)
+        : typeof val === "string"
+          ? parseFloat(val)
+          : val
+    if (isNaN(num) || num <= 0) return null
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(num)
+  }
+
+  const formatLanguage = (langCode: string | null | undefined) => {
+    if (!langCode) return null
+    try {
+      const name = new Intl.DisplayNames(["en"], { type: "language" }).of(
+        langCode
+      )
+      return name
+        ? `${name} (${langCode.toUpperCase()})`
+        : langCode.toUpperCase()
+    } catch {
+      return langCode.toUpperCase()
+    }
+  }
+
+  const formatCountry = (countryCode: string | null | undefined) => {
+    if (!countryCode) return null
+    try {
+      const name = new Intl.DisplayNames(["en"], { type: "region" }).of(
+        countryCode
+      )
+      return name
+        ? `${name} (${countryCode.toUpperCase()})`
+        : countryCode.toUpperCase()
+    } catch {
+      return countryCode.toUpperCase()
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-10">
+      {/* 1. Main Column (Synopsis, Characters, Themes, Relations, Similar) + Narrow Right-Aligned Sidebar */}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_260px]">
+        {/* Main Column */}
+        <div className="flex min-w-0 flex-col gap-8">
+          {/* Next Airing Episode Highlight Banner if status is Releasing */}
+          {isReleasing && nextAiring && (
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 shadow-xs sm:px-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs">
+                  <IconClock className="size-5" aria-hidden="true" />
+                </div>
+                <div className="flex min-w-0 flex-col">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-foreground">
+                      Episode {nextAiring.episodeNumber}
+                      {nextAiring.isAiringNow && " - Airing now"}
+                    </span>
+                    {!nextAiring.isAiringNow && (
+                      <Badge
+                        variant="outline"
+                        className="h-4 border-emerald-500/40 px-1.5 py-0 text-[10px] font-bold tracking-wider text-emerald-600 uppercase dark:text-emerald-400"
+                      >
+                        Airing Next
+                      </Badge>
+                    )}
+                  </div>
+                  {nextAiring.date && (
+                    <span className="text-xs text-muted-foreground">
+                      {nextAiring.isAiringNow
+                        ? `Aired today at ${nextAiring.date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`
+                        : nextAiring.date.toLocaleDateString("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {!nextAiring.isAiringNow && nextAiring.date && (
+                <div className="hidden shrink-0 flex-col items-end text-end sm:flex">
+                  <span className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
+                    Countdown
+                  </span>
+                  <span className="text-xs font-semibold text-emerald-600 tabular-nums dark:text-emerald-400">
+                    {formatTimeUntil(nextAiring.date)}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Synopsis in Card */}
+          <section aria-labelledby="synopsis-heading">
+            <div className="rounded-2xl border border-border/40 bg-card/60 p-4 shadow-xs sm:p-5">
+              <h2
+                id="synopsis-heading"
+                className="mb-2.5 text-base font-semibold text-foreground"
+              >
+                Synopsis
+              </h2>
+              {cleanDescription ? (
+                <p className="text-sm leading-relaxed whitespace-pre-line text-foreground/80">
+                  {cleanDescription}
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground italic">
+                  No synopsis available.
+                </p>
+              )}
+            </div>
+          </section>
+
+          {/* Awards & Accolades */}
+          {media.awards && (
+            <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs shadow-xs">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500">
+                <IconTrophy className="size-5" aria-hidden="true" />
+              </div>
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <span className="text-[11px] font-semibold tracking-wider text-amber-600 text-foreground uppercase dark:text-amber-400">
+                  Awards & Accolades
+                </span>
+                <p className="text-xs leading-relaxed text-foreground/90">
+                  {media.awards}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Game: PC System Requirements */}
+          {media.requirements &&
+            (media.requirements.minimum || media.requirements.recommended) && (
+              <section aria-labelledby="requirements-heading">
+                <div className="flex flex-col gap-3 rounded-2xl border border-border/40 bg-card/60 p-4 shadow-xs sm:p-5">
+                  <div className="flex items-center gap-2">
+                    <IconCpu
+                      className="size-4 text-primary"
+                      aria-hidden="true"
+                    />
+                    <h2
+                      id="requirements-heading"
+                      className="text-base font-semibold text-foreground"
+                    >
+                      System Requirements
+                    </h2>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
+                    {media.requirements.minimum && (
+                      <div className="flex flex-col gap-1.5 rounded-xl border border-border/30 bg-muted/20 p-3 text-xs">
+                        <span className="text-[11px] font-semibold tracking-wider text-foreground text-muted-foreground uppercase">
+                          Minimum
+                        </span>
+                        <div className="text-[11px] leading-relaxed whitespace-pre-line text-muted-foreground select-text">
+                          {typeof media.requirements.minimum === "string"
+                            ? media.requirements.minimum
+                              .replace(/<[^>]*>/g, "")
+                              .trim()
+                            : Object.entries(media.requirements.minimum).map(
+                              ([k, v]) => (
+                                <div
+                                  key={k}
+                                  className="flex justify-between border-b border-border/10 py-0.5"
+                                >
+                                  <span className="font-medium capitalize">
+                                    {k}:
+                                  </span>
+                                  <span className="text-end text-foreground">
+                                    {String(v)}
+                                  </span>
+                                </div>
+                              )
+                            )}
+                        </div>
+                      </div>
+                    )}
+                    {media.requirements.recommended && (
+                      <div className="flex flex-col gap-1.5 rounded-xl border border-border/30 bg-muted/20 p-3 text-xs">
+                        <span className="text-[11px] font-semibold tracking-wider text-foreground text-muted-foreground uppercase">
+                          Recommended
+                        </span>
+                        <div className="text-[11px] leading-relaxed whitespace-pre-line text-muted-foreground select-text">
+                          {typeof media.requirements.recommended === "string"
+                            ? media.requirements.recommended
+                              .replace(/<[^>]*>/g, "")
+                              .trim()
+                            : Object.entries(
+                              media.requirements.recommended
+                            ).map(([k, v]) => (
+                              <div
+                                key={k}
+                                className="flex justify-between border-b border-border/10 py-0.5"
+                              >
+                                <span className="font-medium capitalize">
+                                  {k}:
+                                </span>
+                                <span className="text-end text-foreground">
+                                  {String(v)}
+                                </span>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </section>
+            )}
+
+          {/* Music: Audio Preview Player for Tracks */}
+          {media.category === "music" && media.audioPreviewUrl && (
+            <section
+              aria-labelledby="preview-heading"
+              className="flex flex-col gap-2"
+            >
+              <MusicPlayerPreview
+                audioUrl={media.audioPreviewUrl}
+                title={media.titlePrimary}
+                artist={media.artist}
+              />
+            </section>
+          )}
+
+          {/* Music: From the Album Card for Tracks */}
+          {media.category === "music" && media.album && media.albumId && (
+            <section
+              aria-labelledby="parent-album-heading"
+              className="flex flex-col gap-2.5"
+            >
+              <div className="flex items-center gap-2">
+                <IconDisc className="size-4 text-primary" aria-hidden="true" />
+                <h2
+                  id="parent-album-heading"
+                  className="text-base font-semibold text-foreground"
+                >
+                  From the Album
+                </h2>
+              </div>
+
+              <Link
+                href={`/borealis/music/albums/${media.albumId}`}
+                className="group flex items-center justify-between gap-4 rounded-2xl border border-border/40 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:bg-accent/30"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="relative aspect-square size-14 shrink-0 overflow-hidden rounded-xl bg-muted shadow-2xs">
+                    {media.coverImage ? (
+                      <img
+                        src={media.coverImage}
+                        alt={media.album}
+                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-muted-foreground/50">
+                        <IconPhotoOff className="size-5" aria-hidden="true" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex min-w-0 flex-col gap-0.5">
+                    <span className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
+                      {albumDisplay}
+                    </span>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      {artistDisplay && <span>{artistDisplay}</span>}
+                      {typeof media.trackNumber === "number" && (
+                        <>
+                          <span>•</span>
+                          <span>Track #{media.trackNumber}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary">
+                  <span className="hidden sm:inline">View Album</span>
+                  <IconArrowRight
+                    className="size-4 transition-transform group-hover:translate-x-0.5"
+                    aria-hidden="true"
+                  />
+                </div>
+              </Link>
+            </section>
+          )}
+
+          {/* Music: Album Tracklist Preview for Albums */}
+          {media.category === "music" &&
+            media.tracks &&
+            media.tracks.length > 0 && (
+              <section
+                aria-labelledby="tracklist-heading"
+                className="flex flex-col gap-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <IconDisc
+                      className="size-4 text-primary"
+                      aria-hidden="true"
+                    />
+                    <h2
+                      id="tracklist-heading"
+                      className="text-base font-semibold text-foreground"
+                    >
+                      Tracklist
+                    </h2>
+                    <span className="text-xs text-muted-foreground">
+                      ({media.tracks.length} tracks)
+                    </span>
+                  </div>
+                  {media.tracks.length > 8 && onViewAllTracks && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onViewAllTracks}
+                      className="h-7 gap-1 text-xs text-primary hover:text-primary/80"
+                    >
+                      <span>View all</span>
+                      <IconArrowRight className="size-3" aria-hidden="true" />
+                    </Button>
+                  )}
+                </div>
+
+                <MusicTracklist
+                  tracks={media.tracks}
+                  albumTitle={media.titlePrimary}
+                  albumArtistPersonId={media.artistPersonId}
+                  limit={8}
+                  onViewAll={onViewAllTracks}
+                />
+              </section>
+            )}
+
+          {/* Music: Lyrics for Tracks */}
+          {media.category === "music" &&
+            (media.lyrics || media.syncedLyrics) && (
+              <MusicLyrics
+                lyrics={media.lyrics}
+                syncedLyrics={media.syncedLyrics}
+                title={media.titlePrimary}
+                artist={media.artist}
+              />
+            )}
+
+          {/* 2. Featured Characters (1 row scrollable) */}
+          {featuredCharacters.length > 0 && (
+            <BorealisCardGroup
+              title="Characters"
+              rowCount={1}
+              dragFree
+              variant="none"
+            >
+              {featuredCharacters.map((item) => (
+                <BorealisCard
+                  key={item.characterId}
+                  type="character"
+                  titlePreference={titlePref}
+                  showSubtitle={false}
+                  data={{
+                    id: item.characterId,
+                    characterId: item.characterId,
+                    namePrimary: item.namePrimary,
+                    nameNative: item.nameNative,
+                    image: item.image,
+                    role: item.role,
+                    actor: item.actor,
+                    description: item.description,
+                    gender: item.gender,
+                    age: item.age,
+                  }}
+                />
+              ))}
+            </BorealisCardGroup>
+          )}
+
+          {/* 3. Theme Songs */}
+          {hasThemeSongs && (
+            <section aria-labelledby="themes-heading">
+              <div className="mb-3 flex items-center gap-2">
+                <IconDisc className="size-4 text-primary" aria-hidden="true" />
+                <h2
+                  id="themes-heading"
+                  className="text-base font-semibold text-foreground"
+                >
+                  Theme Songs
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {opSongs.length > 0 && (
+                  <div className="rounded-2xl border border-border/40 bg-card p-4">
+                    <h3 className="mb-2.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                      Opening Themes
+                    </h3>
+                    <ul className="flex flex-col gap-1.5 max-h-[240px] overflow-y-auto pe-1.5">
+                      {opSongs.map((op, idx) => (
+                        <ThemeSongRow
+                          key={idx}
+                          item={op}
+                          index={idx}
+                          playingAudioUrl={playingThemeAudio}
+                          onTogglePlay={handleToggleThemeAudio}
+                        />
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {edSongs.length > 0 && (
+                  <div className="rounded-2xl border border-border/40 bg-card p-4">
+                    <h3 className="mb-2.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                      Ending Themes
+                    </h3>
+                    <ul className="flex flex-col gap-1.5 max-h-[240px] overflow-y-auto pe-1.5">
+                      {edSongs.map((ed, idx) => (
+                        <ThemeSongRow
+                          key={idx}
+                          item={ed}
+                          index={idx}
+                          playingAudioUrl={playingThemeAudio}
+                          onTogglePlay={handleToggleThemeAudio}
+                        />
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* 4. Similar Titles (rendered via smooth BorealisCardGroup carousel) */}
+          {similarListItems.length > 0 && (
+            <BorealisCardGroup
+              title="Similar Titles"
+              rowCount={1}
+              dragFree
+              variant="none"
+            >
+              {similarListItems.map((item) => (
+                <BorealisCard
+                  key={item.id}
+                  type={(item.type ?? media.category) as any}
+                  titlePreference={titlePref}
+                  showSubtitle={false}
+                  showExtras={false}
+                  data={{
+                    id: item.id,
+                    titlePrimary: item.titlePrimary,
+                    titleSecondary: item.titleSecondary,
+                    titleNative: item.titleNative,
+                    coverImage: item.coverImage,
+                    bannerImage: item.bannerImage,
+                    description: item.description,
+                    format: item.format,
+                    status: item.status,
+                    seasonYear: item.year,
+                    year: item.year,
+                    score: item.score,
+                    averageScore: item.score,
+                    genres: item.genres,
+                  }}
+                />
+              ))}
+            </BorealisCardGroup>
+          )}
+        </div>
+
+        {/* Info Sidebar: NARROW & ALIGNED TO THE RIGHT */}
+        <aside className="flex flex-col gap-3.5">
+          {/* 1. STATS CARD: [avgScore, favorites, popularity] */}
+          <div className="flex flex-col gap-3 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+            <div className="flex items-center justify-between border-b border-border/30 pb-2">
+              <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                Stats
+              </span>
+              <IconChartBar
+                className="size-3.5 text-muted-foreground"
+                aria-hidden="true"
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              <div className="flex flex-col items-center justify-center gap-1 rounded-xl border border-border/30 bg-muted/30 px-2 py-2.5 text-center">
+                <div className="flex items-center gap-1 text-amber-500">
+                  <IconStarFilled className="size-3.5" aria-hidden="true" />
+                  <span className="text-sm font-bold text-foreground tabular-nums">
+                    {typeof media.averageScore === "number" &&
+                      media.averageScore > 0
+                      ? media.averageScore > 10
+                        ? `${Math.round(media.averageScore)}%`
+                        : media.averageScore.toFixed(1)
+                      : "—"}
+                  </span>
+                </div>
+
+              </div>
+
+              <div className="flex flex-col items-center justify-center gap-1 rounded-xl border border-border/30 bg-muted/30 px-2 py-2.5 text-center">
+                <div className="flex items-center gap-1 text-rose-500">
+                  <IconHeartFilled className="size-3.5" aria-hidden="true" />
+                  <span className="text-sm font-bold text-foreground tabular-nums">
+                    {typeof media.favorites === "number"
+                      ? media.favorites.toLocaleString()
+                      : "0"}
+                  </span>
+                </div>
+
+              </div>
+
+              <div className="flex flex-col items-center justify-center gap-1 rounded-xl border border-border/30 bg-muted/30 px-2 py-2.5 text-center">
+                <div className="flex items-center gap-1 text-primary">
+                  <IconFlame className="size-3.5" aria-hidden="true" />
+                  <span className="text-sm font-bold text-foreground tabular-nums">
+                    {typeof media.popularity === "number" &&
+                      media.popularity > 0
+                      ? `#${media.popularity.toLocaleString()}`
+                      : "—"}
+                  </span>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          {/* 2. INFORMATION CARD: Remaining general metadata (no genres, no duplicate rows) */}
+          <div className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+            <div className="flex items-center justify-between border-b border-border/30 pb-2">
+              <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                Information
+              </span>
+              <IconInfoCircle
+                className="size-3.5 text-muted-foreground"
+                aria-hidden="true"
+              />
+            </div>
+
+            <div className="flex flex-col divide-y divide-border/20">
+              {/* Format */}
+              <div className="flex items-center justify-between gap-3 py-1.5">
+                <span className="shrink-0 text-muted-foreground">Format</span>
+                <span className="text-end font-medium text-foreground uppercase">
+                  {media.format ?? "Unknown"}
+                </span>
+              </div>
+
+              {/* Source Material */}
+              {media.source && (
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">Source</span>
+                  <span className="text-end font-medium text-foreground capitalize">
+                    {media.source.replace(/_/g, " ").toLowerCase()}
+                  </span>
+                </div>
+              )}
+
+              {/* Status */}
+              {media.status && (
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">Status</span>
+                  <Badge
+                    variant="secondary"
+                    className="text-[10px] font-semibold capitalize"
+                  >
+                    {media.status.toLowerCase().replace(/_/g, " ")}
+                  </Badge>
+                </div>
+              )}
+
+              {/* Show Type (TV) */}
+              {media.showType &&
+                media.showType.toLowerCase() !==
+                media.format?.toLowerCase() && (
+                  <div className="flex items-center justify-between gap-3 py-1.5">
+                    <span className="shrink-0 text-muted-foreground">Type</span>
+                    <span className="text-end font-medium text-foreground capitalize">
+                      {media.showType}
+                    </span>
+                  </div>
+                )}
+
+              {/* Original Language */}
+              {media.originalLanguage &&
+                formatLanguage(media.originalLanguage) && (
+                  <div className="flex items-center justify-between gap-3 py-1.5">
+                    <span className="shrink-0 text-muted-foreground">
+                      Language
+                    </span>
+                    <span className="text-end font-medium text-foreground">
+                      {formatLanguage(media.originalLanguage)}
+                    </span>
+                  </div>
+                )}
+
+              {/* Country of Origin */}
+              {media.countryOfOrigin && (
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">
+                    Country
+                  </span>
+                  <span className="text-end font-medium text-foreground">
+                    {formatCountry(media.countryOfOrigin)}
+                  </span>
+                </div>
+              )}
+
+              {/* Age Rating & Guide */}
+              {(media.ageRating || media.ageRatingGuide) && (
+                <div className="flex flex-col gap-0.5 py-1.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="shrink-0 text-muted-foreground">
+                      Rating
+                    </span>
+                    <span className="text-end font-medium text-foreground">
+                      {media.ageRating
+                        ? media.ageRating.toUpperCase().replace(/_/g, "-")
+                        : "Not Rated"}
+                    </span>
+                  </div>
+                  {media.ageRatingGuide && (
+                    <span className="text-end text-[10px] leading-tight text-muted-foreground">
+                      {media.ageRatingGuide}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Budget (Movies) */}
+              {media.budget && formatCurrency(media.budget) && (
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">Budget</span>
+                  <span className="text-end font-medium text-foreground tabular-nums">
+                    {formatCurrency(media.budget)}
+                  </span>
+                </div>
+              )}
+
+              {/* Box Office / Revenue (Movies) */}
+              {media.revenue && formatCurrency(media.revenue) && (
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">
+                    Box Office
+                  </span>
+                  <span className="text-end font-medium text-foreground tabular-nums">
+                    {formatCurrency(media.revenue)}
+                  </span>
+                </div>
+              )}
+
+              {/* Game: Platforms */}
+              {media.platforms && media.platforms.length > 0 && (
+                <div className="flex flex-col gap-1 py-1.5">
+                  <span className="text-muted-foreground">Platforms</span>
+                  <div className="flex flex-wrap justify-end gap-1">
+                    {media.platforms.map((plat, idx) => (
+                      <Badge
+                        key={idx}
+                        variant="outline"
+                        className="text-[10px]"
+                      >
+                        {plat}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Game: Franchise */}
+              {media.franchise && (
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">
+                    Franchise
+                  </span>
+                  <span className="text-end font-medium text-foreground">
+                    {media.franchise}
+                  </span>
+                </div>
+              )}
+
+              {/* Game: Game Modes */}
+              {media.gameModes && media.gameModes.length > 0 && (
+                <div className="flex items-start justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">Modes</span>
+                  <span className="text-end font-medium text-foreground">
+                    {media.gameModes.join(", ")}
+                  </span>
+                </div>
+              )}
+
+              {/* Game: Perspectives */}
+              {media.playerPerspectives &&
+                media.playerPerspectives.length > 0 && (
+                  <div className="flex items-start justify-between gap-3 py-1.5">
+                    <span className="shrink-0 text-muted-foreground">
+                      Perspectives
+                    </span>
+                    <span className="text-end font-medium text-foreground">
+                      {media.playerPerspectives.join(", ")}
+                    </span>
+                  </div>
+                )}
+
+              {/* Game: Controller Support */}
+              {media.controllerSupport && (
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">
+                    Controller
+                  </span>
+                  <span className="text-end font-medium text-foreground">
+                    {media.controllerSupport}
+                  </span>
+                </div>
+              )}
+
+              {/* Game: Steam Deck */}
+              {media.steamDeckStatus && (
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">
+                    Steam Deck
+                  </span>
+                  <Badge
+                    variant="secondary"
+                    className="text-[10px] font-semibold"
+                  >
+                    {media.steamDeckStatus}
+                  </Badge>
+                </div>
+              )}
+
+              {/* Book: Authors */}
+              {media.authors && media.authors.length > 0 && (
+                <div className="flex items-start justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">
+                    Authors
+                  </span>
+                  <span className="text-end font-medium text-foreground">
+                    {media.authors.join(", ")}
+                  </span>
+                </div>
+              )}
+
+              {/* Book: Series */}
+              {media.series && (
+                <div className="flex items-start justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">Series</span>
+                  <span className="text-end font-medium text-foreground">
+                    {media.series}
+                    {typeof media.seriesPosition === "number"
+                      ? ` #${media.seriesPosition}`
+                      : ""}
+                  </span>
+                </div>
+              )}
+
+              {/* Book: Retail Price */}
+              {typeof media.retailPrice === "number" && (
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">Price</span>
+                  <span className="text-end font-medium text-foreground tabular-nums">
+                    {media.retailPriceCurrency
+                      ? `${media.retailPriceCurrency} `
+                      : "$"}
+                    {media.retailPrice.toFixed(2)}
+                  </span>
+                </div>
+              )}
+
+              {/* Book: Subjects */}
+              {media.subjects && media.subjects.length > 0 && (
+                <div className="flex flex-col gap-1 py-1.5">
+                  <span className="text-muted-foreground">Subjects</span>
+                  <div className="flex flex-wrap justify-end gap-1">
+                    {media.subjects.slice(0, 5).map((subj, idx) => (
+                      <Badge
+                        key={idx}
+                        variant="outline"
+                        className="text-[10px]"
+                      >
+                        {subj}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Music: Artist */}
+              {artistDisplay && (
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">Artist</span>
+                  {media.artistPersonId ? (
+                    <Link
+                      href={`/borealis/people/${media.artistPersonId}`}
+                      className="text-end font-medium text-primary transition-colors hover:underline"
+                    >
+                      {artistDisplay}
+                    </Link>
+                  ) : (
+                    <span className="text-end font-medium text-foreground">
+                      {artistDisplay}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Music: Album (for Tracks) */}
+              {albumDisplay && media.albumId && media.format === "TRACK" && (
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">Album</span>
+                  <Link
+                    href={`/borealis/music/albums/${media.albumId}`}
+                    className="text-end font-medium text-primary hover:underline"
+                  >
+                    {albumDisplay}
+                  </Link>
+                </div>
+              )}
+
+              {/* Music: Track & Disc Number (for Tracks) */}
+              {typeof media.trackNumber === "number" && (
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">Track</span>
+                  <span className="text-end font-medium text-foreground tabular-nums">
+                    #{media.trackNumber}
+                    {typeof media.discNumber === "number" &&
+                      media.discNumber > 1
+                      ? ` (Disc ${media.discNumber})`
+                      : ""}
+                  </span>
+                </div>
+              )}
+
+              {/* Music: ISRC (for Tracks) */}
+              {media.isrc && (
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">ISRC</span>
+                  <span className="text-end font-mono text-[11px] text-foreground">
+                    {media.isrc}
+                  </span>
+                </div>
+              )}
+
+              {/* Music: Local Listeners */}
+              {typeof media.listeners === "number" &&
+                media.category === "music" && (
+                  <div className="flex items-center justify-between gap-3 py-1.5">
+                    <span className="shrink-0 text-muted-foreground">
+                      Listeners
+                    </span>
+                    <span className="text-end font-medium text-foreground tabular-nums">
+                      {media.listeners.toLocaleString()}
+                    </span>
+                  </div>
+                )}
+
+              {/* Music: Local Scrobbles */}
+              {typeof media.playCount === "number" &&
+                media.category === "music" && (
+                  <div className="flex items-center justify-between gap-3 py-1.5">
+                    <span className="shrink-0 text-muted-foreground">
+                      Scrobbles
+                    </span>
+                    <span className="text-end font-medium text-foreground tabular-nums">
+                      {media.playCount.toLocaleString()}
+                    </span>
+                  </div>
+                )}
+
+              {/* Official Hashtag */}
+              {media.hashtag && (
+                <div className="flex items-start justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">
+                    Hashtag
+                  </span>
+                  <div className="flex flex-wrap justify-end gap-1 text-end">
+                    {media.hashtag
+                      .split(/\s+/)
+                      .filter(Boolean)
+                      .map((tag, idx) => {
+                        const cleanTag = tag.replace(/^#/, "")
+                        return (
+                          <a
+                            key={idx}
+                            href={`https://twitter.com/hashtag/${cleanTag}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-medium text-primary hover:underline"
+                          >
+                            #{cleanTag}
+                          </a>
+                        )
+                      })}
+                  </div>
+                </div>
+              )}
+
+              {/* Tags */}
+              {media.tags && media.tags.length > 0 && (
+                <div className="flex flex-col gap-1.5 py-1.5">
+                  <span className="text-muted-foreground">Tags</span>
+                  <div className="flex flex-wrap gap-1">
+                    {media.tags.map((tag) => (
+                      <Badge
+                        key={tag.id}
+                        variant="outline"
+                        title={tag.description ?? undefined}
+                        className="text-[10px] font-normal text-muted-foreground hover:text-foreground"
+                      >
+                        {tag.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 3. DATES CARD: [start, end, season, broadcast] */}
+          {(startDateFormatted ||
+            endDateFormatted ||
+            media.firstAiredYear ||
+            media.lastAiredYear ||
+            media.seasonYear ||
+            (isReleasing && nextAiring) ||
+            (media.broadcastDays && media.broadcastDays.length > 0) ||
+            media.broadcastTime) && (
+              <div className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+                <div className="flex items-center justify-between border-b border-border/30 pb-2">
+                  <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                    Dates
+                  </span>
+                  <IconCalendarEvent
+                    className="size-3.5 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                </div>
+
+                <div className="flex flex-col divide-y divide-border/20">
+                  {startDateFormatted && (
+                    <div className="flex items-center justify-between gap-3 py-1.5">
+                      <span className="shrink-0 text-muted-foreground">
+                        {media.category === "movies" ||
+                          media.category === "games" ||
+                          media.category === "books" ||
+                          media.category === "music"
+                          ? "Release Date"
+                          : "Start Date"}
+                      </span>
+                      <span className="text-end font-medium text-foreground">
+                        {startDateFormatted}
+                      </span>
+                    </div>
+                  )}
+
+                  {endDateFormatted && (
+                    <div className="flex items-center justify-between gap-3 py-1.5">
+                      <span className="shrink-0 text-muted-foreground">
+                        End Date
+                      </span>
+                      <span className="text-end font-medium text-foreground">
+                        {endDateFormatted}
+                      </span>
+                    </div>
+                  )}
+
+                  {!startDateFormatted && media.firstAiredYear && (
+                    <div className="flex items-center justify-between gap-3 py-1.5">
+                      <span className="shrink-0 text-muted-foreground">
+                        Start Date
+                      </span>
+                      <span className="text-end font-medium text-foreground">
+                        {formatFullDate(
+                          media.firstAiredYear,
+                          media.firstAiredMonth,
+                          media.firstAiredDay
+                        )}
+                      </span>
+                    </div>
+                  )}
+
+                  {!endDateFormatted && media.lastAiredYear && (
+                    <div className="flex items-center justify-between gap-3 py-1.5">
+                      <span className="shrink-0 text-muted-foreground">
+                        End Date
+                      </span>
+                      <span className="text-end font-medium text-foreground">
+                        {formatFullDate(
+                          media.lastAiredYear,
+                          media.lastAiredMonth,
+                          media.lastAiredDay
+                        )}
+                      </span>
+                    </div>
+                  )}
+
+                  {media.seasonYear && (
+                    <div className="flex items-center justify-between gap-3 py-1.5">
+                      <span className="shrink-0 text-muted-foreground">
+                        Season
+                      </span>
+                      <span className="text-end font-medium text-foreground capitalize">
+                        {media.seasonSeason
+                          ? `${media.seasonSeason.toLowerCase()} ${media.seasonYear}`
+                          : media.seasonYear}
+                      </span>
+                    </div>
+                  )}
+
+                  {isReleasing && nextAiring && (
+                    <div className="flex items-start justify-between gap-3 py-1.5">
+                      <span className="shrink-0 text-muted-foreground">
+                        {nextAiring.isAiringNow ? "Broadcast" : "Next Episode"}
+                      </span>
+                      <div className="flex flex-col items-end text-end">
+                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                          Ep {nextAiring.episodeNumber}{" "}
+                          {nextAiring.isAiringNow && "• Airing Now"}
+                        </span>
+                        {!nextAiring.isAiringNow && nextAiring.date && (
+                          <span className="text-[10px] text-muted-foreground">
+                            {formatTimeUntil(nextAiring.date)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {((media.broadcastDays && media.broadcastDays.length > 0) ||
+                    media.broadcastTime) && (
+                      <div className="flex items-start justify-between gap-3 py-1.5">
+                        <span className="shrink-0 text-muted-foreground">
+                          Schedule
+                        </span>
+                        <span className="text-end font-medium text-foreground">
+                          {[
+                            media.broadcastDays?.join(", "),
+                            media.broadcastTime ? `at ${media.broadcastTime}` : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                        </span>
+                      </div>
+                    )}
+                </div>
+              </div>
+            )}
+
+          {/* 4. EPISODE INFO CARD: [Episodes, duration] */}
+          {((typeof media.episodeCount === "number" && media.episodeCount > 0) ||
+            (typeof media.episodeDuration === "number" &&
+              media.episodeDuration > 0) ||
+            (typeof media.runtime === "number" && media.runtime > 0) ||
+            (typeof media.seasonCount === "number" && media.seasonCount > 0) ||
+            (typeof media.chapterCount === "number" && media.chapterCount > 0) ||
+            (typeof media.volumeCount === "number" && media.volumeCount > 0) ||
+            (typeof media.pageCount === "number" && media.pageCount > 0) ||
+            (typeof media.duration === "number" && media.duration > 0) ||
+            (typeof media.totalTracks === "number" &&
+              media.totalTracks > 0)) && (
+              <div className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+                <div className="flex items-center justify-between border-b border-border/30 pb-2">
+                  <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                    {media.category === "manga" || media.category === "books"
+                      ? "Publication Info"
+                      : media.category === "music"
+                        ? "Track Info"
+                        : "Episode Info"}
+                  </span>
+                  <IconDeviceTv
+                    className="size-3.5 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                </div>
+
+                <div className="flex flex-col divide-y divide-border/20">
+                  {typeof media.seasonCount === "number" &&
+                    media.seasonCount > 0 && (
+                      <div className="flex items-center justify-between gap-3 py-1.5">
+                        <span className="shrink-0 text-muted-foreground">
+                          Seasons
+                        </span>
+                        <span className="text-end font-semibold text-foreground tabular-nums">
+                          {media.seasonCount}
+                        </span>
+                      </div>
+                    )}
+
+                  {typeof media.episodeCount === "number" &&
+                    media.episodeCount > 0 &&
+                    media.category !== "manga" &&
+                    media.category !== "books" && (
+                      <div className="flex items-center justify-between gap-3 py-1.5">
+                        <span className="shrink-0 text-muted-foreground">
+                          Episodes
+                        </span>
+                        <span className="text-end font-semibold text-foreground tabular-nums">
+                          {media.episodeCount}
+                        </span>
+                      </div>
+                    )}
+
+                  {typeof media.chapterCount === "number" &&
+                    media.chapterCount > 0 && (
+                      <div className="flex items-center justify-between gap-3 py-1.5">
+                        <span className="shrink-0 text-muted-foreground">
+                          Chapters
+                        </span>
+                        <span className="text-end font-semibold text-foreground tabular-nums">
+                          {media.chapterCount}
+                        </span>
+                      </div>
+                    )}
+
+                  {typeof media.volumeCount === "number" &&
+                    media.volumeCount > 0 && (
+                      <div className="flex items-center justify-between gap-3 py-1.5">
+                        <span className="shrink-0 text-muted-foreground">
+                          Volumes
+                        </span>
+                        <span className="text-end font-semibold text-foreground tabular-nums">
+                          {media.volumeCount}
+                        </span>
+                      </div>
+                    )}
+
+                  {typeof media.pageCount === "number" && media.pageCount > 0 && (
+                    <div className="flex items-center justify-between gap-3 py-1.5">
+                      <span className="shrink-0 text-muted-foreground">
+                        Pages
+                      </span>
+                      <span className="text-end font-semibold text-foreground tabular-nums">
+                        {media.pageCount.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+
+                  {typeof media.totalTracks === "number" &&
+                    media.totalTracks > 0 && (
+                      <div className="flex items-center justify-between gap-3 py-1.5">
+                        <span className="shrink-0 text-muted-foreground">
+                          Tracks
+                        </span>
+                        <span className="text-end font-semibold text-foreground tabular-nums">
+                          {media.totalTracks}
+                        </span>
+                      </div>
+                    )}
+
+                  {typeof media.episodeDuration === "number" &&
+                    media.episodeDuration > 0 && (
+                      <div className="flex items-center justify-between gap-3 py-1.5">
+                        <span className="shrink-0 text-muted-foreground">
+                          Duration
+                        </span>
+                        <span className="text-end font-semibold text-foreground tabular-nums">
+                          {media.episodeDuration} min
+                        </span>
+                      </div>
+                    )}
+
+                  {typeof media.runtime === "number" && media.runtime > 0 && (
+                    <div className="flex items-center justify-between gap-3 py-1.5">
+                      <span className="shrink-0 text-muted-foreground">
+                        Duration
+                      </span>
+                      <span className="text-end font-semibold text-foreground tabular-nums">
+                        {media.runtime} min
+                      </span>
+                    </div>
+                  )}
+
+                  {typeof media.duration === "number" && media.duration > 0 && (
+                    <div className="flex items-center justify-between gap-3 py-1.5">
+                      <span className="shrink-0 text-muted-foreground">
+                        Duration
+                      </span>
+                      <span className="text-end font-semibold text-foreground tabular-nums">
+                        {media.category === "music"
+                          ? media.duration >= 3600
+                            ? `${Math.floor(media.duration / 3600)}h ${Math.floor((media.duration % 3600) / 60)}m`
+                            : `${Math.floor(media.duration / 60)}m ${media.duration % 60}s`
+                          : `${media.duration} min`}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+          {/* 5. PRODUCERS CARD: [Studios, Producers, Networks, Developers, Publishers] */}
+          {(animationStudios.length > 0 ||
+            producerStudios.length > 0 ||
+            (media.networks && media.networks.length > 0) ||
+            (media.developers && media.developers.length > 0) ||
+            (media.publishers && media.publishers.length > 0)) && (
+              <div className="flex flex-col gap-2.5 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+                <div className="flex items-center justify-between border-b border-border/30 pb-2">
+                  <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                    Producers
+                  </span>
+                  <IconBuildingCommunity
+                    className="size-3.5 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                </div>
+
+                <div className="flex flex-col divide-y divide-border/20">
+                  {media.category === "movies" ? (
+                    (animationStudios.length > 0 ||
+                      producerStudios.length > 0) && (
+                      <div className="flex flex-col gap-1.5 py-1.5">
+                        <span className="text-[11px] text-muted-foreground">
+                          Production
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {[...animationStudios, ...producerStudios].map(
+                            (st, idx) => (
+                              <Link
+                                key={st.id || idx}
+                                href={`/borealis/studios/${st.id}`}
+                                className="inline-flex items-center rounded-lg border border-border/40 bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+                              >
+                                {st.name}
+                              </Link>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    )
+                  ) : (
+                    <>
+                      {animationStudios.length > 0 && (
+                        <div className="flex flex-col gap-1.5 py-1.5">
+                          <span className="text-[11px] text-muted-foreground">
+                            Studios
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {animationStudios.map((st, idx) => (
+                              <Link
+                                key={st.id || idx}
+                                href={`/borealis/studios/${st.id}`}
+                                className="inline-flex items-center rounded-lg border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary transition-colors hover:bg-primary/20"
+                              >
+                                {st.name}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {producerStudios.length > 0 && (
+                        <div className="flex flex-col gap-1.5 py-1.5">
+                          <span className="text-[11px] text-muted-foreground">
+                            Producers
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {producerStudios.map((st, idx) => (
+                              <Link
+                                key={st.id || idx}
+                                href={`/borealis/studios/${st.id}`}
+                                className="inline-flex items-center rounded-lg border border-border/40 bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+                              >
+                                {st.name}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {media.networks && media.networks.length > 0 && (
+                    <div className="flex flex-col gap-1.5 py-1.5">
+                      <span className="text-[11px] text-muted-foreground">
+                        Networks
+                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {media.networks.map((net, idx) => (
+                          <Badge
+                            key={idx}
+                            variant="secondary"
+                            className="text-[10px] font-medium"
+                          >
+                            {net}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {media.developers && media.developers.length > 0 && (
+                    <div className="flex items-start justify-between gap-3 py-1.5">
+                      <span className="shrink-0 text-muted-foreground">
+                        Developers
+                      </span>
+                      <span className="text-end font-medium text-foreground">
+                        {media.developers.join(", ")}
+                      </span>
+                    </div>
+                  )}
+
+                  {media.publishers && media.publishers.length > 0 && (
+                    <div className="flex items-start justify-between gap-3 py-1.5">
+                      <span className="shrink-0 text-muted-foreground">
+                        Publishers
+                      </span>
+                      <span className="text-end font-medium text-foreground">
+                        {media.publishers.join(", ")}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+          {/* 6. ALTERNATIVE TITLES CARD */}
+          {media.synonyms && media.synonyms.length > 0 && (
+            <div className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+              <div className="flex items-center justify-between border-b border-border/30 pb-2">
+                <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                  Alternative Titles
+                </span>
+                <IconLanguage
+                  className="size-3.5 text-muted-foreground"
+                  aria-hidden="true"
+                />
+              </div>
+              <ul className="flex flex-col divide-y divide-border/15">
+                {media.synonyms.map((syn, idx) => (
+                  <li
+                    key={idx}
+                    className="py-1 text-end text-[11px] leading-snug break-words text-foreground/85"
+                  >
+                    {syn}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* 7. EXTERNAL LINKS CARD */}
+          {((media.externalLinks && media.externalLinks.length > 0) ||
+            media.lastFmUrl ||
+            media.spotifyId ||
+            media.appleMusicId ||
+            media.youtubeMusicId ||
+            media.musicBrainzId ||
+            media.siteUrl ||
+            media.buyLink ||
+            media.previewLink ||
+            media.infoLink) && (
+              <div className="flex flex-col gap-2.5 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+                <div className="flex items-center justify-between border-b border-border/30 pb-2">
+                  <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                    External Links
+                  </span>
+                  <IconWorld
+                    className="size-3.5 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {/* Music streaming links */}
+                  {media.lastFmUrl && (
+                    <a
+                      href={media.lastFmUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg bg-[#D51007]/10 px-2.5 py-1 text-[11px] font-medium text-[#D51007] transition-colors hover:bg-[#D51007]/20"
+                    >
+                      <span>Last.fm</span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  )}
+                  {media.spotifyId && (
+                    <a
+                      href={`https://open.spotify.com/${media.format === "TRACK" ? "track" : "album"}/${media.spotifyId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg bg-[#1DB954]/10 px-2.5 py-1 text-[11px] font-medium text-[#1DB954] transition-colors hover:bg-[#1DB954]/20"
+                    >
+                      <span>Spotify</span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  )}
+                  {media.appleMusicId && (
+                    <a
+                      href={`https://music.apple.com/song/${media.appleMusicId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg bg-[#FA243C]/10 px-2.5 py-1 text-[11px] font-medium text-[#FA243C] transition-colors hover:bg-[#FA243C]/20"
+                    >
+                      <span>Apple Music</span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  )}
+                  {media.youtubeMusicId && (
+                    <a
+                      href={`https://music.youtube.com/watch?v=${media.youtubeMusicId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg bg-[#FF0000]/10 px-2.5 py-1 text-[11px] font-medium text-[#FF0000] transition-colors hover:bg-[#FF0000]/20"
+                    >
+                      <span>YouTube Music</span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  )}
+                  {media.musicBrainzId && (
+                    <a
+                      href={`https://musicbrainz.org/${media.format === "TRACK" ? "recording" : "release-group"}/${media.musicBrainzId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg bg-[#BA478F]/10 px-2.5 py-1 text-[11px] font-medium text-[#BA478F] transition-colors hover:bg-[#BA478F]/20"
+                    >
+                      <span>MusicBrainz</span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  )}
+                  {media.siteUrl && (
+                    <a
+                      href={media.siteUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg border border-border/40 bg-muted/40 px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:border-border hover:bg-muted"
+                    >
+                      <span>Official Site</span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  )}
+                  {media.buyLink && (
+                    <a
+                      href={media.buyLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary/20"
+                    >
+                      <span>Buy</span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  )}
+                  {media.previewLink && (
+                    <a
+                      href={media.previewLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg border border-border/40 bg-muted/40 px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:border-border hover:bg-muted"
+                    >
+                      <span>Preview</span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  )}
+                  {media.infoLink && (
+                    <a
+                      href={media.infoLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg border border-border/40 bg-muted/40 px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:border-border hover:bg-muted"
+                    >
+                      <span>Info</span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  )}
+                  {media.externalLinks?.map((link, idx) => (
+                    <a
+                      key={idx}
+                      href={link.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg border border-border/40 bg-muted/40 px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:border-border hover:bg-muted"
+                    >
+                      <span>{link.site || link.type || "Link"}</span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          {/* 8. PROVIDER IDs CARD */}
+          {(media.anilistId ||
+            media.malId ||
+            media.aniDBId ||
+            media.tvDBId ||
+            media.bangumiId ||
+            media.kitsuId ||
+            media.tmdbId ||
+            media.imdbId ||
+            media.simklId ||
+            media.tvmazeId ||
+            media.igdbId ||
+            media.steamAppId ||
+            media.rawgId ||
+            media.giantbombId ||
+            media.vndbId ||
+            media.googleBookId ||
+            media.isbn10 ||
+            media.isbn13 ||
+            media.openLibraryId ||
+            media.deezerId) && (
+              <div className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+                <div className="flex items-center justify-between border-b border-border/30 pb-2">
+                  <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                    IDs
+                  </span>
+                  <IconHash
+                    className="size-3.5 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                </div>
+                <div className="flex flex-col divide-y divide-border/20 text-xs">
+                  {/* Games IDs */}
+                  {media.igdbId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">IGDB</span>
+                      <a
+                        href={`https://www.igdb.com/games/${media.igdbId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.igdbId}
+                      </a>
+                    </div>
+                  )}
+                  {media.steamAppId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">Steam</span>
+                      <a
+                        href={`https://store.steampowered.com/app/${media.steamAppId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.steamAppId}
+                      </a>
+                    </div>
+                  )}
+                  {media.rawgId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">RAWG</span>
+                      <a
+                        href={`https://rawg.io/games/${media.rawgId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.rawgId}
+                      </a>
+                    </div>
+                  )}
+                  {media.giantbombId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">Giant Bomb</span>
+                      <span className="text-end font-mono text-[11px] font-medium text-foreground">
+                        {media.giantbombId}
+                      </span>
+                    </div>
+                  )}
+                  {media.vndbId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">VNDB</span>
+                      <a
+                        href={`https://vndb.org/v${media.vndbId.replace(/^v/, "")}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        {media.vndbId}
+                      </a>
+                    </div>
+                  )}
+
+                  {/* TV IDs */}
+                  {media.tvmazeId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">TVmaze</span>
+                      <a
+                        href={`https://www.tvmaze.com/shows/${media.tvmazeId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.tvmazeId}
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Books IDs */}
+                  {media.googleBookId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">Google Books</span>
+                      <a
+                        href={`https://books.google.com/books?id=${media.googleBookId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        {media.googleBookId}
+                      </a>
+                    </div>
+                  )}
+                  {media.isbn13 && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">ISBN-13</span>
+                      <span className="text-end font-mono text-[11px] font-medium text-foreground tabular-nums">
+                        {media.isbn13}
+                      </span>
+                    </div>
+                  )}
+                  {media.isbn10 && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">ISBN-10</span>
+                      <span className="text-end font-mono text-[11px] font-medium text-foreground tabular-nums">
+                        {media.isbn10}
+                      </span>
+                    </div>
+                  )}
+                  {media.openLibraryId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">Open Library</span>
+                      <a
+                        href={`https://openlibrary.org/books/${media.openLibraryId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        {media.openLibraryId}
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Music IDs */}
+                  {media.deezerId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">Deezer</span>
+                      <a
+                        href={`https://www.deezer.com/${media.format?.toUpperCase() === "ALBUM" ? "album" : "track"}/${media.deezerId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.deezerId}
+                      </a>
+                    </div>
+                  )}
+
+                  {media.imdbId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">IMDb</span>
+                      <a
+                        href={`https://www.imdb.com/title/${media.imdbId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        {media.imdbId}
+                      </a>
+                    </div>
+                  )}
+                  {media.tmdbId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">TMDB</span>
+                      <a
+                        href={
+                          media.category === "movies"
+                            ? `https://www.themoviedb.org/movie/${media.tmdbId}`
+                            : `https://www.themoviedb.org/tv/${media.tmdbId}`
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.tmdbId}
+                      </a>
+                    </div>
+                  )}
+                  {media.tvDBId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">TheTVDB</span>
+                      <a
+                        href={
+                          media.category === "movies"
+                            ? `https://thetvdb.com/dereferrer/movie/${media.tvDBId}`
+                            : `https://thetvdb.com/dereferrer/series/${media.tvDBId}`
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.tvDBId}
+                      </a>
+                    </div>
+                  )}
+                  {media.simklId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">Simkl</span>
+                      <a
+                        href={
+                          media.category === "movies"
+                            ? `https://simkl.com/movies/${media.simklId}`
+                            : `https://simkl.com/anime/${media.simklId}`
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.simklId}
+                      </a>
+                    </div>
+                  )}
+                  {media.anilistId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">AniList</span>
+                      <a
+                        href={`https://anilist.co/${media.category === "manga" ? "manga" : "anime"}/${media.anilistId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.anilistId}
+                      </a>
+                    </div>
+                  )}
+                  {media.malId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">MyAnimeList</span>
+                      <a
+                        href={`https://myanimelist.net/${media.category === "manga" ? "manga" : "anime"}/${media.malId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.malId}
+                      </a>
+                    </div>
+                  )}
+                  {media.aniDBId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">AniDB</span>
+                      <a
+                        href={`https://anidb.net/anime/${media.aniDBId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.aniDBId}
+                      </a>
+                    </div>
+                  )}
+                  {media.bangumiId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">Bangumi</span>
+                      <a
+                        href={`https://bgm.tv/subject/${media.bangumiId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.bangumiId}
+                      </a>
+                    </div>
+                  )}
+                  {media.kitsuId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">Kitsu</span>
+                      <a
+                        href={`https://kitsu.io/${media.category === "manga" ? "manga" : "anime"}/${media.kitsuId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.kitsuId}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+        </aside>
+      </div>
+    </div>
+  )
+}
+
+interface ThemeSongRowProps {
+  item: ThemeSongItem | string
+  index: number
+  playingAudioUrl: string | null
+  onTogglePlay: (audioUrl: string | null) => void
+}
+
+function ThemeSongRow({
+  item,
+  index,
+  playingAudioUrl,
+  onTogglePlay,
+}: ThemeSongRowProps) {
+  const isObj = typeof item === "object" && item !== null
+  const rawText = isObj ? item.text : item
+  const parsed = useMemo(() => parseMalThemeSong(rawText), [rawText])
+
+  const title = isObj && item.title ? item.title : parsed.titleClean
+  const titleNative =
+    isObj && item.titleNative !== undefined
+      ? item.titleNative
+      : parsed.titleNative
+  const artist = isObj && item.artist ? item.artist : parsed.artistClean
+  const episodes =
+    isObj && item.episodes !== undefined ? item.episodes : parsed.episodes
+  const musicId = isObj ? item.musicId : null
+  const previewUrl = isObj ? item.previewUrl : null
+  const isDirectMatch = isObj ? Boolean(item.isDirectMatch) : false
+  const deezerUrl =
+    isObj && item.deezerUrl
+      ? item.deezerUrl
+      : getDeezerFallbackSearchUrl(artist, title)
+
+  const isPlaying = Boolean(previewUrl && playingAudioUrl === previewUrl)
+
+  return (
+    <li className="group flex items-center justify-between gap-2.5 rounded-xl border border-transparent px-2.5 py-1.5 transition-colors hover:border-border/40 hover:bg-muted/40">
+      <div className="flex min-w-0 items-start gap-2.5">
+        <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md bg-muted text-[11px] font-semibold text-muted-foreground tabular-nums">
+          {parsed.index ?? index + 1}
+        </span>
+
+        <div className="flex min-w-0 flex-col text-start">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {musicId ? (
+              <Link
+                href={getMediaDetailHref("music", musicId, {
+                  itemType: "TRACK",
+                })}
+                className="group/link inline-flex items-center gap-1 text-xs font-semibold text-foreground transition-colors hover:text-primary"
+                title={`Open track #${musicId} in IRIS Music`}
+              >
+                <span className="truncate">{title}</span>
+                {titleNative && (
+                  <span className="font-normal text-muted-foreground">
+                    ({titleNative})
+                  </span>
+                )}
+              </Link>
+            ) : (
+              <a
+                href={deezerUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group/link inline-flex items-center gap-1 text-xs font-semibold text-foreground transition-colors hover:text-primary"
+                title={isDirectMatch ? "Listen on Deezer" : "Search on Deezer"}
+              >
+                <span className="truncate">{title}</span>
+                {titleNative && (
+                  <span className="font-normal text-muted-foreground">
+                    ({titleNative})
+                  </span>
+                )}
+                <IconExternalLink className="size-3 text-muted-foreground opacity-0 transition-opacity group-hover/link:opacity-100" />
+              </a>
+            )}
+          </div>
+
+          <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+            {artist && <span>by {artist}</span>}
+            {episodes && (
+              <Badge
+                variant="outline"
+                className="px-1.5 py-0 text-[10px] font-normal text-muted-foreground"
+              >
+                {episodes}
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex shrink-0 items-center gap-1">
+        {previewUrl && (
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={() => onTogglePlay(previewUrl)}
+            className="size-7 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label={isPlaying ? "Pause Preview" : "Play 30s Audio Preview"}
+          >
+            {isPlaying ? (
+              <IconPlayerPause className="size-3.5 animate-pulse text-primary" />
+            ) : (
+              <IconPlayerPlay className="size-3.5" />
+            )}
+          </Button>
+        )}
+
+        <a
+          href={deezerUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(
+            buttonVariants({ variant: "ghost", size: "icon-xs" }),
+            "size-7 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+          )}
+          title={isDirectMatch ? "Listen on Deezer" : "Search on Deezer"}
+          aria-label={isDirectMatch ? "Listen on Deezer" : "Search on Deezer"}
+        >
+          <IconDisc
+            className={cn(
+              "size-3.5",
+              isDirectMatch ? "text-primary" : "text-muted-foreground/60"
+            )}
+          />
+        </a>
+      </div>
+    </li>
+  )
+}

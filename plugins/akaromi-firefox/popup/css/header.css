@@ -131,6 +131,36 @@
   height: 12px;
 }
 
+.popup-search-chips {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.popup-search-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.search-chip {
+  padding: 1px 6px;
+  font-size: 10px;
+  font-family: ui-monospace, monospace;
+  border-radius: 4px;
+  background: #18181b;
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.12s ease;
+}
+
+.search-chip:hover {
+  background: #27272a;
+  color: var(--foreground);
+}
+
 /* Header Right Actions */
 .header-right {
   display: flex;

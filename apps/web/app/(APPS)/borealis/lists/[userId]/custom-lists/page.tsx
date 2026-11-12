@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { getUserProfile } from "@/lib/user-profile"
-import { CustomListsView } from "@/components/lists/custom-lists-view"
+import { CustomListsView } from "@Runa/borealis"
 
 type Props = {
   params: Promise<{ userId: string }>

@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import type { Metadata } from "next"
-import { BrowsePageClient } from "@/components/browse/browse-page-client"
+import { BrowsePageClient } from "@Runa/borealis"
 import { Skeleton } from "@workspace/ui/components/skeleton"
 
 export const metadata: Metadata = {

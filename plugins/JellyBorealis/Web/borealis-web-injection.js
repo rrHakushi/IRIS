@@ -9,12 +9,19 @@
     // Inject self-contained CSS once
     function injectStyles() {
         if (!document.getElementById('borealis-modal-css')) {
+            if (typeof window !== 'undefined' && window.__BOREALIS_MODAL_CSS__) {
+                const style = document.createElement('style');
+                style.id = 'borealis-modal-css';
+                style.textContent = window.__BOREALIS_MODAL_CSS__;
+                (document.head || document.documentElement).appendChild(style);
+                return;
+            }
             const cssUrl = typeof ApiClient !== 'undefined' && ApiClient.getUrl ? ApiClient.getUrl('Borealis/Modal.css') : '/Borealis/Modal.css';
             const link = document.createElement('link');
             link.id = 'borealis-modal-css';
             link.rel = 'stylesheet';
             link.href = cssUrl;
-            document.head.appendChild(link);
+            (document.head || document.documentElement).appendChild(link);
         }
     }
 
@@ -172,7 +179,7 @@
                 return;
             }
 
-            const isInside = backdrop.contains(e.target);
+            const isInside = backdrop.contains(e.target) || (e.composedPath && e.composedPath().includes(backdrop));
 
             // Tab navigation: focus trap within modal card
             if (e.key === 'Tab') {
@@ -245,7 +252,8 @@
             window.addEventListener(type, (e) => {
                 if (!isModalOpen()) return;
                 const backdrop = document.getElementById('borealis-modal-backdrop');
-                if (backdrop && !backdrop.contains(e.target)) {
+                const isInside = backdrop && (backdrop.contains(e.target) || (e.composedPath && e.composedPath().includes(backdrop)));
+                if (backdrop && !isInside) {
                     e.preventDefault();
                     e.stopPropagation();
                     e.stopImmediatePropagation();
@@ -264,13 +272,17 @@
         backdrop.id = 'borealis-modal-backdrop';
         backdrop.className = 'dark';
 
+        // Set core inline styles to guarantee positioning and visibility across all engines
+        backdrop.style.cssText = 'position: fixed !important; top: 0px !important; left: 0px !important; right: 0px !important; bottom: 0px !important; width: 100% !important; height: 100% !important; z-index: 99999999 !important; background-color: rgba(9, 9, 11, 0.88) !important; display: none; align-items: center !important; justify-content: center !important; box-sizing: border-box !important; pointer-events: auto !important;';
+
         backdrop.innerHTML = `
-            <div id="borealis-modal-card">
-                <div id="borealis-modal-content" class="flex flex-col h-full overflow-hidden"></div>
+            <div id="borealis-modal-card" style="position: relative !important; display: flex !important; flex-direction: column !important; max-height: 90vh !important; width: 92vw !important; max-width: 700px !important; margin: auto !important; background-color: #0b0b0e !important; color: #fafafa !important; border: 1px solid #1f1f25 !important; border-radius: 1.5rem !important; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8) !important; overflow: hidden !important; box-sizing: border-box !important; pointer-events: auto !important;">
+                <div id="borealis-modal-content" class="flex flex-col h-full overflow-hidden" style="display: flex !important; flex-direction: column !important; height: 100% !important; overflow: hidden !important;"></div>
             </div>
         `;
 
-        document.body.appendChild(backdrop);
+        const targetParent = document.fullscreenElement || document.querySelector('.videoPlayerContainer') || document.body;
+        targetParent.appendChild(backdrop);
 
         // Stop all bubbling keyboard and wheel events inside modal from leaking to Jellyfin document listeners
         ['keydown', 'keyup', 'keypress'].forEach(evt => {
@@ -281,7 +293,7 @@
 
         backdrop.addEventListener('wheel', (e) => {
             const card = document.getElementById('borealis-modal-card');
-            if (card && card.contains(e.target)) {
+            if (card && (card === e.target || card.contains(e.target))) {
                 e.stopPropagation();
             } else {
                 e.preventDefault();
@@ -308,9 +320,14 @@
         setupGlobalInputIsolation();
         previousActiveElement = document.activeElement;
         const backdrop = createModalContainer();
+        const targetParent = document.fullscreenElement || document.querySelector('.videoPlayerContainer') || document.body;
+        if (backdrop.parentNode !== targetParent) {
+            targetParent.appendChild(backdrop);
+        }
         backdrop.classList.remove('borealis-closing');
         backdrop.style.display = 'flex';
-        setTimeout(() => backdrop.classList.add('borealis-show'), 10);
+        backdrop.style.opacity = '1';
+        backdrop.classList.add('borealis-show');
     }
 
     function closeModal() {
@@ -318,6 +335,7 @@
         if (backdrop) {
             backdrop.classList.add('borealis-closing');
             backdrop.classList.remove('borealis-show');
+            backdrop.style.opacity = '0';
             setTimeout(() => {
                 backdrop.style.display = 'none';
                 backdrop.classList.remove('borealis-closing');

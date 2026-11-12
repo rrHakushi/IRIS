@@ -4,7 +4,7 @@ import createNextIntlPlugin from "next-intl/plugin"
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts")
 
 const rawApiUrl =
-  (typeof Bun !== "undefined" ? Bun.env.NEXT_PUBLIC_API_URL : process.env.NEXT_PUBLIC_API_URL) || "http://localhost:4000"
+  (typeof Bun !== "undefined" ? Bun.env.ELYSIA_URL : process.env.ELYSIA_URL) || "http://localhost:4000"
 const apiUrl = rawApiUrl.replace(/\$\{ELYSIA_PORT\}|\$ELYSIA_PORT/g, "4000")
 
 const nextConfig: NextConfig = {
@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  transpilePackages: ["@workspace/ui"],
+  transpilePackages: ["@workspace/ui", "@Runa/borealis"],
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60 * 60 * 24 * 180, // 6 months (180 days)
@@ -24,37 +24,19 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**.thetvdb.com" },
       { protocol: "https", hostname: "images.igdb.com" },
       { protocol: "https", hostname: "books.google.com" },
+      { protocol: "http", hostname: "books.google.com" },
+      { protocol: "https", hostname: "**.google.com" },
+      { protocol: "http", hostname: "**.google.com" },
+      { protocol: "https", hostname: "**.googleusercontent.com" },
+      { protocol: "http", hostname: "**.googleusercontent.com" },
       { protocol: "https", hostname: "**.deezer.com" },
       { protocol: "https", hostname: "**.dzcdn.net" },
       { protocol: "https", hostname: "cdn-images.dzcdn.net" },
       { protocol: "https", hostname: "image.tmdb.org" },
       { protocol: "https", hostname: "lastfm.freetls.fastly.net" },
       { protocol: "https", hostname: "**" },
+      { protocol: "http", hostname: "**" },
     ],
-  },
-  async redirects() {
-    return [
-      {
-        source: "/IRIS-search/:path*",
-        destination: "/kiroshi/:path*",
-        permanent: true,
-      },
-      {
-        source: "/IRIS-account/:path*",
-        destination: "/carina/:path*",
-        permanent: true,
-      },
-      {
-        source: "/IRIS-list/:path*",
-        destination: "/borealis/:path*",
-        permanent: true,
-      },
-      {
-        source: "/IRIS-pass/:path*",
-        destination: "/akaromi/:path*",
-        permanent: true,
-      },
-    ]
   },
   async rewrites() {
     return [

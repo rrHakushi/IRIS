@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import { elysia } from "@/lib/elysia"
-import { MediaDetailView } from "@/components/media/media-detail-view"
+import { MediaDetailView } from "@Runa/borealis"
 import type {
   NormalizedMediaData,
   SimilarMediaCardItem,
-} from "@/components/media/media-types"
+} from "@Runa/borealis"
 
 type Props = {
   params: Promise<{ id: string }>
@@ -66,7 +66,8 @@ export default async function OtherDetailPage({ params, searchParams }: Props) {
     notFound()
   }
 
-  const item = data.item
+  const item = data.item as any
+  const creatorObj = Array.isArray(item.creator) ? item.creator[0] : item.creator
 
   const startDateObj = item.startDate ? new Date(item.startDate) : null
   const endDateObj = item.endDate ? new Date(item.endDate) : null
@@ -74,6 +75,9 @@ export default async function OtherDetailPage({ params, searchParams }: Props) {
   const normalized: NormalizedMediaData = {
     id: item.id,
     category: "other",
+    creatorId: item.creatorId ?? creatorObj?.id ?? null,
+    creatorUsername: creatorObj?.username ?? null,
+    creatorDisplayName: creatorObj?.displayName ?? creatorObj?.username ?? null,
     titlePrimary: item.titlePrimary,
     titleSecondary: item.titleSecondary || null,
     titleNative: null,

@@ -1,115 +1,228 @@
-name: iris
+name: namelessliberty
 
 services:
-  # database:
-  #   container_name: IRIS-database
-  #   image: postgres:latest
-  #   restart: unless-stopped
-  #   env_file:
-  #     - .env
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   networks:
-  #     IRIS:
-  #       ipv4_address: 172.28.0.2
-  #   ports:
-  #     - "${POSTGRE_PORT:-5432}:5432"
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U ${POSTGRE_USER:-postgres}"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
+  postgre:
+    container_name: NamelessLiberty-Postgre
+    image: postgres:latest
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRE_USER}
+      POSTGRES_PASSWORD: ${POSTGRE_PASS}
+      POSTGRES_DB: ${POSTGRE_DB}
+      PGDATA: /var/lib/postgresql/data
+    volumes:
+      - ~/db-data/postgres:/var/lib/postgresql
+    networks:
+      NamelessLiberty:
+        ipv4_address: 180.0.0.2
+    ports:
+      - "10001:5432"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} && (psql -U $${POSTGRES_USER} -d $${POSTGRES_DB} -tc \"SELECT 1 FROM pg_database WHERE datname = 'infisical'\" | grep -q 1 || psql -U $${POSTGRES_USER} -d $${POSTGRES_DB} -c \"CREATE DATABASE infisical\")",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
-  # cache:
-  #   container_name: IRIS-cache
-  #   image: redis:latest
-  #   restart: unless-stopped
-  #   env_file:
-  #     - .env
-  #   volumes:
-  #     - redis_data:/data
-  #   networks:
-  #     IRIS:
-  #       ipv4_address: 172.28.0.3
-  #   ports:
-  #     - "6379:6379"
-  #   healthcheck:
-  #     test: ["CMD", "redis-cli", "ping"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
+  redis:
+    container_name: NamelessLiberty-Redis
+    image: redis:latest
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
+    env_file:
+      - .env
+    volumes:
+      - redis_data:/data
+    networks:
+      NamelessLiberty:
+        ipv4_address: 180.0.0.3
+    ports:
+      - "10002:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
 
-  # file-storage:
-  #   container_name: IRIS-fileStorage
-  #   image: rustfs/rustfs:latest
-  #   restart: unless-stopped
-  #   env_file:
-  #     - .env
-  #   volumes:
-  #     - rustfs_data:/data
-  #   networks:
-  #     IRIS:
-  #       ipv4_address: 172.28.0.4
-  #   ports:
-  #     - "9000:9000"
+  infisical:
+    container_name: NamelessLiberty-Infisical
+    image: infisical/infisical:latest
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    env_file:
+      - .env
+    environment:
+      ENCRYPTION_KEY: ${INFISICAL_ENCRYPTION_KEY}
+      AUTH_SECRET: ${INFISICAL_AUTH_SECRET}
+      DB_CONNECTION_URI: postgres://${POSTGRE_USER}:${POSTGRE_PASS}@postgre:5432/infisical
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      SITE_URL: ${INFISICAL_SITE_URL}
+    depends_on:
+      postgre:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - infisical_data:/app/data
+    networks:
+      NamelessLiberty:
+        ipv4_address: 180.0.0.7
+    ports:
+      - "10003:8080"
 
+  rustfs:
+    container_name: NamelessLiberty-RustFS
+    image: rustfs/rustfs:latest
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    env_file:
+      - .env
+    volumes:
+      - /mnt/wdext/rustfs/data:/data
+      - rustfs_logs:/app/logs
+    networks:
+      NamelessLiberty:
+        ipv4_address: 180.0.0.4
+    ports:
+      - "10004:9000"
+      - "10005:9001"
+
+  deemix:
+    container_name: NamelessLiberty-Deemix
+    image: ghcr.io/bambanah/deemix:latest
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    env_file:
+      - .env
+    volumes:
+      - /mnt/wdext/media/music:/downloads
+      - deemix_config:/config
+    networks:
+      NamelessLiberty:
+        ipv4_address: 180.0.0.5
+    ports:
+      - "10006:6595"
+
+  searxng:
+    container_name: NamelessLiberty-SearXNG
+    image: searxng/searxng:latest
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    env_file:
+      - .env
+    volumes:
+      - ./core-config/:/etc/searxng/:Z
+      - core-data:/var/cache/searxng/
+    networks:
+      NamelessLiberty:
+        ipv4_address: 180.0.0.6
+    ports:
+      - "10007:8080"
 
   elysia:
-    container_name: IRIS-elysia
+    container_name: NamelessLiberty-Elysia
     build:
       context: .
       dockerfile: apps/elysia/Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION}
+      secrets:
+        - app_env
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
     env_file:
       - .env
-    # depends_on:
-    #   database:
-    #     condition: service_healthy
-    #   cache:
-    #     condition: service_healthy
-    #   file-storage:
-    #     condition: service_started
+    depends_on:
+      postgre:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rustfs:
+        condition: service_started
+      searxng:
+        condition: service_started
     networks:
-      IRIS:
-        ipv4_address: 172.28.0.7
+      NamelessLiberty:
+        ipv4_address: 180.0.0.8
     ports:
-      - "${ELYSIA_PORT:-4000}:4000"
+      - "10008:4000"
 
-  web:
-    container_name: IRIS-web
+  next:
+    container_name: NamelessLiberty-Next
     build:
       context: .
       dockerfile: apps/web/Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.runerra.org}
+        APP_VERSION: ${APP_VERSION}
+      secrets:
+        - app_env
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
     env_file:
       - .env
-    environment:
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.runerra.org}
-      - ELYSIA_INTERNAL_URL=http://elysia:4000
     depends_on:
-      - elysia
-    volumes:
-      - next_image_cache:/app/apps/web/.next/cache/images
+      elysia:
+        condition: service_started
     networks:
-      IRIS:
-        ipv4_address: 172.28.0.6
+      NamelessLiberty:
+        ipv4_address: 180.0.0.9
     ports:
-      - "3000:3000"
+      - "10009:3000"
+
+secrets:
+  app_env:
+    file: .env
 
 networks:
-  IRIS:
-    name: IRIS
+  NamelessLiberty:
+    name: NamelessLiberty
     driver: bridge
     ipam:
       driver: default
       config:
-        - subnet: 172.28.0.0/16
-          gateway: 172.28.0.1
+        - subnet: 180.0.0.0/24
+          gateway: 180.0.0.1
 
 volumes:
-  postgres_data:
   redis_data:
-  rustfs_data:
-  next_image_cache:
+    name: NamelessLiberty-redis-data
+  rustfs_logs:
+    name: NamelessLiberty-rustfs-logs
+  deemix_config:
+    name: NamelessLiberty-deemix-config
+  core-data:
+    name: NamelessLiberty-searxng-cache
+  infisical_data:
+    name: NamelessLiberty-infisical-data

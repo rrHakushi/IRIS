@@ -421,8 +421,17 @@ export function createConnectionProviderWorker(
     )
   })
 
-  worker.on('error', (err) => {
-    logger.warn(`${c.red('⚠️ [Worker Error]')}: [${provider}] ${err.message}`)
+  worker.on('error', (err: any) => {
+    const isSocketReset =
+      err?.code === 'ECONNRESET' ||
+      err?.code === 'EPIPE' ||
+      err?.code === 'ETIMEDOUT' ||
+      /ECONNRESET|EPIPE|ETIMEDOUT/i.test(err?.message || '')
+
+    if (isSocketReset) {
+      return
+    }
+    logger.warn(`${c.red('⚠️ [Worker Error]')}: [${provider}] ${err?.message || err}`)
   })
 
   workerInstances.set(provider, worker)

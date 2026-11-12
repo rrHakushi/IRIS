@@ -4,68 +4,95 @@ import { Elysia } from 'elysia'
 import { akaromiCiphers as _ctrl_0 } from './controllers/akaromi/ciphers.ctrl'
 import { akaromiEncryption as _ctrl_1 } from './controllers/akaromi/encryption.ctrl'
 import { akaromiVault as _ctrl_2 } from './controllers/akaromi/vault.ctrl'
-import { borealisCalendar as _ctrl_3 } from './controllers/borealis/calendar.ctrl'
-import { borealisEntities as _ctrl_4 } from './controllers/borealis/entities.ctrl'
-import { borealisLists as _ctrl_5 } from './controllers/borealis/lists.ctrl'
-import { borealisMedia as _ctrl_6 } from './controllers/borealis/media.ctrl'
-import { borealisOther as _ctrl_7 } from './controllers/borealis/other.ctrl'
-import { borealisPlaylists as _ctrl_8 } from './controllers/borealis/playlists.ctrl'
-import { borealisSearch as _ctrl_9 } from './controllers/borealis/search.ctrl'
-import { carinaApiKeys as _ctrl_10 } from './controllers/carina/apikeys.ctrl'
-import { carinaAuth as _ctrl_11 } from './controllers/carina/auth.ctrl'
-import { carinaBackupCodes as _ctrl_12 } from './controllers/carina/backupcodes.ctrl'
-import { carinaBookmarks as _ctrl_13 } from './controllers/carina/bookmarks.ctrl'
-import { carinaComments as _ctrl_14 } from './controllers/carina/comments.ctrl'
-import { carinaConnections as _ctrl_15 } from './controllers/carina/connections.ctrl'
-import { carinaEmail2fa as _ctrl_16 } from './controllers/carina/email-2fa.ctrl'
-import { carinaFavorites as _ctrl_17 } from './controllers/carina/favorites.ctrl'
-import { carinaFriends as _ctrl_18 } from './controllers/carina/friends.ctrl'
-import { carinaNotifications as _ctrl_19 } from './controllers/carina/notifications.ctrl'
-import { carinaOAuthDiscovery as _ctrl_20 } from './controllers/carina/oauth-discovery.ctrl'
-import { carinaOAuth as _ctrl_21 } from './controllers/carina/oauth.ctrl'
-import { carinaPasskeys as _ctrl_22 } from './controllers/carina/passkeys.ctrl'
-import { carinaPublic as _ctrl_23 } from './controllers/carina/public.ctrl'
-import { carinaQc as _ctrl_24 } from './controllers/carina/qc.ctrl'
-import { carinaRecommendations as _ctrl_25 } from './controllers/carina/recommendations.ctrl'
-import { carinaTotp as _ctrl_26 } from './controllers/carina/totp.ctrl'
-import { carinaUsers as _ctrl_27 } from './controllers/carina/users.ctrl'
-import { kiroshiHistory as _ctrl_28 } from './controllers/kiroshi/history.ctrl'
-import { kiroshiSearch as _ctrl_29 } from './controllers/kiroshi/search.ctrl'
-import { kiroshiSettings as _ctrl_30 } from './controllers/kiroshi/settings.ctrl'
-import { servarrController as _ctrl_31 } from './controllers/servarr/servarr.ctrl'
+import { borealisAnime as _ctrl_3 } from './controllers/borealis/anime.ctrl'
+import { borealisBooks as _ctrl_4 } from './controllers/borealis/books.ctrl'
+import { borealisCalendar as _ctrl_5 } from './controllers/borealis/calendar.ctrl'
+import { borealisEntities as _ctrl_6 } from './controllers/borealis/entities.ctrl'
+import { borealisGames as _ctrl_7 } from './controllers/borealis/games.ctrl'
+import { borealisLists as _ctrl_8 } from './controllers/borealis/lists.ctrl'
+import { borealisManga as _ctrl_9 } from './controllers/borealis/manga.ctrl'
+import { borealisMovies as _ctrl_10 } from './controllers/borealis/movies.ctrl'
+import { borealisMusic as _ctrl_11 } from './controllers/borealis/music.ctrl'
+import { borealisOther as _ctrl_12 } from './controllers/borealis/other.ctrl'
+import { borealisPlaylists as _ctrl_13 } from './controllers/borealis/playlists.ctrl'
+import { borealisSearch as _ctrl_14 } from './controllers/borealis/search.ctrl'
+import { borealisTv as _ctrl_15 } from './controllers/borealis/tv.ctrl'
+import { carinaApiKeys as _ctrl_16 } from './controllers/carina/apikeys.ctrl'
+import { carinaAuth as _ctrl_17 } from './controllers/carina/auth.ctrl'
+import { carinaBackupCodes as _ctrl_18 } from './controllers/carina/backupcodes.ctrl'
+import { carinaBookmarks as _ctrl_19 } from './controllers/carina/bookmarks.ctrl'
+import { carinaComments as _ctrl_20 } from './controllers/carina/comments.ctrl'
+import { carinaConnections as _ctrl_21 } from './controllers/carina/connections.ctrl'
+import { carinaEmail2fa as _ctrl_22 } from './controllers/carina/email-2fa.ctrl'
+import { carinaFavorites as _ctrl_23 } from './controllers/carina/favorites.ctrl'
+import { carinaFriends as _ctrl_24 } from './controllers/carina/friends.ctrl'
+import { carinaNotifications as _ctrl_25 } from './controllers/carina/notifications.ctrl'
+import { carinaOAuthDiscovery as _ctrl_26 } from './controllers/carina/oauth-discovery.ctrl'
+import { carinaOAuth as _ctrl_27 } from './controllers/carina/oauth.ctrl'
+import { carinaPasskeys as _ctrl_28 } from './controllers/carina/passkeys.ctrl'
+import { carinaPublic as _ctrl_29 } from './controllers/carina/public.ctrl'
+import { carinaQc as _ctrl_30 } from './controllers/carina/qc.ctrl'
+import { carinaRecommendations as _ctrl_31 } from './controllers/carina/recommendations.ctrl'
+import { carinaTotp as _ctrl_32 } from './controllers/carina/totp.ctrl'
+import { carinaUsers as _ctrl_33 } from './controllers/carina/users.ctrl'
+import { kiroshiHistory as _ctrl_34 } from './controllers/kiroshi/history.ctrl'
+import { kiroshiSearch as _ctrl_35 } from './controllers/kiroshi/search.ctrl'
+import { kiroshiSettings as _ctrl_36 } from './controllers/kiroshi/settings.ctrl'
+import { servarrController as _ctrl_37 } from './controllers/servarr/servarr.ctrl'
 
-export const controllers = new Elysia({ name: 'controllers' })
+const _group_0 = new Elysia()
   .use(_ctrl_0)
   .use(_ctrl_1)
   .use(_ctrl_2)
   .use(_ctrl_3)
   .use(_ctrl_4)
   .use(_ctrl_5)
+const _group_1 = new Elysia()
   .use(_ctrl_6)
   .use(_ctrl_7)
   .use(_ctrl_8)
   .use(_ctrl_9)
   .use(_ctrl_10)
   .use(_ctrl_11)
+const _group_2 = new Elysia()
   .use(_ctrl_12)
   .use(_ctrl_13)
   .use(_ctrl_14)
   .use(_ctrl_15)
   .use(_ctrl_16)
   .use(_ctrl_17)
+const _group_3 = new Elysia()
   .use(_ctrl_18)
   .use(_ctrl_19)
   .use(_ctrl_20)
   .use(_ctrl_21)
   .use(_ctrl_22)
   .use(_ctrl_23)
+const _group_4 = new Elysia()
   .use(_ctrl_24)
   .use(_ctrl_25)
   .use(_ctrl_26)
   .use(_ctrl_27)
   .use(_ctrl_28)
   .use(_ctrl_29)
+const _group_5 = new Elysia()
   .use(_ctrl_30)
   .use(_ctrl_31)
+  .use(_ctrl_32)
+  .use(_ctrl_33)
+  .use(_ctrl_34)
+  .use(_ctrl_35)
+const _group_6 = new Elysia()
+  .use(_ctrl_36)
+  .use(_ctrl_37)
+
+export const controllers = new Elysia({ name: 'controllers' })
+  .use(_group_0)
+  .use(_group_1)
+  .use(_group_2)
+  .use(_group_3)
+  .use(_group_4)
+  .use(_group_5)
+  .use(_group_6)
 
 export type ControllersApp = typeof controllers

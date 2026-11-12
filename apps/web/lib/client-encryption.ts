@@ -14,7 +14,10 @@ export function safeDecryptText(
   if (!ciphertext) return ""
   if (!vaultKey) return ciphertext
   const parts = ciphertext.split(":")
-  if (parts.length === 3 && parts[0]?.length === 24 && parts[1]?.length === 32) {
+  if (
+    (parts.length === 3 && parts[0]?.length === 24 && parts[1]?.length === 32) ||
+    (parts.length === 2 && parts[0]?.length === 24 && (parts[1]?.length ?? 0) >= 32)
+  ) {
     try {
       return decryptVaultData(ciphertext, vaultKey)
     } catch {

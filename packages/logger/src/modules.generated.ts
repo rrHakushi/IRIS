@@ -9,6 +9,7 @@ export interface KnownModules {
   "Borealis:Freshness": true
   "Borealis:PreviewSyncer": true
   "Borealis:Provider:AniList": true
+  "Borealis:Provider:AnimeMapping": true
   "Borealis:Provider:Deezer": true
   "Borealis:Provider:GoogleBooks": true
   "Borealis:Provider:IGDB": true
@@ -34,6 +35,7 @@ export interface KnownModules {
   "ProdModule": true
   "Scoped": true
   "SubModule": true
+  "Test": true
   "Worker:ConnectionSync": true
   "Worker:Email": true
   "Worker:Media": true

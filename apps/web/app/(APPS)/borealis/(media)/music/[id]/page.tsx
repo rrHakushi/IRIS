@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   try {
-    const { data } = await elysia.borealis.media.music({ id: numericId }).get()
+    const { data } = await elysia.borealis.music({ id: numericId }).get()
     const musicData = (data as any)?.media ?? data
     if (!musicData) {
       return {
@@ -44,7 +44,7 @@ export default async function MusicDetailPage({ params }: Props) {
     notFound()
   }
 
-  const { data, error } = await elysia.borealis.media.music({ id: numericId }).get()
+  const { data, error } = await elysia.borealis.music({ id: numericId }).get()
   const musicData = (data as any)?.media ?? data
   if (error || !musicData) {
     notFound()

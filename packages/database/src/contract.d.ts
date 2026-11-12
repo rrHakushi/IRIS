@@ -23,9 +23,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'dfda105c1a90ebc11f3d640b7a221d71fab6104ff155adeec20d0e44bb0e3194'>;
+  StorageHashBase<'171540bbf35293d8c6b6c5fded904a71ed3d4b7a557259c61aa92582da621f85'>;
 export type ExecutionHash =
-  ExecutionHashBase<'b7640b0fcc81eff6f25706df08d8b4535a1b5e11bd21a8168ea15ca60dc18af0'>;
+  ExecutionHashBase<'badedc9bf9c9e244076dcf05953b220b0f6de5a376999c55f32d4164bd8124ba'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -43,6 +43,10 @@ export type AggregateTypes = {
       readonly 'pg/int4@1': { readonly output: 'pg/float8@1'; readonly nullable: true };
       readonly 'pg/int8@1': { readonly output: 'pg/float8@1'; readonly nullable: true };
       readonly 'pg/int8number@1': { readonly output: 'pg/float8@1'; readonly nullable: true };
+      readonly 'pg/interval-string@1': {
+        readonly output: 'pg/interval-string@1';
+        readonly nullable: true;
+      };
       readonly 'pg/interval@1': { readonly output: 'pg/interval@1'; readonly nullable: true };
       readonly 'pg/numeric@1': { readonly output: 'pg/numeric@1'; readonly nullable: true };
       readonly 'pg/time-string@1': { readonly output: 'pg/interval@1'; readonly nullable: true };
@@ -92,6 +96,10 @@ export type AggregateTypes = {
       readonly 'pg/int4@1': { readonly output: 'pg/int4@1'; readonly nullable: true };
       readonly 'pg/int8@1': { readonly output: 'pg/int8@1'; readonly nullable: true };
       readonly 'pg/int8number@1': { readonly output: 'pg/int8number@1'; readonly nullable: true };
+      readonly 'pg/interval-string@1': {
+        readonly output: 'pg/interval-string@1';
+        readonly nullable: true;
+      };
       readonly 'pg/interval@1': { readonly output: 'pg/interval@1'; readonly nullable: true };
       readonly 'pg/numeric@1': { readonly output: 'pg/numeric@1'; readonly nullable: true };
       readonly 'pg/text-array@1': { readonly output: 'pg/text-array@1'; readonly nullable: true };
@@ -99,6 +107,14 @@ export type AggregateTypes = {
       readonly 'pg/time-string@1': { readonly output: 'pg/time-string@1'; readonly nullable: true };
       readonly 'pg/time-temporal@1': {
         readonly output: 'pg/time-temporal@1';
+        readonly nullable: true;
+      };
+      readonly 'pg/timestamp-date@1': {
+        readonly output: 'pg/timestamp-date@1';
+        readonly nullable: true;
+      };
+      readonly 'pg/timestamp-instant@1': {
+        readonly output: 'pg/timestamp-instant@1';
         readonly nullable: true;
       };
       readonly 'pg/timestamp-string@1': {
@@ -152,6 +168,10 @@ export type AggregateTypes = {
       readonly 'pg/int4@1': { readonly output: 'pg/int4@1'; readonly nullable: true };
       readonly 'pg/int8@1': { readonly output: 'pg/int8@1'; readonly nullable: true };
       readonly 'pg/int8number@1': { readonly output: 'pg/int8number@1'; readonly nullable: true };
+      readonly 'pg/interval-string@1': {
+        readonly output: 'pg/interval-string@1';
+        readonly nullable: true;
+      };
       readonly 'pg/interval@1': { readonly output: 'pg/interval@1'; readonly nullable: true };
       readonly 'pg/numeric@1': { readonly output: 'pg/numeric@1'; readonly nullable: true };
       readonly 'pg/text-array@1': { readonly output: 'pg/text-array@1'; readonly nullable: true };
@@ -159,6 +179,14 @@ export type AggregateTypes = {
       readonly 'pg/time-string@1': { readonly output: 'pg/time-string@1'; readonly nullable: true };
       readonly 'pg/time-temporal@1': {
         readonly output: 'pg/time-temporal@1';
+        readonly nullable: true;
+      };
+      readonly 'pg/timestamp-date@1': {
+        readonly output: 'pg/timestamp-date@1';
+        readonly nullable: true;
+      };
+      readonly 'pg/timestamp-instant@1': {
+        readonly output: 'pg/timestamp-instant@1';
         readonly nullable: true;
       };
       readonly 'pg/timestamp-string@1': {
@@ -204,6 +232,10 @@ export type AggregateTypes = {
       readonly 'pg/int4@1': { readonly output: 'pg/int8number@1'; readonly nullable: true };
       readonly 'pg/int8@1': { readonly output: 'pg/int8number@1'; readonly nullable: true };
       readonly 'pg/int8number@1': { readonly output: 'pg/int8number@1'; readonly nullable: true };
+      readonly 'pg/interval-string@1': {
+        readonly output: 'pg/interval-string@1';
+        readonly nullable: true;
+      };
       readonly 'pg/interval@1': { readonly output: 'pg/interval@1'; readonly nullable: true };
       readonly 'pg/numeric@1': { readonly output: 'pg/numeric@1'; readonly nullable: true };
       readonly 'pg/time-string@1': { readonly output: 'pg/interval@1'; readonly nullable: true };
@@ -368,9 +400,14 @@ type FieldTypeOverrides = {
         };
       };
       readonly AnimeList: {
+        readonly priority: {
+          readonly output: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+          readonly input: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+        };
         readonly status: {
-          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly output:
+            'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
         };
       };
       readonly Book: {
@@ -382,9 +419,14 @@ type FieldTypeOverrides = {
         };
       };
       readonly BookList: {
+        readonly priority: {
+          readonly output: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+          readonly input: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+        };
         readonly status: {
-          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly output:
+            'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
         };
       };
       readonly Connection: {
@@ -439,6 +481,12 @@ type FieldTypeOverrides = {
         readonly status: {
           readonly output: 'CONNECTED' | 'EXPIRED' | 'REVOKED' | 'ERROR' | 'DISCONNECTED';
           readonly input: 'CONNECTED' | 'EXPIRED' | 'REVOKED' | 'ERROR' | 'DISCONNECTED';
+        };
+      };
+      readonly CustomListCollaborator: {
+        readonly role: {
+          readonly output: 'EDITOR' | 'VIEWER';
+          readonly input: 'EDITOR' | 'VIEWER';
         };
       };
       readonly CustomListEntry: {
@@ -516,9 +564,14 @@ type FieldTypeOverrides = {
         };
       };
       readonly GameList: {
+        readonly priority: {
+          readonly output: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+          readonly input: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+        };
         readonly status: {
-          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly output:
+            'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
         };
       };
       readonly Manga: {
@@ -572,9 +625,14 @@ type FieldTypeOverrides = {
         };
       };
       readonly MangaList: {
+        readonly priority: {
+          readonly output: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+          readonly input: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+        };
         readonly status: {
-          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly output:
+            'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
         };
       };
       readonly MediaCharacter: {
@@ -858,9 +916,14 @@ type FieldTypeOverrides = {
         };
       };
       readonly MovieList: {
+        readonly priority: {
+          readonly output: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+          readonly input: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+        };
         readonly status: {
-          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly output:
+            'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
         };
       };
       readonly Music: {
@@ -873,9 +936,14 @@ type FieldTypeOverrides = {
         readonly type: { readonly output: 'TRACK' | 'ALBUM'; readonly input: 'TRACK' | 'ALBUM' };
       };
       readonly MusicList: {
+        readonly priority: {
+          readonly output: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+          readonly input: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+        };
         readonly status: {
-          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly output:
+            'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
         };
       };
       readonly Notification: {
@@ -893,9 +961,14 @@ type FieldTypeOverrides = {
         };
       };
       readonly OtherList: {
+        readonly priority: {
+          readonly output: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+          readonly input: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+        };
         readonly status: {
-          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly output:
+            'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
         };
       };
       readonly PassCipher: {
@@ -949,15 +1022,21 @@ type FieldTypeOverrides = {
         };
       };
       readonly TvList: {
+        readonly priority: {
+          readonly output: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+          readonly input: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+        };
         readonly status: {
-          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly output:
+            'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
         };
       };
       readonly TvSeasonProgress: {
         readonly status: {
-          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly output:
+            'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
         };
       };
       readonly UserStats: {
@@ -1132,9 +1211,13 @@ type ColumnTypeOverrides = {
       };
     };
     readonly AnimeList: {
+      readonly priority: {
+        readonly output: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+        readonly input: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+      };
       readonly status: {
-        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
       };
     };
     readonly Book: {
@@ -1144,9 +1227,13 @@ type ColumnTypeOverrides = {
       };
     };
     readonly BookList: {
+      readonly priority: {
+        readonly output: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+        readonly input: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+      };
       readonly status: {
-        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
       };
     };
     readonly Connection: {
@@ -1202,6 +1289,9 @@ type ColumnTypeOverrides = {
         readonly output: 'CONNECTED' | 'EXPIRED' | 'REVOKED' | 'ERROR' | 'DISCONNECTED';
         readonly input: 'CONNECTED' | 'EXPIRED' | 'REVOKED' | 'ERROR' | 'DISCONNECTED';
       };
+    };
+    readonly CustomListCollaborator: {
+      readonly role: { readonly output: 'EDITOR' | 'VIEWER'; readonly input: 'EDITOR' | 'VIEWER' };
     };
     readonly CustomListEntry: {
       readonly mediaType: {
@@ -1276,9 +1366,13 @@ type ColumnTypeOverrides = {
       };
     };
     readonly GameList: {
+      readonly priority: {
+        readonly output: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+        readonly input: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+      };
       readonly status: {
-        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
       };
     };
     readonly Manga: {
@@ -1330,9 +1424,13 @@ type ColumnTypeOverrides = {
       };
     };
     readonly MangaList: {
+      readonly priority: {
+        readonly output: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+        readonly input: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+      };
       readonly status: {
-        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
       };
     };
     readonly MediaCharacter: {
@@ -1614,9 +1712,13 @@ type ColumnTypeOverrides = {
       };
     };
     readonly MovieList: {
+      readonly priority: {
+        readonly output: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+        readonly input: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+      };
       readonly status: {
-        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
       };
     };
     readonly Music: {
@@ -1627,9 +1729,13 @@ type ColumnTypeOverrides = {
       readonly type: { readonly output: 'TRACK' | 'ALBUM'; readonly input: 'TRACK' | 'ALBUM' };
     };
     readonly MusicList: {
+      readonly priority: {
+        readonly output: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+        readonly input: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+      };
       readonly status: {
-        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
       };
     };
     readonly Notification: {
@@ -1647,9 +1753,13 @@ type ColumnTypeOverrides = {
       };
     };
     readonly OtherList: {
+      readonly priority: {
+        readonly output: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+        readonly input: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+      };
       readonly status: {
-        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
       };
     };
     readonly PassCipher: {
@@ -1698,15 +1808,19 @@ type ColumnTypeOverrides = {
       };
     };
     readonly TvList: {
+      readonly priority: {
+        readonly output: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+        readonly input: 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA';
+      };
       readonly status: {
-        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
       };
     };
     readonly TvSeasonProgress: {
       readonly status: {
-        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
       };
     };
     readonly UserStats: {
@@ -1935,6 +2049,7 @@ export namespace Models {
     createdAt: FieldOutputTypes['public']['AnimeList']['createdAt'];
     id: FieldOutputTypes['public']['AnimeList']['id'];
     notes: FieldOutputTypes['public']['AnimeList']['notes'];
+    priority: FieldOutputTypes['public']['AnimeList']['priority'];
     private: FieldOutputTypes['public']['AnimeList']['private'];
     progress: FieldOutputTypes['public']['AnimeList']['progress'];
     rewatchHistory: FieldOutputTypes['public']['AnimeList']['rewatchHistory'];
@@ -2074,6 +2189,7 @@ export namespace Models {
     createdAt: FieldOutputTypes['public']['BookList']['createdAt'];
     id: FieldOutputTypes['public']['BookList']['id'];
     notes: FieldOutputTypes['public']['BookList']['notes'];
+    priority: FieldOutputTypes['public']['BookList']['priority'];
     private: FieldOutputTypes['public']['BookList']['private'];
     progressChapters: FieldOutputTypes['public']['BookList']['progressChapters'];
     progressPages: FieldOutputTypes['public']['BookList']['progressPages'];
@@ -2185,9 +2301,21 @@ export namespace Models {
     order: FieldOutputTypes['public']['CustomList']['order'];
     updatedAt: FieldOutputTypes['public']['CustomList']['updatedAt'];
     userId: FieldOutputTypes['public']['CustomList']['userId'];
+    collaborators: public_CustomListCollaborator[];
+    comments: public_ListComment[];
     entries: public_CustomListEntry[];
     user: public_User;
-    readonly [RelationKeys]?: 'entries' | 'user';
+    readonly [RelationKeys]?: 'collaborators' | 'comments' | 'entries' | 'user';
+  };
+  export type public_CustomListCollaborator = {
+    createdAt: FieldOutputTypes['public']['CustomListCollaborator']['createdAt'];
+    id: FieldOutputTypes['public']['CustomListCollaborator']['id'];
+    listId: FieldOutputTypes['public']['CustomListCollaborator']['listId'];
+    role: FieldOutputTypes['public']['CustomListCollaborator']['role'];
+    userId: FieldOutputTypes['public']['CustomListCollaborator']['userId'];
+    list: public_CustomList;
+    user: public_User;
+    readonly [RelationKeys]?: 'list' | 'user';
   };
   export type public_CustomListEntry = {
     addedAt: FieldOutputTypes['public']['CustomListEntry']['addedAt'];
@@ -2334,6 +2462,7 @@ export namespace Models {
     gameId: FieldOutputTypes['public']['GameList']['gameId'];
     id: FieldOutputTypes['public']['GameList']['id'];
     notes: FieldOutputTypes['public']['GameList']['notes'];
+    priority: FieldOutputTypes['public']['GameList']['priority'];
     private: FieldOutputTypes['public']['GameList']['private'];
     progress: FieldOutputTypes['public']['GameList']['progress'];
     replayHistory: FieldOutputTypes['public']['GameList']['replayHistory'];
@@ -2390,15 +2519,17 @@ export namespace Models {
     authorId: FieldOutputTypes['public']['ListComment']['authorId'];
     content: FieldOutputTypes['public']['ListComment']['content'];
     createdAt: FieldOutputTypes['public']['ListComment']['createdAt'];
+    customListId: FieldOutputTypes['public']['ListComment']['customListId'];
     id: FieldOutputTypes['public']['ListComment']['id'];
     isSpoiler: FieldOutputTypes['public']['ListComment']['isSpoiler'];
     listOwnerId: FieldOutputTypes['public']['ListComment']['listOwnerId'];
     mediaType: FieldOutputTypes['public']['ListComment']['mediaType'];
     updatedAt: FieldOutputTypes['public']['ListComment']['updatedAt'];
     author: public_User;
+    customList: public_CustomList | null;
     listOwner: public_User;
     reply: public_ListCommentReply | null;
-    readonly [RelationKeys]?: 'author' | 'listOwner' | 'reply';
+    readonly [RelationKeys]?: 'author' | 'customList' | 'listOwner' | 'reply';
   };
   export type public_ListCommentReply = {
     authorId: FieldOutputTypes['public']['ListCommentReply']['authorId'];
@@ -2500,6 +2631,7 @@ export namespace Models {
     id: FieldOutputTypes['public']['MangaList']['id'];
     mangaId: FieldOutputTypes['public']['MangaList']['mangaId'];
     notes: FieldOutputTypes['public']['MangaList']['notes'];
+    priority: FieldOutputTypes['public']['MangaList']['priority'];
     private: FieldOutputTypes['public']['MangaList']['private'];
     reread: FieldOutputTypes['public']['MangaList']['reread'];
     rereadHistory: FieldOutputTypes['public']['MangaList']['rereadHistory'];
@@ -2711,6 +2843,7 @@ export namespace Models {
     id: FieldOutputTypes['public']['MovieList']['id'];
     movieId: FieldOutputTypes['public']['MovieList']['movieId'];
     notes: FieldOutputTypes['public']['MovieList']['notes'];
+    priority: FieldOutputTypes['public']['MovieList']['priority'];
     private: FieldOutputTypes['public']['MovieList']['private'];
     rewatchHistory: FieldOutputTypes['public']['MovieList']['rewatchHistory'];
     rewatched: FieldOutputTypes['public']['MovieList']['rewatched'];
@@ -2833,6 +2966,7 @@ export namespace Models {
     musicId: FieldOutputTypes['public']['MusicList']['musicId'];
     notes: FieldOutputTypes['public']['MusicList']['notes'];
     playCount: FieldOutputTypes['public']['MusicList']['playCount'];
+    priority: FieldOutputTypes['public']['MusicList']['priority'];
     private: FieldOutputTypes['public']['MusicList']['private'];
     score: FieldOutputTypes['public']['MusicList']['score'];
     startedAt: FieldOutputTypes['public']['MusicList']['startedAt'];
@@ -2997,6 +3131,7 @@ export namespace Models {
     id: FieldOutputTypes['public']['OtherList']['id'];
     notes: FieldOutputTypes['public']['OtherList']['notes'];
     otherId: FieldOutputTypes['public']['OtherList']['otherId'];
+    priority: FieldOutputTypes['public']['OtherList']['priority'];
     private: FieldOutputTypes['public']['OtherList']['private'];
     progressValues: FieldOutputTypes['public']['OtherList']['progressValues'];
     score: FieldOutputTypes['public']['OtherList']['score'];
@@ -3265,6 +3400,7 @@ export namespace Models {
     createdAt: FieldOutputTypes['public']['TvList']['createdAt'];
     id: FieldOutputTypes['public']['TvList']['id'];
     notes: FieldOutputTypes['public']['TvList']['notes'];
+    priority: FieldOutputTypes['public']['TvList']['priority'];
     private: FieldOutputTypes['public']['TvList']['private'];
     progress: FieldOutputTypes['public']['TvList']['progress'];
     rewatchHistory: FieldOutputTypes['public']['TvList']['rewatchHistory'];
@@ -3392,6 +3528,7 @@ export namespace Models {
     bookList: public_BookList[];
     bookReviews: public_BookReview[];
     bookmarks: public_Bookmark[];
+    collaborations: public_CustomListCollaborator[];
     connections: public_Connection[];
     createdOtherItems: public_Other[];
     customLists: public_CustomList[];
@@ -3440,6 +3577,7 @@ export namespace Models {
       | 'bookList'
       | 'bookReviews'
       | 'bookmarks'
+      | 'collaborations'
       | 'connections'
       | 'createdOtherItems'
       | 'customLists'
@@ -3538,6 +3676,7 @@ export declare const models: {
     Character: Models.public_Character;
     Connection: Models.public_Connection;
     CustomList: Models.public_CustomList;
+    CustomListCollaborator: Models.public_CustomListCollaborator;
     CustomListEntry: Models.public_CustomListEntry;
     Favorite: Models.public_Favorite;
     Friend: Models.public_Friend;
@@ -5560,6 +5699,16 @@ type ContractBase = Omit<
                   readonly nullable: true;
                   readonly many: false;
                 };
+                readonly priority: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'LOW'>;
+                  };
+                  readonly many: false;
+                };
                 readonly private: {
                   readonly dataType: 'pg/bool';
                   readonly codecId: 'pg/bool@1';
@@ -5650,6 +5799,12 @@ type ContractBase = Omit<
                   readonly name: 'AnimeList_userId_idx_a489d58a';
                   readonly prefix: 'AnimeList_userId_idx';
                   readonly columns: readonly ['userId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'AnimeList_userId_priority_idx_48571828';
+                  readonly prefix: 'AnimeList_userId_priority_idx';
+                  readonly columns: readonly ['userId', 'priority'];
                   readonly unique: false;
                 },
                 {
@@ -6367,6 +6522,16 @@ type ContractBase = Omit<
                   readonly nullable: true;
                   readonly many: false;
                 };
+                readonly priority: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'LOW'>;
+                  };
+                  readonly many: false;
+                };
                 readonly private: {
                   readonly dataType: 'pg/bool';
                   readonly codecId: 'pg/bool@1';
@@ -6477,6 +6642,12 @@ type ContractBase = Omit<
                   readonly name: 'BookList_userId_idx_a489d58a';
                   readonly prefix: 'BookList_userId_idx';
                   readonly columns: readonly ['userId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'BookList_userId_priority_idx_48571828';
+                  readonly prefix: 'BookList_userId_priority_idx';
+                  readonly columns: readonly ['userId', 'priority'];
                   readonly unique: false;
                 },
                 {
@@ -7181,6 +7352,87 @@ type ContractBase = Omit<
                   readonly source: {
                     readonly namespaceId: 'public' & NamespaceId;
                     readonly tableName: 'CustomList';
+                    readonly columns: readonly ['userId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'User';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
+            readonly CustomListCollaborator: {
+              columns: {
+                readonly createdAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly listId: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly role: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'EDITOR'>;
+                  };
+                  readonly many: false;
+                };
+                readonly userId: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [{ readonly columns: readonly ['listId', 'userId'] }];
+              indexes: readonly [
+                {
+                  readonly name: 'CustomListCollaborator_listId_idx_0033d367';
+                  readonly prefix: 'CustomListCollaborator_listId_idx';
+                  readonly columns: readonly ['listId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'CustomListCollaborator_userId_idx_a489d58a';
+                  readonly prefix: 'CustomListCollaborator_userId_idx';
+                  readonly columns: readonly ['userId'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'CustomListCollaborator';
+                    readonly columns: readonly ['listId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'CustomList';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'CustomListCollaborator';
                     readonly columns: readonly ['userId'];
                   };
                   readonly target: {
@@ -8193,6 +8445,16 @@ type ContractBase = Omit<
                   readonly nullable: true;
                   readonly many: false;
                 };
+                readonly priority: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'LOW'>;
+                  };
+                  readonly many: false;
+                };
                 readonly private: {
                   readonly dataType: 'pg/bool';
                   readonly codecId: 'pg/bool@1';
@@ -8283,6 +8545,12 @@ type ContractBase = Omit<
                   readonly name: 'GameList_userId_idx_a489d58a';
                   readonly prefix: 'GameList_userId_idx';
                   readonly columns: readonly ['userId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'GameList_userId_priority_idx_48571828';
+                  readonly prefix: 'GameList_userId_priority_idx';
+                  readonly columns: readonly ['userId', 'priority'];
                   readonly unique: false;
                 },
                 {
@@ -8533,6 +8801,12 @@ type ContractBase = Omit<
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
                 };
+                readonly customListId: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
                 readonly id: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
@@ -8578,6 +8852,18 @@ type ContractBase = Omit<
                   readonly unique: false;
                 },
                 {
+                  readonly name: 'ListComment_customListId_createdAt_idx_93d03413';
+                  readonly prefix: 'ListComment_customListId_createdAt_idx';
+                  readonly columns: readonly ['customListId', 'createdAt'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'ListComment_customListId_idx_b1b1fd15';
+                  readonly prefix: 'ListComment_customListId_idx';
+                  readonly columns: readonly ['customListId'];
+                  readonly unique: false;
+                },
+                {
                   readonly name: 'ListComment_listOwnerId_idx_26c09ee9';
                   readonly prefix: 'ListComment_listOwnerId_idx';
                   readonly columns: readonly ['listOwnerId'];
@@ -8612,6 +8898,18 @@ type ContractBase = Omit<
                   readonly target: {
                     readonly namespaceId: 'public' & NamespaceId;
                     readonly tableName: 'User';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'ListComment';
+                    readonly columns: readonly ['customListId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'CustomList';
                     readonly columns: readonly ['id'];
                   };
                 },
@@ -9213,6 +9511,16 @@ type ContractBase = Omit<
                   readonly nullable: true;
                   readonly many: false;
                 };
+                readonly priority: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'LOW'>;
+                  };
+                  readonly many: false;
+                };
                 readonly private: {
                   readonly dataType: 'pg/bool';
                   readonly codecId: 'pg/bool@1';
@@ -9303,6 +9611,12 @@ type ContractBase = Omit<
                   readonly name: 'MangaList_userId_idx_a489d58a';
                   readonly prefix: 'MangaList_userId_idx';
                   readonly columns: readonly ['userId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'MangaList_userId_priority_idx_48571828';
+                  readonly prefix: 'MangaList_userId_priority_idx';
+                  readonly columns: readonly ['userId', 'priority'];
                   readonly unique: false;
                 },
                 {
@@ -10794,6 +11108,16 @@ type ContractBase = Omit<
                   readonly nullable: true;
                   readonly many: false;
                 };
+                readonly priority: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'LOW'>;
+                  };
+                  readonly many: false;
+                };
                 readonly private: {
                   readonly dataType: 'pg/bool';
                   readonly codecId: 'pg/bool@1';
@@ -10874,6 +11198,12 @@ type ContractBase = Omit<
                   readonly name: 'MovieList_userId_idx_a489d58a';
                   readonly prefix: 'MovieList_userId_idx';
                   readonly columns: readonly ['userId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'MovieList_userId_priority_idx_48571828';
+                  readonly prefix: 'MovieList_userId_priority_idx';
+                  readonly columns: readonly ['userId', 'priority'];
                   readonly unique: false;
                 },
                 {
@@ -11539,6 +11869,16 @@ type ContractBase = Omit<
                   };
                   readonly many: false;
                 };
+                readonly priority: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'LOW'>;
+                  };
+                  readonly many: false;
+                };
                 readonly private: {
                   readonly dataType: 'pg/bool';
                   readonly codecId: 'pg/bool@1';
@@ -11603,6 +11943,12 @@ type ContractBase = Omit<
                   readonly name: 'MusicList_userId_idx_a489d58a';
                   readonly prefix: 'MusicList_userId_idx';
                   readonly columns: readonly ['userId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'MusicList_userId_priority_idx_48571828';
+                  readonly prefix: 'MusicList_userId_priority_idx';
+                  readonly columns: readonly ['userId', 'priority'];
                   readonly unique: false;
                 },
                 {
@@ -12717,6 +13063,16 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly many: false;
                 };
+                readonly priority: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'LOW'>;
+                  };
+                  readonly many: false;
+                };
                 readonly private: {
                   readonly dataType: 'pg/bool';
                   readonly codecId: 'pg/bool@1';
@@ -12791,6 +13147,12 @@ type ContractBase = Omit<
                   readonly name: 'OtherList_userId_idx_a489d58a';
                   readonly prefix: 'OtherList_userId_idx';
                   readonly columns: readonly ['userId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'OtherList_userId_priority_idx_48571828';
+                  readonly prefix: 'OtherList_userId_priority_idx';
+                  readonly columns: readonly ['userId', 'priority'];
                   readonly unique: false;
                 },
                 {
@@ -14367,6 +14729,16 @@ type ContractBase = Omit<
                   readonly nullable: true;
                   readonly many: false;
                 };
+                readonly priority: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'LOW'>;
+                  };
+                  readonly many: false;
+                };
                 readonly private: {
                   readonly dataType: 'pg/bool';
                   readonly codecId: 'pg/bool@1';
@@ -14463,6 +14835,12 @@ type ContractBase = Omit<
                   readonly name: 'TvList_userId_idx_a489d58a';
                   readonly prefix: 'TvList_userId_idx';
                   readonly columns: readonly ['userId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'TvList_userId_priority_idx_48571828';
+                  readonly prefix: 'TvList_userId_priority_idx';
+                  readonly columns: readonly ['userId', 'priority'];
                   readonly unique: false;
                 },
                 {
@@ -15547,6 +15925,10 @@ type ContractBase = Omit<
               readonly kind: 'valueSet';
               readonly values: readonly ['MAIN', 'SUPPORTING', 'BACKGROUND'];
             };
+            readonly CollaboratorRole: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['EDITOR', 'VIEWER'];
+            };
             readonly ConnectionAuthType: {
               readonly kind: 'valueSet';
               readonly values: readonly ['OAUTH2', 'API_KEY', 'CREDENTIALS', 'OPENID'];
@@ -15586,6 +15968,10 @@ type ContractBase = Omit<
                 'DISCONNECTED',
               ];
             };
+            readonly EntryPriority: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['LOW', 'MEDIUM', 'HIGH', 'ULTRA'];
+            };
             readonly EpisodeType: {
               readonly kind: 'valueSet';
               readonly values: readonly ['REGULAR', 'SPECIAL', 'OVA', 'ONA', 'MOVIE', 'OTHER'];
@@ -15620,6 +16006,7 @@ type ContractBase = Omit<
                 'DROPPED',
                 'COMPLETED',
                 'PLANNED',
+                'MAYBE',
               ];
             };
             readonly MangaFormat: {
@@ -15797,6 +16184,10 @@ type ContractBase = Omit<
     readonly CustomList: {
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'CustomList';
+    };
+    readonly CustomListCollaborator: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'CustomListCollaborator';
     };
     readonly CustomListEntry: {
       readonly namespace: 'public' & NamespaceId;
@@ -16971,6 +17362,10 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly priority: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly private: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
@@ -17047,6 +17442,7 @@ type ContractBase = Omit<
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly id: { readonly column: 'id' };
                 readonly notes: { readonly column: 'notes' };
+                readonly priority: { readonly column: 'priority' };
                 readonly private: { readonly column: 'private' };
                 readonly progress: { readonly column: 'progress' };
                 readonly rewatchHistory: { readonly column: 'rewatchHistory' };
@@ -17747,6 +18143,10 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly priority: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly private: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
@@ -17828,6 +18228,7 @@ type ContractBase = Omit<
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly id: { readonly column: 'id' };
                 readonly notes: { readonly column: 'notes' };
+                readonly priority: { readonly column: 'priority' };
                 readonly private: { readonly column: 'private' };
                 readonly progressChapters: { readonly column: 'progressChapters' };
                 readonly progressPages: { readonly column: 'progressPages' };
@@ -18364,6 +18765,28 @@ type ContractBase = Omit<
               };
             };
             readonly relations: {
+              readonly collaborators: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'CustomListCollaborator';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['listId'];
+                };
+              };
+              readonly comments: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'ListComment';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['customListId'];
+                };
+              };
               readonly entries: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -18398,6 +18821,67 @@ type ContractBase = Omit<
                 readonly name: { readonly column: 'name' };
                 readonly order: { readonly column: 'order' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
+                readonly userId: { readonly column: 'userId' };
+              };
+            };
+          };
+          readonly CustomListCollaborator: {
+            readonly fields: {
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly listId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly role: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly userId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+            };
+            readonly relations: {
+              readonly list: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'CustomList';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['listId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly user: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['userId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'CustomListCollaborator';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly createdAt: { readonly column: 'createdAt' };
+                readonly id: { readonly column: 'id' };
+                readonly listId: { readonly column: 'listId' };
+                readonly role: { readonly column: 'role' };
                 readonly userId: { readonly column: 'userId' };
               };
             };
@@ -19255,6 +19739,10 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly priority: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly private: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
@@ -19328,6 +19816,7 @@ type ContractBase = Omit<
                 readonly gameId: { readonly column: 'gameId' };
                 readonly id: { readonly column: 'id' };
                 readonly notes: { readonly column: 'notes' };
+                readonly priority: { readonly column: 'priority' };
                 readonly private: { readonly column: 'private' };
                 readonly progress: { readonly column: 'progress' };
                 readonly replayHistory: { readonly column: 'replayHistory' };
@@ -19613,6 +20102,10 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
+              readonly customListId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly id: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
@@ -19647,6 +20140,18 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['id'];
                 };
               };
+              readonly customList: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'CustomList';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['customListId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
               readonly listOwner: {
                 readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
                 readonly cardinality: 'N:1';
@@ -19676,6 +20181,7 @@ type ContractBase = Omit<
                 readonly authorId: { readonly column: 'authorId' };
                 readonly content: { readonly column: 'content' };
                 readonly createdAt: { readonly column: 'createdAt' };
+                readonly customListId: { readonly column: 'customListId' };
                 readonly id: { readonly column: 'id' };
                 readonly isSpoiler: { readonly column: 'isSpoiler' };
                 readonly listOwnerId: { readonly column: 'listOwnerId' };
@@ -20260,6 +20766,10 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly priority: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly private: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
@@ -20337,6 +20847,7 @@ type ContractBase = Omit<
                 readonly id: { readonly column: 'id' };
                 readonly mangaId: { readonly column: 'mangaId' };
                 readonly notes: { readonly column: 'notes' };
+                readonly priority: { readonly column: 'priority' };
                 readonly private: { readonly column: 'private' };
                 readonly reread: { readonly column: 'reread' };
                 readonly rereadHistory: { readonly column: 'rereadHistory' };
@@ -21514,6 +22025,10 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly priority: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly private: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
@@ -21586,6 +22101,7 @@ type ContractBase = Omit<
                 readonly id: { readonly column: 'id' };
                 readonly movieId: { readonly column: 'movieId' };
                 readonly notes: { readonly column: 'notes' };
+                readonly priority: { readonly column: 'priority' };
                 readonly private: { readonly column: 'private' };
                 readonly rewatchHistory: { readonly column: 'rewatchHistory' };
                 readonly rewatched: { readonly column: 'rewatched' };
@@ -22194,6 +22710,10 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
+              readonly priority: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly private: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
@@ -22259,6 +22779,7 @@ type ContractBase = Omit<
                 readonly musicId: { readonly column: 'musicId' };
                 readonly notes: { readonly column: 'notes' };
                 readonly playCount: { readonly column: 'playCount' };
+                readonly priority: { readonly column: 'priority' };
                 readonly private: { readonly column: 'private' };
                 readonly score: { readonly column: 'score' };
                 readonly startedAt: { readonly column: 'startedAt' };
@@ -23198,6 +23719,10 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
+              readonly priority: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly private: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
@@ -23265,6 +23790,7 @@ type ContractBase = Omit<
                 readonly id: { readonly column: 'id' };
                 readonly notes: { readonly column: 'notes' };
                 readonly otherId: { readonly column: 'otherId' };
+                readonly priority: { readonly column: 'priority' };
                 readonly private: { readonly column: 'private' };
                 readonly progressValues: { readonly column: 'progressValues' };
                 readonly score: { readonly column: 'score' };
@@ -24715,6 +25241,10 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly priority: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly private: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
@@ -24813,6 +25343,7 @@ type ContractBase = Omit<
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly id: { readonly column: 'id' };
                 readonly notes: { readonly column: 'notes' };
+                readonly priority: { readonly column: 'priority' };
                 readonly private: { readonly column: 'private' };
                 readonly progress: { readonly column: 'progress' };
                 readonly rewatchHistory: { readonly column: 'rewatchHistory' };
@@ -25538,6 +26069,17 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['userId'];
                 };
               };
+              readonly collaborations: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'CustomListCollaborator';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['userId'];
+                };
+              };
               readonly connections: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -26223,6 +26765,13 @@ type ContractBase = Omit<
               { readonly name: 'BACKGROUND'; readonly value: 'BACKGROUND' },
             ];
           };
+          readonly CollaboratorRole: {
+            readonly codecId: 'pg/text@1';
+            readonly members: readonly [
+              { readonly name: 'EDITOR'; readonly value: 'EDITOR' },
+              { readonly name: 'VIEWER'; readonly value: 'VIEWER' },
+            ];
+          };
           readonly ConnectionAuthType: {
             readonly codecId: 'pg/text@1';
             readonly members: readonly [
@@ -26265,6 +26814,15 @@ type ContractBase = Omit<
               { readonly name: 'REVOKED'; readonly value: 'REVOKED' },
               { readonly name: 'ERROR'; readonly value: 'ERROR' },
               { readonly name: 'DISCONNECTED'; readonly value: 'DISCONNECTED' },
+            ];
+          };
+          readonly EntryPriority: {
+            readonly codecId: 'pg/text@1';
+            readonly members: readonly [
+              { readonly name: 'LOW'; readonly value: 'LOW' },
+              { readonly name: 'MEDIUM'; readonly value: 'MEDIUM' },
+              { readonly name: 'HIGH'; readonly value: 'HIGH' },
+              { readonly name: 'ULTRA'; readonly value: 'ULTRA' },
             ];
           };
           readonly EpisodeType: {
@@ -26313,6 +26871,7 @@ type ContractBase = Omit<
               { readonly name: 'DROPPED'; readonly value: 'DROPPED' },
               { readonly name: 'COMPLETED'; readonly value: 'COMPLETED' },
               { readonly name: 'PLANNED'; readonly value: 'PLANNED' },
+              { readonly name: 'MAYBE'; readonly value: 'MAYBE' },
             ];
           };
           readonly MangaFormat: {
@@ -26533,6 +27092,10 @@ type ContractBase = Omit<
             { readonly name: 'SUPPORTING'; readonly value: 'SUPPORTING' },
             { readonly name: 'BACKGROUND'; readonly value: 'BACKGROUND' },
           ];
+          readonly CollaboratorRole: readonly [
+            { readonly name: 'EDITOR'; readonly value: 'EDITOR' },
+            { readonly name: 'VIEWER'; readonly value: 'VIEWER' },
+          ];
           readonly ConnectionAuthType: readonly [
             { readonly name: 'OAUTH2'; readonly value: 'OAUTH2' },
             { readonly name: 'API_KEY'; readonly value: 'API_KEY' },
@@ -26567,6 +27130,12 @@ type ContractBase = Omit<
             { readonly name: 'REVOKED'; readonly value: 'REVOKED' },
             { readonly name: 'ERROR'; readonly value: 'ERROR' },
             { readonly name: 'DISCONNECTED'; readonly value: 'DISCONNECTED' },
+          ];
+          readonly EntryPriority: readonly [
+            { readonly name: 'LOW'; readonly value: 'LOW' },
+            { readonly name: 'MEDIUM'; readonly value: 'MEDIUM' },
+            { readonly name: 'HIGH'; readonly value: 'HIGH' },
+            { readonly name: 'ULTRA'; readonly value: 'ULTRA' },
           ];
           readonly EpisodeType: readonly [
             { readonly name: 'REGULAR'; readonly value: 'REGULAR' },
@@ -26603,6 +27172,7 @@ type ContractBase = Omit<
             { readonly name: 'DROPPED'; readonly value: 'DROPPED' },
             { readonly name: 'COMPLETED'; readonly value: 'COMPLETED' },
             { readonly name: 'PLANNED'; readonly value: 'PLANNED' },
+            { readonly name: 'MAYBE'; readonly value: 'MAYBE' },
           ];
           readonly MangaFormat: readonly [
             { readonly name: 'MANGA'; readonly value: 'MANGA' },
@@ -26940,6 +27510,14 @@ type ContractBase = Omit<
           readonly ref: {
             readonly entry: 'CustomList';
             readonly field: 'updatedAt';
+            readonly namespace: 'public';
+          };
+        },
+        {
+          readonly onCreate: { readonly id: 'uuidv4'; readonly kind: 'generator' };
+          readonly ref: {
+            readonly entry: 'CustomListCollaborator';
+            readonly field: 'id';
             readonly namespace: 'public';
           };
         },

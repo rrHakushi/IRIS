@@ -13,6 +13,8 @@
     ? navigator.credentials.get.bind(navigator.credentials)
     : null
 
+    // Step 1: Main-World Credential API Interception
+  // Step 1.1: navigator.credentials Monkeypatching & Platform Authenticator Spoofing
   // Ensure PublicKeyCredential platform authenticator is reported as available
   if (window.PublicKeyCredential) {
     try {

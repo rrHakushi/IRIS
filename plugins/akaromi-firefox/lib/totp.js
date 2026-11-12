@@ -7,6 +7,8 @@
   // Base32 Alphabet RFC 4648
   const BASE32_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
 
+    // Step 1: Base32 Encoding & Secret Sanitization
+  // Step 1.1: RFC 4648 Base32 Decoding
   function base32Decode(str) {
     const clean = str.toUpperCase().replace(/[\s\-_=]/g, "")
     let bits = 0
@@ -32,6 +34,7 @@
   /**
    * Extracts clean Base32 secret from raw string or otpauth:// URI
    */
+  // Step 1.2: Raw Secret Normalization & otpauth Extraction
   IrisTotp.extractSecret = function (secretOrUri) {
     if (!secretOrUri || typeof secretOrUri !== "string") return ""
     const trimmed = secretOrUri.trim()
@@ -43,6 +46,8 @@
   }
 
   // Pure JS SHA-1 implementation (RFC 3174) for synchronous TOTP computation
+    // Step 2: Synchronous RFC 3174 SHA-1 & HMAC-SHA1 Engine
+  // Step 2.1: Synchronous Pure-JS SHA-1 Block Processing
   function sha1(bytes) {
     const K = [0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xca62c1d6]
     let H0 = 0x67452301
@@ -119,6 +124,7 @@
     return out
   }
 
+  // Step 2.2: HMAC-SHA1 Key Padding & Inner/Outer Hashing
   function hmacSha1(key, message) {
     let k = key
     if (k.length > 64) {
@@ -147,6 +153,8 @@
    * Synchronously generates a 6-digit TOTP token from base32 secret or otpauth:// URI
    * Supports optional timeOffsetSeconds to compute future/next codes (e.g. +30s)
    */
+    // Step 3: TOTP Token Calculation & Countdown
+  // Step 3.1: Epoch Counter Calculation & Dynamic Truncation
   IrisTotp.generateTotpSync = function (secretOrUri, timeStepSeconds = 30, timeOffsetSeconds = 0) {
     if (!secretOrUri) return ""
     try {
@@ -193,6 +201,7 @@
   /**
    * Returns remaining seconds in the current 30s window
    */
+  // Step 3.2: Remaining Seconds in Time Window
   IrisTotp.getRemainingSeconds = function (timeStepSeconds = 30) {
     const epoch = Math.floor(Date.now() / 1000)
     return timeStepSeconds - (epoch % timeStepSeconds)
@@ -202,6 +211,8 @@
    * Parses an otpauth:// URL or raw Base32 secret string into its parameters.
    * Format: otpauth://totp/Issuer:account?secret=XYZ&issuer=Issuer
    */
+    // Step 4: otpauth:// URI Parser
+  // Step 4.1: URI Parameter Parsing & Validation
   IrisTotp.parseOtpAuthUri = function (uri) {
     if (!uri || typeof uri !== "string") return null
     try {

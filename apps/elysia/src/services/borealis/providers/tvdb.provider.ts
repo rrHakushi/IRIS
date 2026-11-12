@@ -185,16 +185,11 @@ export class TheTVDBProvider {
   private readonly minDelayMs = 250 // 4 req/s
 
   private getApiKey(): string {
-    return (
-      Bun.env.THETVDB_KEY ||
-      Bun.env.TVDB_API_KEY ||
-      Bun.env.TVDB_KEY ||
-      ''
-    )
-  }
-
-  private getPin(): string {
-    return Bun.env.THETVDB_PIN || Bun.env.TVDB_PIN || ''
+    const key = Bun.env.TVDB_API_KEY
+    if (!key) {
+      throw new Error('[TheTVDBProvider] Missing required environment variable: TVDB_API_KEY')
+    }
+    return key
   }
 
   private async waitForRateLimit(): Promise<void> {
@@ -213,13 +208,7 @@ export class TheTVDBProvider {
     }
 
     const apiKey = this.getApiKey()
-    if (!apiKey) {
-      throw new Error('[TheTVDBProvider] TVDB API key is missing from environment variables')
-    }
-
-    const pin = this.getPin()
     const body: Record<string, string> = { apikey: apiKey }
-    if (pin) body.pin = pin
 
     const res = await fetch(`${this.baseUrl}/login`, {
       method: 'POST',
@@ -443,5 +432,50 @@ export class TheTVDBProvider {
       }
     }
     return movie
+  }
+
+  /**
+   * Fetches all discovered artwork/image URLs for a series.
+   */
+  async fetchTvSeriesArtworks(tvdbId: number): Promise<string[]> {
+    const urls = new Set<string>()
+
+    // 1. Fetch /series/{id}/extended to get main image, artworks array, and season images
+    try {
+      const series = await this.fetchTvSeries(tvdbId)
+      if (series?.image) {
+        const img = normalizeTvdbImageUrl(series.image)
+        if (img) urls.add(img)
+      }
+      if (series?.artworks && Array.isArray(series.artworks)) {
+        for (const art of series.artworks) {
+          const img = normalizeTvdbImageUrl(art.image)
+          if (img) urls.add(img)
+        }
+      }
+      if (series?.seasons && Array.isArray(series.seasons)) {
+        for (const s of series.seasons) {
+          if (s.image) {
+            const img = normalizeTvdbImageUrl(s.image)
+            if (img) urls.add(img)
+          }
+        }
+      }
+    } catch {}
+
+    // 2. Fetch /series/{id}/artworks
+    try {
+      const res = await this.fetchJson<{ artworks?: Array<{ image?: string; thumbnail?: string }> }>(
+        `/series/${tvdbId}/artworks`
+      )
+      if (res?.artworks && Array.isArray(res.artworks)) {
+        for (const art of res.artworks) {
+          const img = normalizeTvdbImageUrl(art.image || art.thumbnail)
+          if (img) urls.add(img)
+        }
+      }
+    } catch {}
+
+    return Array.from(urls)
   }
 }

@@ -7,19 +7,30 @@ import {
   CreateBucketCommand,
 } from "@aws-sdk/client-s3"
 
-const RUSTFS_ENDPOINT = Bun.env.RUSTFS_ENDPOINT || "http://127.0.0.1:9000"
-const RUSTFS_REGION = Bun.env.RUSTFS_REGION || "us-east-1"
-const RUSTFS_ACCESS_KEY = Bun.env.RUSTFS_ACCESS_KEY || ""
-const RUSTFS_SECRET_KEY = Bun.env.RUSTFS_SECRET_KEY || ""
-export const PUBLIC_BUCKET =
-  Bun.env.RUSTFS_PUBLIC_BUCKET!
+const RUSTFS_URL = Bun.env.RUSTFS_URL
+const RUSTFS_REGION = Bun.env.RUSTFS_REGION
+const RUSTFS_ACCESS_KEY = Bun.env.RUSTFS_ACCESS_KEY
+const RUSTFS_SECRET_KEY = Bun.env.RUSTFS_SECRET_KEY
+export const PUBLIC_BUCKET = Bun.env.RUSTFS_PUBLIC_BUCKET!
+export const ENCRYPTED_BUCKET = Bun.env.RUSTFS_ENCRYPTED_BUCKET
+
+if (!RUSTFS_URL || !RUSTFS_REGION || !RUSTFS_ACCESS_KEY || !RUSTFS_SECRET_KEY || !PUBLIC_BUCKET) {
+  const missing = [
+    !RUSTFS_URL && "RUSTFS_URL",
+    !RUSTFS_REGION && "RUSTFS_REGION",
+    !RUSTFS_ACCESS_KEY && "RUSTFS_ACCESS_KEY",
+    !RUSTFS_SECRET_KEY && "RUSTFS_SECRET_KEY",
+    !PUBLIC_BUCKET && "RUSTFS_PUBLIC_BUCKET",
+  ].filter(Boolean)
+  throw new Error(`Missing required RustFS environment variable(s): ${missing.join(", ")}`)
+}
 
 export const s3Client = new S3Client({
-  endpoint: RUSTFS_ENDPOINT,
+  endpoint: RUSTFS_URL,
   region: RUSTFS_REGION,
   credentials: {
-    accessKeyId: RUSTFS_ACCESS_KEY || "dummy",
-    secretAccessKey: RUSTFS_SECRET_KEY || "dummy",
+    accessKeyId: RUSTFS_ACCESS_KEY,
+    secretAccessKey: RUSTFS_SECRET_KEY,
   },
   forcePathStyle: true,
 })

@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import React from "react"
-import { ServarrMediaView } from "@/components/servarr/servarr-media-view"
+import { ServarrMediaView } from "@Runa/borealis"
 
 export const metadata: Metadata = {
   title: "Borealis | Servarr > Sonarr > Series",

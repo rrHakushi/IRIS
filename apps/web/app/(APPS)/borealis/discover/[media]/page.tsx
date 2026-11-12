@@ -4,9 +4,9 @@ import type { Metadata } from "next"
 import {
   type DiscoverCategory,
   DISCOVER_MEDIA_METAS,
-} from "@/components/discover/discover-types"
-import { DiscoverPageClient } from "@/components/discover/discover-page-client"
-import { DiscoverSkeleton } from "@/components/discover/discover-skeleton"
+} from "@Runa/borealis"
+import { DiscoverPageClient } from "@Runa/borealis"
+import { DiscoverSkeleton } from "@Runa/borealis"
 
 interface DiscoverMediaPageProps {
   params: Promise<{ media: string }>

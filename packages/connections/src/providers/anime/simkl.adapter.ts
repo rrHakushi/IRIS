@@ -40,7 +40,8 @@ export class SimklAdapter extends BaseConnectionAdapter {
   }
 
   private getClientId(): string {
-    const raw = Bun.env.SIMKL_CLIENT_ID || ""
+    const raw = Bun.env.SIMKL_CLIENT_ID
+    if (!raw) throw new Error("Missing required environment variable: SIMKL_CLIENT_ID");
     return raw
       .trim()
       .replace(/^["']|["']$/g, "")
@@ -48,7 +49,8 @@ export class SimklAdapter extends BaseConnectionAdapter {
   }
 
   private getClientSecret(): string {
-    const raw = Bun.env.SIMKL_CLIENT_SECRET || ""
+    const raw = Bun.env.SIMKL_CLIENT_SECRET
+    if (!raw) throw new Error("Missing required environment variable: SIMKL_CLIENT_SECRET");
     return raw
       .trim()
       .replace(/^["']|["']$/g, "")
@@ -169,6 +171,20 @@ export class SimklAdapter extends BaseConnectionAdapter {
       return []
     }
 
+    const cleanQuery = query.trim()
+    if (!cleanQuery) return []
+
+    // 1. Check for explicit Simkl ID prefixes or URLs (e.g., "id:40698", "simkl:40698", "#40698", or "https://simkl.com/anime/40698/...")
+    const explicitIdMatch = cleanQuery.match(
+      /^(?:id:|simkl:|#|https?:\/\/(?:www\.)?simkl\.com\/(?:anime|tv|movies)\/)(\d+)/i
+    )
+    if (explicitIdMatch && explicitIdMatch[1]) {
+      const item = await this.getMediaById(cleanQuery, credentials, options)
+      return item ? [item] : []
+    }
+
+    const isPlainNumeric = /^\d+$/.test(cleanQuery)
+
     const clientId = this.getClientId()
     const searchCategory =
       options?.type === "MOVIE"
@@ -191,7 +207,7 @@ export class SimklAdapter extends BaseConnectionAdapter {
 
     const fetchCategory = async (type: string) => {
       const url = new URL(`https://api.simkl.com/search/${type}`)
-      url.searchParams.set("q", query)
+      url.searchParams.set("q", cleanQuery)
       url.searchParams.set("limit", String(options?.perPage || 20))
       url.searchParams.set("extended", "full")
       if (clientId) {
@@ -211,84 +227,101 @@ export class SimklAdapter extends BaseConnectionAdapter {
       return Array.isArray(items) ? items : []
     }
 
-    let items = await fetchCategory(searchCategory)
+    const fetchTextSearch = async (): Promise<MediaSearchResult[]> => {
+      let items = await fetchCategory(searchCategory)
 
-    // Fallback: If searching "anime" yields no results, also check "tv" in case the entry is under TV
-    if (items.length === 0 && searchCategory === "anime") {
-      try {
-        const tvItems = await fetchCategory("tv")
-        if (tvItems.length > 0) {
-          items = tvItems
+      // Fallback: If searching "anime" yields no results, also check "tv" in case the entry is under TV
+      if (items.length === 0 && searchCategory === "anime") {
+        try {
+          const tvItems = await fetchCategory("tv")
+          if (tvItems.length > 0) {
+            items = tvItems
+          }
+        } catch {
+          // Ignore fallback errors
         }
-      } catch {
-        // Ignore fallback errors
       }
+
+      return items.map((item: any) => {
+        const simklId =
+          item.ids?.simkl_id ??
+          item.ids?.simkl ??
+          item.ids?.id ??
+          item.simkl_id ??
+          item.simkl ??
+          item.id
+
+        let validId =
+          simklId != null &&
+          String(simklId) !== "undefined" &&
+          String(simklId) !== "null"
+            ? String(simklId)
+            : ""
+
+        if (!validId && item.ids?.slug) {
+          const slugMatch = String(item.ids.slug).match(/-(\d+)$/)
+          if (slugMatch && slugMatch[1]) {
+            validId = slugMatch[1]
+          } else {
+            validId = String(item.ids.slug)
+          }
+        }
+
+        if (!validId && item.url) {
+          const urlMatch = String(item.url).match(/\/(\d+)(?:\/|$)/)
+          if (urlMatch && urlMatch[1]) {
+            validId = urlMatch[1]
+          }
+        }
+
+        const primaryTitle =
+          item.title_en || item.title || item.title_romaji || "Untitled"
+
+        return {
+          id: validId || undefined,
+          externalId: validId,
+          provider: "SIMKL",
+          mediaType,
+          title: {
+            userPreferred: primaryTitle,
+            english: item.title_en,
+            romaji: item.title_romaji || item.title,
+          },
+          description: item.overview,
+          coverImage: {
+            large: item.poster
+              ? `https://simkl.in/posters/${item.poster}_m.jpg`
+              : undefined,
+          },
+          bannerImage: item.fanart
+            ? `https://simkl.in/fanart/${item.fanart}_medium.jpg`
+            : undefined,
+          releaseYear: item.year,
+          format: item.type ? String(item.type).toUpperCase() : undefined,
+          episodes: item.ep_count ?? undefined,
+          url: validId
+            ? `https://simkl.com/${pathType}/${validId}`
+            : item.url
+              ? `https://simkl.com${item.url}`
+              : undefined,
+        }
+      })
     }
 
-    return items.map((item: any) => {
-      const simklId =
-        item.ids?.simkl_id ??
-        item.ids?.simkl ??
-        item.ids?.id ??
-        item.simkl_id ??
-        item.simkl ??
-        item.id
+    if (isPlainNumeric) {
+      const [idResult, textResults] = await Promise.all([
+        this.getMediaById(cleanQuery, credentials, options).catch(() => null),
+        fetchTextSearch().catch(() => [] as MediaSearchResult[]),
+      ])
 
-      let validId =
-        simklId != null &&
-        String(simklId) !== "undefined" &&
-        String(simklId) !== "null"
-          ? String(simklId)
-          : ""
-
-      if (!validId && item.ids?.slug) {
-        const slugMatch = String(item.ids.slug).match(/-(\d+)$/)
-        if (slugMatch && slugMatch[1]) {
-          validId = slugMatch[1]
-        } else {
-          validId = String(item.ids.slug)
-        }
+      if (idResult) {
+        const deduped = textResults.filter((r) => r.externalId !== idResult.externalId)
+        return [idResult, ...deduped]
       }
+      return textResults
+    }
 
-      if (!validId && item.url) {
-        const urlMatch = String(item.url).match(/\/(\d+)(?:\/|$)/)
-        if (urlMatch && urlMatch[1]) {
-          validId = urlMatch[1]
-        }
-      }
-
-      const primaryTitle =
-        item.title_en || item.title || item.title_romaji || "Untitled"
-
-      return {
-        id: validId || undefined,
-        externalId: validId,
-        provider: "SIMKL",
-        mediaType,
-        title: {
-          userPreferred: primaryTitle,
-          english: item.title_en,
-          romaji: item.title_romaji || item.title,
-        },
-        description: item.overview,
-        coverImage: {
-          large: item.poster
-            ? `https://simkl.in/posters/${item.poster}_m.jpg`
-            : undefined,
-        },
-        bannerImage: item.fanart
-          ? `https://simkl.in/fanart/${item.fanart}_medium.jpg`
-          : undefined,
-        releaseYear: item.year,
-        format: item.type ? String(item.type).toUpperCase() : undefined,
-        episodes: item.ep_count ?? undefined,
-        url: validId
-          ? `https://simkl.com/${pathType}/${validId}`
-          : item.url
-            ? `https://simkl.com${item.url}`
-            : undefined,
-      }
-    })
+    return fetchTextSearch()
   }
 
   async getMediaById(
@@ -296,18 +329,30 @@ export class SimklAdapter extends BaseConnectionAdapter {
     credentials?: ConnectionCredentials,
     options?: SearchOptions
   ): Promise<MediaSearchResult | null> {
+    const raw = externalId.trim()
+    const urlCategoryMatch = raw.match(
+      /^https?:\/\/(?:www\.)?simkl\.com\/(anime|tv|movies)\/(\d+)/i
+    )
+    const cleanId = urlCategoryMatch?.[2]
+      ? urlCategoryMatch[2]
+      : raw.replace(/^(?:id:|simkl:|#)/i, "").trim()
+
+    if (!cleanId || !/^\d+$/.test(cleanId)) return null
+
     const clientId = this.getClientId()
+    const urlType = urlCategoryMatch?.[1]?.toLowerCase()
     const primaryType =
-      options?.type === "MOVIE"
-        ? "movies"
-        : options?.type === "TV"
-          ? "tv"
-          : "anime"
-    const url = new URL(`https://api.simkl.com/${primaryType}/${externalId}`)
-    url.searchParams.set("extended", "full")
-    if (clientId) {
-      url.searchParams.set("client_id", clientId)
-    }
+      urlType === "movies" || urlType === "tv" || urlType === "anime"
+        ? urlType
+        : options?.type === "MOVIE"
+          ? "movies"
+          : options?.type === "TV"
+            ? "tv"
+            : "anime"
+
+    const candidateTypes = Array.from(
+      new Set([primaryType, "anime", "tv", "movies"])
+    )
 
     const headers: Record<string, string> = {}
     if (clientId) {
@@ -317,54 +362,66 @@ export class SimklAdapter extends BaseConnectionAdapter {
       headers["Authorization"] = `Bearer ${credentials.accessToken}`
     }
 
-    try {
-      const item = await this.fetchJson<any>(url.toString(), { headers })
-      if (!item || item.error) return null
+    for (const catType of candidateTypes) {
+      try {
+        const url = new URL(`https://api.simkl.com/${catType}/${cleanId}`)
+        url.searchParams.set("extended", "full")
+        if (clientId) {
+          url.searchParams.set("client_id", clientId)
+        }
 
-      const simklId =
-        item.ids?.simkl_id ??
-        item.ids?.simkl ??
-        item.ids?.id ??
-        item.simkl_id ??
-        item.simkl ??
-        item.id ??
-        externalId
+        const item = await this.fetchJson<any>(url.toString(), { headers })
+        if (!item || item.error || (!item.title && !item.title_en && !item.ids)) {
+          continue
+        }
 
-      const primaryTitle =
-        item.title_en || item.title || item.title_romaji || "Untitled"
+        const simklId =
+          item.ids?.simkl_id ??
+          item.ids?.simkl ??
+          item.ids?.id ??
+          item.simkl_id ??
+          item.simkl ??
+          item.id ??
+          cleanId
 
-      return {
-        id: String(simklId),
-        externalId: String(simklId),
-        provider: "SIMKL",
-        mediaType:
-          primaryType === "movies"
-            ? "MOVIE"
-            : primaryType === "tv"
-              ? "TV"
-              : "ANIME",
-        title: {
-          userPreferred: primaryTitle,
-          english: item.title_en,
-          romaji: item.title_romaji || item.title,
-        },
-        description: item.overview,
-        coverImage: {
-          large: item.poster
-            ? `https://simkl.in/posters/${item.poster}_m.jpg`
+        const primaryTitle =
+          item.title_en || item.title || item.title_romaji || "Untitled"
+
+        return {
+          id: String(simklId),
+          externalId: String(simklId),
+          provider: "SIMKL",
+          mediaType:
+            catType === "movies"
+              ? "MOVIE"
+              : catType === "tv"
+                ? "TV"
+                : "ANIME",
+          title: {
+            userPreferred: primaryTitle,
+            english: item.title_en,
+            romaji: item.title_romaji || item.title,
+          },
+          description: item.overview,
+          coverImage: {
+            large: item.poster
+              ? `https://simkl.in/posters/${item.poster}_m.jpg`
+              : undefined,
+          },
+          bannerImage: item.fanart
+            ? `https://simkl.in/fanart/${item.fanart}_medium.jpg`
             : undefined,
-        },
-        bannerImage: item.fanart
-          ? `https://simkl.in/fanart/${item.fanart}_medium.jpg`
-          : undefined,
-        releaseYear: item.year,
-        format: item.type ? String(item.type).toUpperCase() : undefined,
-        episodes: item.ep_count ?? undefined,
-        url: `https://simkl.com/${primaryType}/${simklId}`,
+          releaseYear: item.year,
+          format: item.type ? String(item.type).toUpperCase() : undefined,
+          episodes: item.ep_count ?? undefined,
+          url: `https://simkl.com/${catType}/${simklId}`,
+        }
+      } catch {
+        // Try next category type
       }
-    } catch {
-      return null
     }
+
+    return null
   }
 
   async scrobble(

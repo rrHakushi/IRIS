@@ -45,6 +45,8 @@
   // ----------------------------------------------------
   // Drawer Interactions
   // ----------------------------------------------------
+    // Step 1: Navigation Drawer & User Profile
+  // Step 1.1: Sliding Drawer Animation, Lock, Sync & Logout Triggers
   async function openDrawer() {
     if (drawerBackdrop) drawerBackdrop.style.display = "block"
     if (appDrawer) appDrawer.style.display = "flex"
@@ -124,6 +126,8 @@
   btnSettingsClose?.addEventListener("click", closeSettings)
 
   // Auto-lock option
+    // Step 2: Security Preferences Configuration
+  // Step 2.1: Auto-Lock Timeout, Clipboard Countdown & Default PM Handover
   selectAutoLock?.addEventListener("change", async (e) => {
     const minutes = parseInt(e.target.value, 10)
     await storage.set({ autoLockMinutes: minutes })
@@ -208,6 +212,8 @@
     }
   })
 
+    // Step 3: Cryptographic PIN Setup & Deconfiguration
+  // Step 3.1: PIN Setup Modal, Change & Removal Workflows
   formPinSetup?.addEventListener("submit", async (e) => {
     e.preventDefault()
     if (pinSetupError) pinSetupError.style.display = "none"

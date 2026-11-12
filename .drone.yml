@@ -2,87 +2,310 @@ kind: pipeline
 type: docker
 name: default
 
+clone:
+  disable: true
+
 steps:
+  - name: Clone
+    image: alpine/git:latest
+    commands:
+      - git init
+      - git remote add origin ${DRONE_REMOTE_URL} || git remote set-url origin ${DRONE_REMOTE_URL}
+      - git fetch --depth=1 origin +refs/heads/${DRONE_COMMIT_BRANCH}:refs/remotes/origin/${DRONE_COMMIT_BRANCH}
+      - git checkout -f ${DRONE_COMMIT_SHA}
+
+  - name: Redis
+    image: docker:latest
+    environment:
+      REDIS_PASSWORD:
+        from_secret: REDIS_PASSWORD
+    volumes:
+      - name: docker_sock
+        path: /var/run/docker.sock
+    commands:
+      - printf "REDIS_PASSWORD=%s\n" "$REDIS_PASSWORD" > .env
+      - chmod 600 .env
+      - docker compose up -d redis
+      - |
+        for i in $(seq 1 30); do
+          if [ "$(docker inspect -f '{{.State.Health.Status}}' NamelessLiberty-Redis 2>/dev/null)" = "healthy" ]; then
+            echo "NamelessLiberty-Redis is healthy."
+            break
+          fi
+          sleep 2
+        done
+    depends_on:
+      - Clone
+
+  - name: Postgre
+    image: docker:latest
+    environment:
+      POSTGRE_USER:
+        from_secret: POSTGRE_USER
+      POSTGRE_PASS:
+        from_secret: POSTGRE_PASS
+      POSTGRE_DB:
+        from_secret: POSTGRE_DB
+    volumes:
+      - name: docker_sock
+        path: /var/run/docker.sock
+    commands:
+      - |
+        cat << EOF >> .env
+        POSTGRE_USER=$POSTGRE_USER
+        POSTGRE_PASS=$POSTGRE_PASS
+        POSTGRE_DB=$POSTGRE_DB
+        EOF
+      - docker compose up -d postgre
+      - |
+        for i in $(seq 1 30); do
+          if [ "$(docker inspect -f '{{.State.Health.Status}}' NamelessLiberty-Postgre 2>/dev/null)" = "healthy" ]; then
+            echo "NamelessLiberty-Postgre is healthy."
+            break
+          fi
+          sleep 2
+        done
+    depends_on:
+      - Redis
+
+  - name: infisical
+    image: docker:latest
+    environment:
+      INFISICAL_ENCRYPTION_KEY:
+        from_secret: INFISICAL_ENCRYPTION_KEY
+      INFISICAL_AUTH_SECRET:
+        from_secret: INFISICAL_AUTH_SECRET
+      INFISICAL_SITE_URL:
+        from_secret: INFISICAL_SITE_URL
+    volumes:
+      - name: docker_sock
+        path: /var/run/docker.sock
+    commands:
+      - |
+        cat << EOF >> .env
+        INFISICAL_ENCRYPTION_KEY=$INFISICAL_ENCRYPTION_KEY
+        INFISICAL_AUTH_SECRET=$INFISICAL_AUTH_SECRET
+        INFISICAL_SITE_URL=$INFISICAL_SITE_URL
+        EOF
+      - docker compose up -d infisical
+      - |
+        for i in $(seq 1 30); do
+          if [ "$(docker inspect -f '{{.State.Running}}' NamelessLiberty-Infisical 2>/dev/null)" = "true" ]; then
+            echo "NamelessLiberty-Infisical is running."
+            break
+          fi
+          sleep 2
+        done
+    depends_on:
+      - Postgre
+
   - name: Environment
     image: oven/bun:latest
     environment:
-      ENV_FILE:
-        from_secret: ENV_FILE
+      INFISICAL_TOKEN:
+        from_secret: INFISICAL_TOKEN
+      INFISICAL_PROJECT_ID:
+        from_secret: INFISICAL_PROJECT_ID
     commands:
-      - 'if [ -z "$ENV_FILE" ]; then echo "WARNING: ENV_FILE secret is empty"; fi'
-      - 'printf "%s\n" "$ENV_FILE" > .env'
+      - bunx @infisical/cli export --token="$INFISICAL_TOKEN" --projectId="$INFISICAL_PROJECT_ID" --env="prod" --domain="http://180.0.0.7:8080/api" --format=dotenv >> .env
       - chmod 600 .env
       - bun install --frozen-lockfile
+    depends_on:
+      - infisical
 
-  - name: Database Contract
+  - name: RustFS
+    image: docker:latest
+    volumes:
+      - name: docker_sock
+        path: /var/run/docker.sock
+    commands:
+      - docker compose up -d rustfs
+    depends_on:
+      - Environment
+
+  - name: deemix
+    image: docker:latest
+    volumes:
+      - name: docker_sock
+        path: /var/run/docker.sock
+    commands:
+      - docker compose up -d deemix
+    depends_on:
+      - RustFS
+
+  - name: searxng
+    image: docker:latest
+    volumes:
+      - name: docker_sock
+        path: /var/run/docker.sock
+    commands:
+      - docker compose up -d searxng
+    depends_on:
+      - deemix
+
+  - name: Prisma Contract
     image: oven/bun:latest
     commands:
       - bun run --filter=@Iris/db contract:emit
     depends_on:
-      - Environment
+      - searxng
 
-  - name: Database Update
+  - name: Prisma Update
     image: oven/bun:latest
     commands:
-      - bun run --filter=@Iris/db db:update
+      - POSTGRE_HOST=180.0.0.2 POSTGRE_PORT=5432 bun run --filter=@Iris/db db:update
     depends_on:
-      - Database Contract
+      - Prisma Contract
 
   - name: Packages
     image: oven/bun:latest
     commands:
       - bun x turbo run build --filter="./packages/*"
     depends_on:
-      - Database Update
+      - Prisma Update
 
-  - name: Backend
+  - name: Elysia
     image: docker:latest
     volumes:
       - name: docker_sock
         path: /var/run/docker.sock
     commands:
       - export DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1
-      - docker compose build elysia
+      - |
+        PKG_VERSION=$(sed -n 's/.*"version":[[:space:]]*"\([^"]*\)".*/\1/p' apps/elysia/package.json | head -n 1)
+        IS_RUNNING=$(docker inspect -f '{{.State.Running}}' NamelessLiberty-Elysia 2>/dev/null || echo "false")
+        CONTAINER_VERSION=$(docker inspect -f '{{ index .Config.Labels "org.opencontainers.image.version" }}' NamelessLiberty-Elysia 2>/dev/null || echo "")
+        if [ -z "$CONTAINER_VERSION" ] && [ "$IS_RUNNING" = "true" ]; then
+          CONTAINER_VERSION=$(docker cp NamelessLiberty-Elysia:/app/package.json - 2>/dev/null | sed -n 's/.*"version":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1 || echo "")
+        fi
+        echo "NamelessLiberty-Elysia package.json version: $PKG_VERSION | container version: $CONTAINER_VERSION (running: $IS_RUNNING)"
+        SHOULD_BUILD=1
+        if [ "$IS_RUNNING" = "true" ] && [ -n "$CONTAINER_VERSION" ]; then
+          if [ "$CONTAINER_VERSION" = "$PKG_VERSION" ]; then
+            SHOULD_BUILD=0
+          else
+            OLDER=$(printf '%s\n%s\n' "$CONTAINER_VERSION" "$PKG_VERSION" | sort -V | head -n 1)
+            if [ "$OLDER" = "$PKG_VERSION" ]; then
+              SHOULD_BUILD=0
+            fi
+          fi
+        fi
+        if [ "$SHOULD_BUILD" = "0" ]; then
+          echo "NamelessLiberty-Elysia is already up to date (v$CONTAINER_VERSION). Skipping build."
+        else
+          echo "Building NamelessLiberty-Elysia v$PKG_VERSION..."
+          APP_VERSION="$PKG_VERSION" docker compose build --build-arg APP_VERSION="$PKG_VERSION" elysia
+          APP_VERSION="$PKG_VERSION" docker compose up -d --no-deps elysia
+        fi
     depends_on:
       - Packages
 
-  - name: Frontend
+  - name: Next
     image: docker:latest
     volumes:
       - name: docker_sock
         path: /var/run/docker.sock
     commands:
       - export DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1
-      - docker compose build web
-      - docker compose up -d --remove-orphans
-      - sleep 5
+      - |
+        PKG_VERSION=$(sed -n 's/.*"version":[[:space:]]*"\([^"]*\)".*/\1/p' apps/web/package.json | head -n 1)
+        IS_RUNNING=$(docker inspect -f '{{.State.Running}}' NamelessLiberty-Next 2>/dev/null || echo "false")
+        CONTAINER_VERSION=$(docker inspect -f '{{ index .Config.Labels "org.opencontainers.image.version" }}' NamelessLiberty-Next 2>/dev/null || echo "")
+        if [ -z "$CONTAINER_VERSION" ] && [ "$IS_RUNNING" = "true" ]; then
+          CONTAINER_VERSION=$(docker cp NamelessLiberty-Next:/app/package.json - 2>/dev/null | sed -n 's/.*"version":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1 || echo "")
+        fi
+        echo "NamelessLiberty-Next package.json version: $PKG_VERSION | container version: $CONTAINER_VERSION (running: $IS_RUNNING)"
+        SHOULD_BUILD=1
+        if [ "$IS_RUNNING" = "true" ] && [ -n "$CONTAINER_VERSION" ]; then
+          if [ "$CONTAINER_VERSION" = "$PKG_VERSION" ]; then
+            SHOULD_BUILD=0
+          else
+            OLDER=$(printf '%s\n%s\n' "$CONTAINER_VERSION" "$PKG_VERSION" | sort -V | head -n 1)
+            if [ "$OLDER" = "$PKG_VERSION" ]; then
+              SHOULD_BUILD=0
+            fi
+          fi
+        fi
+        if [ "$SHOULD_BUILD" = "0" ]; then
+          echo "NamelessLiberty-Next is already up to date (v$CONTAINER_VERSION). Skipping build."
+        else
+          echo "Building NamelessLiberty-Next v$PKG_VERSION..."
+          APP_VERSION="$PKG_VERSION" docker compose build --build-arg APP_VERSION="$PKG_VERSION" next
+          APP_VERSION="$PKG_VERSION" docker compose up -d --no-deps next
+        fi
+    depends_on:
+      - Elysia
+
+  - name: Jellyborealis - Build
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    commands:
+      - apt-get update && apt-get install -y python3
+      - python3 plugins/JellyBorealis/package.py
+    depends_on:
+      - Next
+
+  - name: Jellyborealis - Release
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    commands:
+      - apt-get update && apt-get install -y python3
+      - python3 plugins/JellyBorealis/package.py --ci --skip-build
+    depends_on:
+      - Jellyborealis - Build
+
+  - name: BorealisExtra - Build
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    commands:
+      - apt-get update && apt-get install -y python3 file fuse libfuse2
+      - python3 plugins/BorealisExtra/package.py
+    depends_on:
+      - Jellyborealis - Release
+
+  - name: BorealisExtra - Release
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    commands:
+      - apt-get update && apt-get install -y python3
+      - python3 plugins/BorealisExtra/package.py --ci --skip-build
+    depends_on:
+      - BorealisExtra - Build
+
+  - name: Verify its running
+    image: docker:latest
+    volumes:
+      - name: docker_sock
+        path: /var/run/docker.sock
+    commands:
       - docker compose ps
-      - docker compose logs elysia --tail=50
-      - docker compose logs web --tail=50
+      - |
+        FAILED=0
+        for CONTAINER in \
+          NamelessLiberty-Redis \
+          NamelessLiberty-Postgre \
+          NamelessLiberty-Infisical \
+          NamelessLiberty-RustFS \
+          NamelessLiberty-Deemix \
+          NamelessLiberty-SearXNG \
+          NamelessLiberty-Elysia \
+          NamelessLiberty-Next; do
+          STATE=$(docker inspect -f '{{.State.Running}}' "$CONTAINER" 2>/dev/null || echo "false")
+          if [ "$STATE" != "true" ]; then
+            echo "ERROR: $CONTAINER is not running!"
+            docker logs "$CONTAINER" --tail=50 || true
+            FAILED=1
+          else
+            echo "OK: $CONTAINER is running."
+          fi
+        done
+        docker compose logs elysia --tail=30
+        docker compose logs next --tail=30
+        exit $FAILED
     depends_on:
-      - Backend
-
-  - name: JellyBorealis Release
-    image: mcr.microsoft.com/dotnet/sdk:10.0
-    environment:
-      GITHUB_TOKEN:
-        from_secret: github_token
-    commands:
-      - apt-get update && apt-get install -y python3
-      - python3 plugins/JellyBorealis/package.py --ci
-    depends_on:
-      - Packages
-
-  - name: BorealisExtra Release
-    image: mcr.microsoft.com/dotnet/sdk:10.0
-    environment:
-      GITHUB_TOKEN:
-        from_secret: github_token
-    commands:
-      - apt-get update && apt-get install -y python3
-      - python3 plugins/BorealisExtra/package.py --ci
-    depends_on:
-      - Packages
+      - BorealisExtra - Release
 
   - name: Cleanup
     image: docker:latest
@@ -90,9 +313,10 @@ steps:
       - name: docker_sock
         path: /var/run/docker.sock
     commands:
+      - rm -f .env
       - docker image prune -f
     depends_on:
-      - Frontend
+      - Verify its running
     when:
       status:
         - success

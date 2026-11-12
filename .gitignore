@@ -67,3 +67,4 @@ packages/*/.agents/
 packages/*/.claude/
 packages/*/.cursor/
 packages/*/.devin/
+apps/elysia/dev-info.txt

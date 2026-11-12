@@ -321,7 +321,29 @@ export const carinaUsers = new Elysia({ prefix: '/carina/users' })
     }
   )
 
-  // --- 13. GET /carina/users/:userId/favorites/:category (Get user favorites filtered by category) ---
+  // --- 13. GET /carina/users/:userId/favorites/all (Get all user favorites across all categories at once) ---
+  .get(
+    '/:userId/favorites/all',
+    {
+      params: CarinaUsersModel.userParam,
+      query: CarinaUsersModel.allFavoritesQuery,
+      detail: {
+        summary: 'Get all user favorites in all categories at once strictly by user ID',
+        tags: ['Carina Users'],
+      },
+      response: {
+        200: CarinaUsersModel.allFavoritesResponse,
+        400: CarinaUsersModel.badRequestError,
+        404: CarinaUsersModel.notFoundError,
+        422: CarinaUsersModel.validationError,
+      },
+    },
+    async ({ params, query }) => {
+      return await CarinaUsersServ.getAllUserFavorites(params.userId, query)
+    }
+  )
+
+  // --- 14. GET /carina/users/:userId/favorites/:category (Get user favorites filtered by category) ---
   .get(
     '/:userId/favorites/:category',
     {
@@ -347,7 +369,7 @@ export const carinaUsers = new Elysia({ prefix: '/carina/users' })
     }
   )
 
-  // --- 14. GET /carina/users/:userId/favorites (Get user favorites) ---
+  // --- 15. GET /carina/users/:userId/favorites (Get user favorites) ---
   .get(
     '/:userId/favorites',
     {

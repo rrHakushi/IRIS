@@ -9,6 +9,8 @@
   const ext = typeof browser !== "undefined" ? browser : chrome
   const storage = typeof IrisStorage !== "undefined" ? IrisStorage : ext.storage.local
 
+    // Step 1: Endpoint Configuration & Token Resolution
+  // Step 1.1: Server URL Resolution & Storage Persistence
   IrisApi.getServerUrl = async function () {
     const data = await storage.get(["serverUrl"])
     return (data.serverUrl || DEFAULT_SERVER_URL).replace(/\/+$/, "")
@@ -66,6 +68,8 @@
   /**
    * Log into IRIS account (returns mfaRequired/mfaTicket if 2FA active)
    */
+    // Step 2: Authentication & Session Verification
+  // Step 2.1: Login Submission & Session Token Persistence
   IrisApi.login = async function (identifier, password) {
     const data = await request("/carina/auth/login", {
       method: "POST",

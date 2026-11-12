@@ -41,11 +41,15 @@ export class BangumiAdapter extends BaseConnectionAdapter {
   };
 
   private getClientId(): string {
-    return Bun.env.BANGUMI_CLIENT_ID || "";
+    const id = Bun.env.BANGUMI_CLIENT_ID;
+    if (!id) throw new Error("Missing required environment variable: BANGUMI_CLIENT_ID");
+    return id;
   }
 
   private getClientSecret(): string {
-    return Bun.env.BANGUMI_CLIENT_SECRET || "";
+    const secret = Bun.env.BANGUMI_CLIENT_SECRET;
+    if (!secret) throw new Error("Missing required environment variable: BANGUMI_CLIENT_SECRET");
+    return secret;
   }
 
   async getAuthUrl(options: AuthUrlOptions): Promise<AuthUrlResult> {
@@ -186,13 +190,21 @@ export class BangumiAdapter extends BaseConnectionAdapter {
     credentials?: ConnectionCredentials,
     options?: SearchOptions
   ): Promise<MediaSearchResult[]> {
-    const token = credentials?.accessToken || credentials?.apiKey;
-    const headers: Record<string, string> = {
-      "User-Agent": BangumiAdapter.USER_AGENT,
-    };
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
+    const cleanQuery = query.trim();
+    if (!cleanQuery) return [];
+
+    // 1. Check for explicit Bangumi ID prefixes or URLs (e.g., "id:253", "bgm:253", "bangumi:253", "#253", or "https://bgm.tv/subject/253")
+    const explicitIdMatch = cleanQuery.match(
+      /^(?:id:|bgm:|bangumi:|#|https?:\/\/(?:www\.)?(?:bgm|bangumi|chii)\.(?:tv|in)\/subject\/)(\d+)/i
+    );
+    if (explicitIdMatch && explicitIdMatch[1]) {
+      const item = await this.getMediaById(explicitIdMatch[1], credentials, options);
+      return item ? [item] : [];
     }
+
+    const isPlainNumeric = /^\d+$/.test(cleanQuery);
+
+    const token = credentials?.accessToken || credentials?.apiKey;
 
     // Bangumi subject type: 1 = Book, 2 = Anime, 3 = Music, 4 = Game, 6 = Real
     const typeFilter =
@@ -234,7 +246,7 @@ export class BangumiAdapter extends BaseConnectionAdapter {
         method: "POST",
         headers,
         body: JSON.stringify({
-          keyword: query,
+          keyword: cleanQuery,
           filter: {
             type: typeFilter,
           },
@@ -244,39 +256,56 @@ export class BangumiAdapter extends BaseConnectionAdapter {
       });
     };
 
-    let data;
-    try {
-      data = await executeSearch(token);
-    } catch (err: unknown) {
-      // If token expired or is unauthorized, retry search without auth header as endpoint is public
-      if (token && (err instanceof ConnectionAuthError || String(err).includes("401"))) {
-        data = await executeSearch(undefined);
-      } else {
-        throw err;
+    const fetchTextSearch = async (): Promise<MediaSearchResult[]> => {
+      let data;
+      try {
+        data = await executeSearch(token);
+      } catch (err: unknown) {
+        // If token expired or is unauthorized, retry search without auth header as endpoint is public
+        if (token && (err instanceof ConnectionAuthError || String(err).includes("401"))) {
+          data = await executeSearch(undefined);
+        } else {
+          throw err;
+        }
       }
+
+      return (data.data || []).map((sub) => ({
+        id: String(sub.id),
+        externalId: String(sub.id),
+        provider: "BANGUMI",
+        mediaType: sub.type === 1 ? "MANGA" : sub.type === 4 ? "GAME" : "ANIME",
+        title: {
+          userPreferred: sub.name_cn || sub.name,
+          native: sub.name,
+          romaji: sub.name,
+        },
+        description: sub.summary,
+        coverImage: {
+          large: sub.images?.large || sub.images?.common,
+          medium: sub.images?.medium,
+        },
+        episodes: sub.eps,
+        volumes: sub.volumes,
+        averageScore: sub.score ? Math.round(sub.score * 10) : undefined,
+        releaseYear: sub.date ? parseInt(sub.date.substring(0, 4), 10) : undefined,
+        url: `https://bgm.tv/subject/${sub.id}`,
+      }));
+    };
+
+    if (isPlainNumeric) {
+      const [idResult, textResults] = await Promise.all([
+        this.getMediaById(cleanQuery, credentials, options).catch(() => null),
+        fetchTextSearch().catch(() => [] as MediaSearchResult[]),
+      ]);
+
+      if (idResult) {
+        const deduped = textResults.filter((r) => r.externalId !== idResult.externalId);
+        return [idResult, ...deduped];
+      }
+      return textResults;
     }
 
-    return (data.data || []).map((sub) => ({
-      id: String(sub.id),
-      externalId: String(sub.id),
-      provider: "BANGUMI",
-      mediaType: sub.type === 1 ? "MANGA" : sub.type === 4 ? "GAME" : "ANIME",
-      title: {
-        userPreferred: sub.name_cn || sub.name,
-        native: sub.name,
-        romaji: sub.name,
-      },
-      description: sub.summary,
-      coverImage: {
-        large: sub.images?.large || sub.images?.common,
-        medium: sub.images?.medium,
-      },
-      episodes: sub.eps,
-      volumes: sub.volumes,
-      averageScore: sub.score ? Math.round(sub.score * 10) : undefined,
-      releaseYear: sub.date ? parseInt(sub.date.substring(0, 4), 10) : undefined,
-      url: `https://bgm.tv/subject/${sub.id}`,
-    }));
+    return fetchTextSearch();
   }
 
   async getMediaById(
@@ -284,6 +313,14 @@ export class BangumiAdapter extends BaseConnectionAdapter {
     credentials?: ConnectionCredentials,
     _options?: SearchOptions
   ): Promise<MediaSearchResult | null> {
+    const cleanId = externalId
+      .trim()
+      .replace(/^(?:id:|bgm:|bangumi:|#)/i, "")
+      .replace(/^https?:\/\/(?:www\.)?(?:bgm|bangumi|chii)\.(?:tv|in)\/subject\/(\d+).*$/i, "$1")
+      .trim();
+
+    if (!cleanId || !/^\d+$/.test(cleanId)) return null;
+
     const token = credentials?.accessToken || credentials?.apiKey;
     const fetchSubject = async (authToken?: string) => {
       const headers: Record<string, string> = {
@@ -304,7 +341,7 @@ export class BangumiAdapter extends BaseConnectionAdapter {
         rank?: number;
         eps?: number;
         volumes?: number;
-      }>(`https://api.bgm.tv/v0/subjects/${externalId}`, {
+      }>(`https://api.bgm.tv/v0/subjects/${cleanId}`, {
         headers,
       });
     };

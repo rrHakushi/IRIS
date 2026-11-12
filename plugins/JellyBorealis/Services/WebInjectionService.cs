@@ -15,7 +15,7 @@ public class WebInjectionService : IHostedService
 {
     private readonly IApplicationPaths _applicationPaths;
     private readonly ILogger<WebInjectionService> _logger;
-    private const string ScriptTag = "<script id=\"borealis-web-script\" src=\"/Borealis/WebInjection.js?v=2.0.0\" defer></script>";
+    private const string ScriptTag = "<script id=\"borealis-web-script\" src=\"/Borealis/WebInjection.js?v=2.0.3.0\" defer></script>";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WebInjectionService"/> class.

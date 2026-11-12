@@ -957,5 +957,33 @@
     "allDay": "All Day",
     "releasesCount": "{count} releases",
     "loginToFilterLists": "Sign in to filter releases by your tracked lists"
+  },
+  "borealis": {
+    "components": {
+      "media": {
+        "status": {
+          "RELEASED": "Released",
+          "RELEASING": "Releasing",
+          "UPCOMING": "Upcoming",
+          "CANCELLED": "Cancelled",
+          "HIATUS": "Hiatus",
+          "UNKNOWN": "Unknown"
+        },
+        "list": {
+          "status": {
+            "IN_PROGRESS": "In Progress",
+            "WATCHING": "Watching",
+            "PLAYING": "Playing",
+            "READING": "Reading",
+            "LISTENING": "Listening",
+            "ON_HOLD": "Paused",
+            "DROPPED": "Dropped",
+            "COMPLETED": "Finished",
+            "PLANNED": "Planning",
+            "MAYBE": "Considering"
+          }
+        }
+      }
+    }
   }
 }

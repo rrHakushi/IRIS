@@ -1,0 +1,18 @@
+use_default_settings: true
+
+general:
+  instance_name: "NamelessLiberty Search"
+  enable_metrics: false
+
+search:
+  safe_search: 0
+  autocomplete: "google"
+  formats:
+    - html
+    - json
+
+server:
+  port: 8080
+  bind_address: "0.0.0.0"
+  limiter: false
+  image_proxy: true

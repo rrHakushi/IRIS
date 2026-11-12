@@ -44,6 +44,8 @@ export const BorealisPlaylistsModel = {
     limit: t.Optional(t.Numeric({ default: 20, minimum: 1, maximum: 100, description: 'Playlists per page' })),
     q: t.Optional(t.String({ description: 'Search playlist by name' })),
     isPrivate: t.Optional(t.Boolean({ description: 'Filter by privacy flag' })),
+    mediaType: t.Optional(t.String({ description: 'With mediaId: flag playlists that contain this media (containsMedia)' })),
+    mediaId: t.Optional(t.Numeric({ description: 'With mediaType: flag playlists that contain this media (containsMedia)' })),
   }),
 
   listPlaylistsResponse: t.Object({
@@ -57,8 +59,20 @@ export const BorealisPlaylistsModel = {
         isDefault: t.Boolean(),
         isPrivate: t.Boolean(),
         coverImage: t.Nullable(t.String()),
+        covers: t.Optional(t.Array(t.String())),
         order: t.Number(),
         entriesCount: t.Number(),
+        containsMedia: t.Optional(t.Boolean()),
+        role: t.Optional(t.String()),
+        isOwner: t.Optional(t.Boolean()),
+        owner: t.Optional(
+          t.Object({
+            id: t.String(),
+            username: t.String(),
+            displayName: t.Nullable(t.String()),
+            avatarUrl: t.Nullable(t.String()),
+          })
+        ),
         createdAt: t.String(),
         updatedAt: t.String(),
       })
@@ -149,6 +163,8 @@ export const BorealisPlaylistsModel = {
       isPrivate: t.Boolean(),
       coverImage: t.Nullable(t.String()),
       entriesCount: t.Number(),
+      role: t.Optional(t.String()),
+      isOwner: t.Optional(t.Boolean()),
     }),
     items: t.Array(
       t.Object({
@@ -165,6 +181,149 @@ export const BorealisPlaylistsModel = {
       })
     ),
     pagination: PaginationMetaSchema,
+  }),
+
+  // --- Reorder Entries ---
+  reorderEntriesBody: t.Object({
+    entryIds: t.Array(t.String({ minLength: 1 }), {
+      description: 'Ordered array of entry IDs',
+    }),
+  }),
+
+  reorderEntriesResponse: t.Object({
+    success: t.Boolean(),
+    message: t.String(),
+  }),
+
+  // --- Collaborators Schemas ---
+  collaboratorParam: t.Object({
+    playlistId: t.String({ minLength: 1 }),
+    collaboratorId: t.String({ minLength: 1 }),
+  }),
+
+  collaboratorItem: t.Object({
+    id: t.String(),
+    userId: t.String(),
+    role: t.String(),
+    createdAt: t.String(),
+    user: t.Object({
+      id: t.String(),
+      username: t.String(),
+      displayName: t.Nullable(t.String()),
+      avatarUrl: t.Nullable(t.String()),
+    }),
+  }),
+
+  listCollaboratorsResponse: t.Object({
+    success: t.Boolean(),
+    collaborators: t.Array(
+      t.Object({
+        id: t.String(),
+        userId: t.String(),
+        role: t.String(),
+        createdAt: t.String(),
+        user: t.Object({
+          id: t.String(),
+          username: t.String(),
+          displayName: t.Nullable(t.String()),
+          avatarUrl: t.Nullable(t.String()),
+        }),
+      })
+    ),
+  }),
+
+  addCollaboratorBody: t.Object({
+    username: t.String({ minLength: 1, maxLength: 100 }),
+    role: t.Optional(t.Union([t.Literal('EDITOR'), t.Literal('VIEWER')], { default: 'EDITOR' })),
+  }),
+
+  addCollaboratorResponse: t.Object({
+    success: t.Boolean(),
+    message: t.String(),
+    collaborator: t.Object({
+      id: t.String(),
+      userId: t.String(),
+      role: t.String(),
+      createdAt: t.String(),
+      user: t.Object({
+        id: t.String(),
+        username: t.String(),
+        displayName: t.Nullable(t.String()),
+        avatarUrl: t.Nullable(t.String()),
+      }),
+    }),
+  }),
+
+  updateCollaboratorBody: t.Object({
+    role: t.Union([t.Literal('EDITOR'), t.Literal('VIEWER')]),
+  }),
+
+  updateCollaboratorResponse: t.Object({
+    success: t.Boolean(),
+    message: t.String(),
+    collaborator: t.Object({
+      id: t.String(),
+      userId: t.String(),
+      role: t.String(),
+      createdAt: t.String(),
+    }),
+  }),
+
+  removeCollaboratorResponse: t.Object({
+    success: t.Boolean(),
+    message: t.String(),
+  }),
+
+  // --- Comments Schemas ---
+  commentParam: t.Object({
+    playlistId: t.String({ minLength: 1 }),
+    commentId: t.String({ minLength: 1 }),
+  }),
+
+  listCommentsQuery: t.Object({
+    page: t.Optional(t.Numeric({ default: 1, minimum: 1 })),
+    limit: t.Optional(t.Numeric({ default: 20, minimum: 1, maximum: 50 })),
+  }),
+
+  createCommentBody: t.Object({
+    content: t.String({ minLength: 1, maxLength: 2000 }),
+    isSpoiler: t.Optional(t.Boolean({ default: false })),
+  }),
+
+  listCommentsResponse: t.Object({
+    success: t.Boolean(),
+    comments: t.Array(t.Any()),
+    pagination: PaginationMetaSchema,
+  }),
+
+  createCommentResponse: t.Object({
+    success: t.Boolean(),
+    comment: t.Any(),
+  }),
+
+  deleteCommentResponse: t.Object({
+    success: t.Boolean(),
+    message: t.String(),
+  }),
+
+  // --- Activity Schemas ---
+  activityResponse: t.Object({
+    success: t.Boolean(),
+    activity: t.Array(
+      t.Object({
+        id: t.String(),
+        type: t.String(),
+        user: t.Object({
+          id: t.String(),
+          username: t.String(),
+          displayName: t.Nullable(t.String()),
+          avatarUrl: t.Nullable(t.String()),
+        }),
+        content: t.Nullable(t.String()),
+        metadata: t.Nullable(t.Any()),
+        createdAt: t.String(),
+      })
+    ),
   }),
 
   // --- POST /borealis/playlists/:playlistId/entries (Add entry to playlist) ---

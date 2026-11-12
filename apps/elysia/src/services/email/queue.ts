@@ -36,33 +36,38 @@ export type EmailJobData =
     }
 
 export function getRedisConnectionOptions() {
-  if (Bun.env.REDIS_URL) {
-    try {
-      const url = new URL(Bun.env.REDIS_URL)
-      return {
-        host: url.hostname || '127.0.0.1',
-        port: parseInt(url.port || '6379', 10),
-        username: url.username || undefined,
-        password: url.password || undefined,
-        maxRetriesPerRequest: null,
-        enableReadyCheck: false,
-      }
-    } catch {
-      // Fallback if parsing fails
-    }
+  const commonOptions = {
+    maxRetriesPerRequest: null,
+    enableReadyCheck: false,
+    keepAlive: 10000,
+    connectTimeout: 15000,
+    enableOfflineQueue: true,
+    reconnectOnError(err: Error) {
+      const targetErrors = ['READONLY', 'ECONNRESET', 'ETIMEDOUT', 'EPIPE']
+      return targetErrors.some((t) => err.message.includes(t))
+    },
+    retryStrategy(times: number) {
+      return Math.min(times * 200, 3000)
+    },
+  }
+
+  const host = Bun.env.REDIS_HOST
+  const portStr = Bun.env.REDIS_PORT
+  if (!host || !portStr) {
+    throw new Error('Missing required Redis environment variable(s): REDIS_HOST and/or REDIS_PORT')
+  }
+
+  const port = parseInt(portStr, 10)
+  if (Number.isNaN(port)) {
+    throw new Error(`Invalid REDIS_PORT environment variable value: "${portStr}". Expected a number.`)
   }
 
   return {
-    host: Bun.env.REDIS_HOST || '127.0.0.1',
-    port: Number(Bun.env.REDIS_PORT) || 6379,
+    ...commonOptions,
+    host,
+    port,
     password: Bun.env.REDIS_PASSWORD || undefined,
-    db: Number(Bun.env.REDIS_DB) || 0,
-    maxRetriesPerRequest: null,
-    enableReadyCheck: false,
-    retryStrategy(times: number) {
-      if (times > 5) return null // Stop retrying after 5 attempts to avoid flood
-      return Math.min(times * 300, 2000)
-    },
+    db: Bun.env.REDIS_DB ? Number(Bun.env.REDIS_DB) : 0,
   }
 }
 
@@ -87,8 +92,14 @@ export function getEmailQueue(): Queue<EmailJobData> {
       },
     })
 
-    emailQueueInstance.on('error', (err) => {
-      logger.warn(`Queue error: ${err.message}`)
+    emailQueueInstance.on('error', (err: any) => {
+      const isSocketReset =
+        err?.code === 'ECONNRESET' ||
+        err?.code === 'EPIPE' ||
+        err?.code === 'ETIMEDOUT' ||
+        /ECONNRESET|EPIPE|ETIMEDOUT/i.test(err?.message || '')
+      if (isSocketReset) return
+      logger.warn(`Queue error: ${err?.message || err}`)
     })
   }
 

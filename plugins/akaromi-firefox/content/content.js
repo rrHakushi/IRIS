@@ -9,6 +9,8 @@
   let akaromiPortal = null
   let inertObserver = null
 
+    // Step 1: Portal Container & Focus Isolation
+  // Step 1.1: Persistent DOM Portal Setup & Inert Neutralizer
   function getOrCreatePortal() {
     if (akaromiPortal && akaromiPortal.isConnected) {
       return akaromiPortal
@@ -802,9 +804,175 @@
   })
 
   // ----------------------------------------------------
+  // In-Page Unlock Modal (Android & Fallback Support)
+  // ----------------------------------------------------
+  let activeUnlockModal = null
+
+  function removeUnlockModal() {
+    if (activeUnlockModal) {
+      activeUnlockModal.remove()
+      activeUnlockModal = null
+    }
+  }
+
+    // Step 2: Android In-Page Unlock Modal Dialog Overlay
+  // Step 2.1: In-Page Unlock Dialog Construction & Submission
+  async function showInPageUnlockModal(onUnlocked) {
+    removeUnlockModal()
+
+    // Query vault state to see if PIN unlock is enabled
+    const stateRes = await ext.runtime.sendMessage({ action: "GET_VAULT_STATE" }).catch(() => ({}))
+    const pinEnabled = Boolean(stateRes?.pinUnlockEnabled)
+
+    const overlay = document.createElement("div")
+    overlay.className = "iris-passkey-dialog-overlay"
+
+    const dialog = document.createElement("div")
+    dialog.className = "iris-passkey-dialog"
+
+    let usePin = pinEnabled
+
+    function renderDialog() {
+      dialog.replaceChildren()
+
+      const iconDiv = document.createElement("div")
+      iconDiv.className = "iris-passkey-icon"
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+      svg.setAttribute("viewBox", "0 0 24 24")
+      svg.setAttribute("fill", "none")
+      svg.setAttribute("stroke", "currentColor")
+      svg.setAttribute("stroke-width", "2")
+      svg.setAttribute("stroke-linecap", "round")
+      svg.setAttribute("stroke-linejoin", "round")
+      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
+      rect.setAttribute("width", "18")
+      rect.setAttribute("height", "11")
+      rect.setAttribute("x", "3")
+      rect.setAttribute("y", "11")
+      rect.setAttribute("rx", "2")
+      rect.setAttribute("ry", "2")
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path")
+      path.setAttribute("d", "M7 11V7a5 5 0 0 1 10 0v4")
+      svg.appendChild(rect)
+      svg.appendChild(path)
+      iconDiv.appendChild(svg)
+      dialog.appendChild(iconDiv)
+
+      const titleDiv = document.createElement("div")
+      titleDiv.className = "iris-passkey-title"
+      titleDiv.textContent = "Unlock Akaromi"
+      dialog.appendChild(titleDiv)
+
+      const subtitleDiv = document.createElement("div")
+      subtitleDiv.className = "iris-passkey-subtitle"
+      subtitleDiv.textContent = `Enter your ${usePin ? "PIN" : "master password"} to access credentials`
+      dialog.appendChild(subtitleDiv)
+
+      const form = document.createElement("form")
+      form.id = "iris-unlock-form"
+      form.style.cssText = "width: 100%; display: flex; flex-direction: column; gap: 12px; margin-top: 4px;"
+
+      const input = document.createElement("input")
+      input.id = "iris-unlock-input"
+      input.type = "password"
+      input.inputMode = usePin ? "numeric" : "text"
+      input.placeholder = usePin ? "Enter 4-8 digit PIN..." : "Master password..."
+      input.autocomplete = "current-password"
+      input.style.cssText = `width: 100%; height: 40px; background: #18181b; border: 1px solid #27272a; border-radius: 10px; color: #fafafa; padding: 0 12px; box-sizing: border-box; outline: none; text-align: ${usePin ? "center" : "left"}; letter-spacing: ${usePin ? "0.2em" : "normal"}; font-size: ${usePin ? "18px" : "13px"};`
+      form.appendChild(input)
+
+      const errorDiv = document.createElement("div")
+      errorDiv.id = "iris-unlock-error"
+      errorDiv.style.cssText = "display: none; color: #ef4444; font-size: 11px; text-align: center;"
+      form.appendChild(errorDiv)
+
+      const btnRow = document.createElement("div")
+      btnRow.style.cssText = "display: flex; gap: 8px; width: 100%;"
+
+      const btnCancel = document.createElement("button")
+      btnCancel.type = "button"
+      btnCancel.id = "iris-unlock-cancel"
+      btnCancel.style.cssText = "flex: 1; height: 38px; border-radius: 8px; background: #27272a; color: #a1a1aa; border: none; font-size: 12px; font-weight: 600; cursor: pointer;"
+      btnCancel.textContent = "Cancel"
+      btnCancel.addEventListener("click", () => removeUnlockModal())
+      btnRow.appendChild(btnCancel)
+
+      const btnSubmit = document.createElement("button")
+      btnSubmit.type = "submit"
+      btnSubmit.id = "iris-unlock-submit"
+      btnSubmit.style.cssText = "flex: 2; height: 38px; border-radius: 8px; background: #fafafa; color: #09090b; border: none; font-size: 12px; font-weight: 600; cursor: pointer;"
+      btnSubmit.textContent = "Unlock"
+      btnRow.appendChild(btnSubmit)
+
+      form.appendChild(btnRow)
+
+      if (pinEnabled) {
+        const btnToggle = document.createElement("button")
+        btnToggle.type = "button"
+        btnToggle.id = "iris-unlock-toggle-mode"
+        btnToggle.style.cssText = "background: transparent; border: none; color: #71717a; font-size: 11px; cursor: pointer; text-decoration: underline; margin-top: 4px;"
+        btnToggle.textContent = usePin ? "Use master password instead" : "Use PIN instead"
+        btnToggle.addEventListener("click", () => {
+          usePin = !usePin
+          renderDialog()
+        })
+        form.appendChild(btnToggle)
+      }
+
+      dialog.appendChild(form)
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault()
+        const val = input.value.trim()
+        if (!val) return
+
+        btnSubmit.disabled = true
+        btnSubmit.textContent = "Unlocking..."
+        errorDiv.style.display = "none"
+
+        const action = usePin ? "UNLOCK_WITH_PIN" : "UNLOCK_VAULT"
+        const payload = usePin ? { pin: val } : { password: val }
+
+        const res = await ext.runtime.sendMessage({ action, payload }).catch((err) => ({ error: err.message }))
+
+        if (res && res.success) {
+          removeUnlockModal()
+          showToast("Akaromi unlocked")
+          if (typeof onUnlocked === "function") {
+            onUnlocked()
+          }
+          document.dispatchEvent(new CustomEvent("iris-vault-unlocked"))
+        } else {
+          btnSubmit.disabled = false
+          btnSubmit.textContent = "Unlock"
+          errorDiv.textContent = res?.error || "Incorrect credentials"
+          errorDiv.style.display = "block"
+          input.select()
+        }
+      })
+
+      setTimeout(() => input?.focus(), 50)
+    }
+
+    renderDialog()
+    overlay.appendChild(dialog)
+    getOrCreatePortal().appendChild(overlay)
+    activeUnlockModal = overlay
+  }
+
+  globalThis.AkaromiUnlock = { showInPageUnlockModal, removeUnlockModal }
+
+  // ----------------------------------------------------
   // Extension Message Handler
   // ----------------------------------------------------
+    // Step 4: Global Input Interception & Secure Clipboard Sync
+  // Step 4.1: Message Listener & Clipboard Sanitization
   ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === "SHOW_IN_PAGE_UNLOCK_MODAL") {
+      showInPageUnlockModal()
+      sendResponse({ success: true })
+      return true
+    }
     if (message.action === "PING") {
       sendResponse({ pong: true })
       return true

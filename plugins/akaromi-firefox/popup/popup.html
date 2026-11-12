@@ -1,3 +1,4 @@
+<!-- Step 1: Responsive Dual-Pane Master Shell -->
 <!doctype html>
 <html lang="en" style="width: 650px; min-width: 650px; height: 446px; min-height: 446px;">
 
@@ -31,7 +32,7 @@
             <circle cx="10" cy="10" r="7" />
             <path d="m21 21-6-6" />
           </svg>
-          <input type="text" id="vault-search-input" placeholder="Search in all items..." autocomplete="off" spellcheck="false" />
+          <input type="text" id="vault-search-input" placeholder="Search in all items (e.g. user:, domain:)..." autocomplete="off" spellcheck="false" />
           <button type="button" id="btn-search-clear" class="search-clear-btn" style="display: none;" title="Clear search">
             <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M18 6 6 18M6 6l12 12" />
@@ -445,6 +446,14 @@
               <div id="matching-cards-list" class="cards-list"></div>
             </div>
 
+            <!-- Section: Matching base domain (if applicable) -->
+            <div id="section-matching-base" class="list-section" style="display: none;">
+              <div class="section-header">
+                <span id="matching-base-tab-label">Matching base domain</span>
+              </div>
+              <div id="matching-base-cards-list" class="cards-list"></div>
+            </div>
+
             <!-- Section: All items / Recent items -->
             <div id="section-all" class="list-section">
               <div class="section-header" id="all-items-section-header">
@@ -724,7 +733,9 @@
     </main>
 
     <!-- State 5: Item Create / Edit Modal (Screenshots 2 & 3) -->
-    <div id="modal-edit-cipher" class="modal-overlay" style="display: none;">
+      <!-- Step 3: Modal Dialogs & Navigation Drawers -->
+  <!-- Step 3.1: Cipher Edit, Generator, Settings & PIN Modals -->
+  <div id="modal-edit-cipher" class="modal-overlay" style="display: none;">
       <div class="modal-sheet-dialog">
         <!-- Top Bar -->
         <div class="modal-sheet-header">

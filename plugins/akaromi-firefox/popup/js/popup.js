@@ -30,6 +30,8 @@
   // ----------------------------------------------------
   // Search Bar
   // ----------------------------------------------------
+    // Step 1: Search Bar & Filter Chip Bindings
+  // Step 1.1: Real-Time Search Query Synchronization & Syntax Chip Injections
   vaultSearchInput?.addEventListener("input", (e) => {
     state.currentSearchQuery = e.target.value
     if (btnSearchClear) btnSearchClear.style.display = state.currentSearchQuery ? "flex" : "none"
@@ -45,7 +47,6 @@
     vaultSearchInput?.focus()
     storage.remove("akaromi_search_query").catch(() => {})
   })
-
 
   // ----------------------------------------------------
   // Header Add (+) Menu
@@ -123,6 +124,8 @@
   // ----------------------------------------------------
   // Mobile Detail Navigation
   // ----------------------------------------------------
+    // Step 2: Mobile Responsive Navigation
+  // Step 2.1: Master List & Detail View Toggle
   btnMobileBack?.addEventListener("click", () => {
     if (itemDetailPane) itemDetailPane.classList.remove("active")
     if (itemsListPane) itemsListPane.style.display = "flex"

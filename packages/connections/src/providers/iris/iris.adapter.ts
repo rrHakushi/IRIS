@@ -65,7 +65,10 @@ export class IrisAdapter extends BaseConnectionAdapter {
   }
 
   private normalizeHost(hostUrl?: string): string {
-    const raw = hostUrl || Bun.env.NEXT_PUBLIC_URL || "http://localhost:4000";
+    const raw = hostUrl || Bun.env.NEXT_PUBLIC_URL;
+    if (!raw) {
+      throw new Error("Missing required environment variable: NEXT_PUBLIC_URL");
+    }
     return raw.replace(/\/+$/, "");
   }
 

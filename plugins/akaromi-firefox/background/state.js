@@ -8,6 +8,8 @@ const storage = typeof IrisStorage !== "undefined" ? IrisStorage : ext.storage.l
 
 // In-memory vault state (strictly zero-history, wiped on lock or restart)
 // In-memory vault state (strictly zero-history, wiped on lock or restart)
+// Step 1: In-Memory Volatile Vault Store
+// Step 1.1: Zero-History Vault Key & Decrypted Ciphers State
 let inMemoryVaultKey = null
 let inMemoryCiphers = []
 let autoLockTimer = null
@@ -18,6 +20,8 @@ const ONE_HOUR_MS = 60 * 60 * 1000
 /**
  * Saves current in-memory vault key to session storage
  */
+// Step 2: Session Storage Vault Key Persistence
+// Step 2.1: Ephemeral Session Storage Backup & Cleansing on Vault Lock
 async function saveVaultKeyToSession() {
   if (!ext.storage?.session || !inMemoryVaultKey) return
   try {

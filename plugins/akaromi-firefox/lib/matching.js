@@ -24,6 +24,8 @@
   }
   IrisMatching.BITWARDEN_MATCH_LABELS = BITWARDEN_MATCH_LABELS
 
+    // Step 2: Bitwarden Matching Strategy Normalization
+  // Step 2.1: Strategy Enum & Case-Insensitive Normalization
   function normalizeMatchStrategy(strategy) {
     if (typeof strategy === "number") return strategy
     if (typeof strategy === "string") {
@@ -42,6 +44,8 @@
   /**
    * Extracts hostname from a URL string safely
    */
+    // Step 1: URL Normalization & Domain Extraction
+  // Step 1.1: Safe Hostname Extraction
   IrisMatching.extractHost = function (urlString) {
     if (!urlString) return ""
     try {
@@ -76,6 +80,7 @@
   /**
    * Extracts base domain (eTLD+1 approximation)
    */
+  // Step 1.2: Public Suffix List & Base Domain Resolution
   IrisMatching.extractBaseDomain = function (urlString) {
     const host = IrisMatching.extractHost(urlString)
     if (!host) return ""
@@ -105,6 +110,8 @@
   /**
    * Tests whether targetUrl matches vaultUri according to Bitwarden match strategy
    */
+    // Step 3: Match Evaluation Engine (Exact, Starts With, Host, Regex, Base Domain, Never)
+  // Step 3.1: Multi-Strategy Match Evaluation
   IrisMatching.isUriMatch = function (
     targetUrl,
     vaultUri,

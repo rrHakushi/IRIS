@@ -109,20 +109,16 @@ function dispatchIncomingMessage(msg: WsMessage) {
 }
 
 function getWebSocketUrl(userId?: string | null): string {
-  try {
-    const raw = API_URL || "http://localhost:4000"
-    const cleaned = raw.replace(/\$\{ELYSIA_PORT\}|\$ELYSIA_PORT/g, "4000")
-    const url = new URL(cleaned)
-    const protocol = url.protocol === "https:" ? "wss:" : "ws:"
-    const host = url.host || "localhost:4000"
-    const query = userId ? `?userId=${encodeURIComponent(userId)}` : ""
-    return `${protocol}//${host}/ws${query}`
-  } catch {
-    const host =
-      typeof window !== "undefined" ? window.location.hostname : "localhost"
-    const query = userId ? `?userId=${encodeURIComponent(userId)}` : ""
-    return `ws://${host}:4000/ws${query}`
+  const query = userId ? `?userId=${encodeURIComponent(userId)}` : ""
+  if (typeof window !== "undefined") {
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:"
+    return `${protocol}//${window.location.host}/elysia/ws${query}`
   }
+  const raw = API_URL
+  const cleaned = raw.replace(/\$\{ELYSIA_PORT\}|\$ELYSIA_PORT/g, "4000")
+  const url = new URL(cleaned)
+  const protocol = url.protocol === "https:" ? "wss:" : "ws:"
+  return `${protocol}//${url.host}/ws${query}`
 }
 
 function ensureWebSocketConnected(

@@ -27,6 +27,8 @@
       "@workspace/ui/postcss.config": ["../../packages/ui/postcss.config.mjs"],
       "@workspace/ui/globals.css": ["../../packages/ui/src/styles/globals.css"],
       "@workspace/ui/*": ["../../packages/ui/src/*"],
+      "@Runa/borealis": ["../../packages/borealis/src/index.ts"],
+      "@Runa/borealis/*": ["../../packages/borealis/src/*"],
       "elysia": ["../elysia/node_modules/elysia"],
       "elysia/*": ["../elysia/node_modules/elysia/*"]
     },

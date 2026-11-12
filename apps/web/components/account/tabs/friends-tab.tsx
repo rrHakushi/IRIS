@@ -46,21 +46,87 @@ interface FriendCardItem {
   }
 }
 
+const friendsClientCache = new Map<string, { friends: FriendCardItem[]; timestamp: number }>()
+const friendsInFlightRequests = new Map<string, Promise<any>>()
+const FRIENDS_CACHE_TTL_MS = 60 * 1000 // 1 minute
+
+export function invalidateFriendsCache(key?: string) {
+  if (key) {
+    friendsClientCache.delete(key)
+  } else {
+    friendsClientCache.clear()
+  }
+}
+
 export function ProfileFriendsTab({
   username,
   userId,
   isOwner,
 }: ProfileFriendsTabProps): React.JSX.Element {
-  const [friends, setFriends] = useState<FriendCardItem[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const cacheKey = userId || username
+  const cached = friendsClientCache.get(cacheKey)
+  const isFresh = Boolean(
+    cached && Date.now() - cached.timestamp < FRIENDS_CACHE_TTL_MS
+  )
+
+  const [friends, setFriends] = useState<FriendCardItem[]>(() =>
+    isFresh && cached ? cached.friends : []
+  )
+  const [isLoading, setIsLoading] = useState(!isFresh)
   const [searchQuery, setSearchQuery] = useState("")
 
-  const fetchUserFriends = useCallback(async () => {
+  const fetchUserFriends = useCallback(async (forceRefresh = false) => {
+    if (!forceRefresh) {
+      const entry = friendsClientCache.get(cacheKey)
+      if (entry && Date.now() - entry.timestamp < FRIENDS_CACHE_TTL_MS) {
+        setFriends(entry.friends)
+        setIsLoading(false)
+        return
+      }
+
+      const inFlight = friendsInFlightRequests.get(cacheKey)
+      if (inFlight) {
+        try {
+          const res = await inFlight
+          if (!res.error && res.data?.success) {
+            const rawFriends = (res.data as any).friends || (res.data as any).data || []
+            const list: FriendCardItem[] = rawFriends.map((f: any) => ({
+              id: f.friendId || f.id,
+              friendId: f.friendId || f.id,
+              nickname: f.nickname ?? null,
+              isPrivate: Boolean(f.isPrivate),
+              createdAt: f.createdAt,
+              user: {
+                id: f.user?.id || f.friendId,
+                username: f.user?.username || "",
+                customization: f.user?.customization || {},
+                createdAt: f.createdAt,
+                displayName: f.user?.displayName,
+                avatarUrl: f.user?.avatarUrl,
+              },
+            }))
+            setFriends(list)
+          }
+        } catch {}
+        setIsLoading(false)
+        return
+      }
+    }
+
     setIsLoading(true)
-    try {
-      const res = userId
+
+    const promise = (async () => {
+      return userId
         ? await elysia.carina.users({ userId }).friends.get({ query: { limit: 50 } })
         : await elysia.carina.friends.get({ query: { limit: 50 } })
+    })().finally(() => {
+      friendsInFlightRequests.delete(cacheKey)
+    })
+
+    friendsInFlightRequests.set(cacheKey, promise)
+
+    try {
+      const res = await promise
 
       if (!res.error && res.data?.success) {
         const rawFriends = (res.data as any).friends || (res.data as any).data || []
@@ -79,6 +145,7 @@ export function ProfileFriendsTab({
             avatarUrl: f.user?.avatarUrl,
           },
         }))
+        friendsClientCache.set(cacheKey, { friends: list, timestamp: Date.now() })
         setFriends(list)
       }
     } catch (err) {
@@ -86,7 +153,7 @@ export function ProfileFriendsTab({
     } finally {
       setIsLoading(false)
     }
-  }, [userId])
+  }, [userId, cacheKey])
 
   useEffect(() => {
     fetchUserFriends()

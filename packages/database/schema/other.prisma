@@ -56,6 +56,7 @@ model OtherList {
     other       Other     @relation(fields: [otherId], references: [id], onDelete: Cascade)
 
     status      ListStatus @default(PLANNED)
+    priority    EntryPriority @default(LOW)
     // Map of progress field keys to values: { [key: string]: number }
     progressValues Jsonb @default(json`{}`)
 
@@ -74,5 +75,6 @@ model OtherList {
     @@index([otherId])
     @@index([status])
     @@index([userId, status])
+    @@index([userId, priority])
     @@index([userId, score])
 }

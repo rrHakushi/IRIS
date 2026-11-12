@@ -25,9 +25,10 @@ export function getDomainConfig() {
     cookieDomain = parts.length >= 2 ? `.${parts.slice(-2).join('.')}` : `.${hostname}`
   }
 
-  const nodeEnv =
-    typeof Bun !== "undefined" ? Bun.env.NODE_ENV : process.env.NODE_ENV
-  const isSecure = nodeEnv === 'production' && !isLocalhost
+  const bunEnv =
+    (typeof Bun !== "undefined" ? Bun.env.BUN_ENV : process.env.BUN_ENV) ||
+    process.env.NODE_ENV
+  const isSecure = bunEnv === 'production' && !isLocalhost
 
   return {
     url: urlStr,

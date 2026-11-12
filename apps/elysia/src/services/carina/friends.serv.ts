@@ -826,7 +826,7 @@ export class CarinaFriendsServ {
         formatEntry(
           e.userId,
           e.status,
-          e.progressPages,
+          e.progressChapters,
           e.progressVolumes,
           e.score,
           e.updatedAt

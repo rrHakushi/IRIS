@@ -14,7 +14,7 @@ export * from './types/media-details'
 
 const logger = new LogFactory('Elysia:Cluster')
 
-const isTest = Bun.env.NODE_ENV === 'test'
+const isTest = Bun.env.BUN_ENV === 'test'
 const isClusteringEnabled = !isTest && Bun.env.CLUSTER !== 'false'
 
 if (isClusteringEnabled && cluster.isPrimary) {

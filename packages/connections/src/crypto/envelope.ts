@@ -16,14 +16,11 @@ const AUTH_TAG_LENGTH = 16; // 128 bits
  * Retrieves the base master encryption secret from environment.
  */
 function getMasterSecret(): Buffer {
-  const secret =
-    Bun.env.CONNECTIONS_SECRET ||
-    Bun.env.JWT_SECRET ||
-    Bun.env.APP_SECRET;
+  const secret = Bun.env.JWT_SECRET;
 
   if (!secret) {
     throw new Error(
-      "CONNECTIONS_SECRET, JWT_SECRET, or APP_SECRET environment variable is required for connection encryption."
+      "JWT_SECRET environment variable is required for connection encryption."
     );
   }
   return createHash("sha256").update(secret).digest();

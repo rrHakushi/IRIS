@@ -1,6 +1,7 @@
 import React, { useMemo } from "react"
 import type { SidebarConfig } from "@/types/sidebar-config"
 import {
+  IconLayoutDashboard,
   IconShieldLock,
   IconKey,
   IconNote,
@@ -36,31 +37,31 @@ export function getAkaromiSidebarConfig(
       dataKey: "mobile-dock",
       items: [
         {
+          label: tr("dashboard", "Dashboard"),
+          dataKey: "phone-dashboard",
+          href: "/akaromi",
+          icon: <IconLayoutDashboard className="size-5" />,
+          position: 1,
+        },
+        {
           label: tr("vault", "Vault"),
           dataKey: "phone-vault",
-          href: "/akaromi",
+          href: "/akaromi/vault",
           icon: <IconShieldLock className="size-5" />,
-          position: 1,
+          position: 2,
         },
         {
           label: tr("logins", "Logins"),
           dataKey: "phone-logins",
-          href: "/akaromi/logins",
+          href: "/akaromi/vault/logins",
           icon: <IconKey className="size-5" />,
-          position: 2,
+          position: 3,
         },
         {
           label: tr("notes", "Notes"),
           dataKey: "phone-notes",
-          href: "/akaromi/notes",
+          href: "/akaromi/vault/notes",
           icon: <IconNote className="size-5" />,
-          position: 3,
-        },
-        {
-          label: tr("cards", "Cards"),
-          dataKey: "phone-cards",
-          href: "/akaromi/cards",
-          icon: <IconCreditCard className="size-5" />,
           position: 4,
         },
         {
@@ -69,6 +70,23 @@ export function getAkaromiSidebarConfig(
           href: "/akaromi/generator",
           icon: <IconSparkles className="size-5" />,
           position: 5,
+        },
+      ],
+    },
+
+    // ----------------------------------------------------
+    // Overview Section
+    // ----------------------------------------------------
+    {
+      section: tr("overview", "Overview"),
+      dataKey: "overview-section",
+      items: [
+        {
+          label: tr("dashboard", "Dashboard"),
+          dataKey: "nav-dashboard",
+          href: "/akaromi",
+          icon: <IconLayoutDashboard className="size-4" />,
+          position: 1,
         },
       ],
     },
@@ -83,56 +101,56 @@ export function getAkaromiSidebarConfig(
         {
           label: tr("allItems", "All Items"),
           dataKey: "vault-all",
-          href: "/akaromi",
+          href: "/akaromi/vault",
           icon: <IconShieldLock className="size-4" />,
           position: 1,
         },
         {
           label: tr("favorites", "Favorites"),
           dataKey: "vault-favorites",
-          href: "/akaromi/favorites",
+          href: "/akaromi/vault/favorites",
           icon: <IconStar className="size-4" />,
           position: 2,
         },
         {
           label: tr("logins", "Logins"),
           dataKey: "vault-logins",
-          href: "/akaromi/logins",
+          href: "/akaromi/vault/logins",
           icon: <IconKey className="size-4" />,
           position: 3,
         },
         {
           label: tr("notes", "Secure Notes"),
           dataKey: "vault-notes",
-          href: "/akaromi/notes",
+          href: "/akaromi/vault/notes",
           icon: <IconNote className="size-4" />,
           position: 4,
         },
         {
           label: tr("cards", "Credit Cards"),
           dataKey: "vault-cards",
-          href: "/akaromi/cards",
+          href: "/akaromi/vault/cards",
           icon: <IconCreditCard className="size-4" />,
           position: 5,
         },
         {
           label: tr("sshKeys", "SSH Keys"),
           dataKey: "vault-ssh",
-          href: "/akaromi/ssh",
+          href: "/akaromi/vault/ssh",
           icon: <IconTerminal2 className="size-4" />,
           position: 6,
         },
         {
           label: tr("identities", "Identities"),
           dataKey: "vault-identities",
-          href: "/akaromi/identities",
+          href: "/akaromi/vault/identities",
           icon: <IconId className="size-4" />,
           position: 7,
         },
         {
           label: tr("trash", "Trash"),
           dataKey: "vault-trash",
-          href: "/akaromi/trash",
+          href: "/akaromi/vault/trash",
           icon: <IconTrash className="size-4" />,
           position: 8,
         },
@@ -165,4 +183,3 @@ export function useAkaromiSidebarConfig(session: Session | null): SidebarConfig 
 // Aliases for backwards compatibility
 export const getPassSidebarConfig = getAkaromiSidebarConfig
 export const usePassSidebarConfig = useAkaromiSidebarConfig
-

@@ -1,0 +1,309 @@
+"use client"
+
+import React, { useMemo, useState } from "react"
+import {
+  Dialog,
+  DialogHeader,
+  DialogTitle,
+} from "@workspace/ui/components/dialog"
+
+interface ImagesTabProps {
+  coverImage: string | null
+  bannerImage: string | null
+  images: Record<string, string[] | string | null> | null
+}
+
+type ImageCategoryKey =
+  "all" | "posters" | "backgrounds" | "banners" | "screencaps"
+
+function classifyImageUrl(
+  url: string,
+  context?: "cover" | "banner"
+): Exclude<ImageCategoryKey, "all"> {
+  if (context === "cover") return "posters"
+  if (context === "banner") return "banners"
+
+  const lower = url.toLowerCase()
+  if (
+    lower.includes("/posters/") ||
+    lower.includes("/poster") ||
+    lower.includes("/cover/") ||
+    lower.includes("cover") ||
+    lower.includes("cdn.myanimelist.net/images/anime")
+  ) {
+    return "posters"
+  }
+  if (
+    lower.includes("/backgrounds/") ||
+    lower.includes("/background/") ||
+    lower.includes("background") ||
+    lower.includes("fanart") ||
+    lower.includes("wallpaper")
+  ) {
+    return "backgrounds"
+  }
+  if (
+    lower.includes("/banners/") ||
+    lower.includes("/banner/") ||
+    lower.includes("banner")
+  ) {
+    return "banners"
+  }
+  if (
+    lower.includes("/screencap") ||
+    lower.includes("screenshot") ||
+    lower.includes("/still/") ||
+    lower.includes("episode")
+  ) {
+    return "screencaps"
+  }
+  return "posters"
+}
+
+export interface ProcessedMediaImage {
+  url: string
+  category: Exclude<ImageCategoryKey, "all">
+}
+
+export function extractMediaImages(
+  coverImage?: string | null,
+  bannerImage?: string | null,
+  images?: any
+): ProcessedMediaImage[] {
+  const result: ProcessedMediaImage[] = []
+  const seen = new Set<string>()
+
+  const collectCandidate = (
+    url?: string | null,
+    context?: "cover" | "banner"
+  ) => {
+    if (!url || typeof url !== "string") return
+    const trimmed = url.trim()
+    if (!trimmed) return
+    const normalized = trimmed.replace(/^http:\/\//i, "https://")
+    if (seen.has(normalized)) return
+    seen.add(normalized)
+    result.push({
+      url: normalized,
+      category: classifyImageUrl(normalized, context),
+    })
+  }
+
+  // 1. Cover and banner first
+  if (coverImage) collectCandidate(coverImage, "cover")
+  if (bannerImage) collectCandidate(bannerImage, "banner")
+
+  // 2. Extra images (array or object)
+  if (images) {
+    if (Array.isArray(images)) {
+      for (const item of images) {
+        if (typeof item === "string") {
+          collectCandidate(item)
+        } else if (item && typeof item === "object") {
+          const u =
+            (item as any).url || (item as any).image || (item as any).original
+          if (typeof u === "string") collectCandidate(u)
+        }
+      }
+    } else if (typeof images === "object") {
+      for (const [key, val] of Object.entries(images)) {
+        let context: "cover" | "banner" | undefined
+        const lKey = key.toLowerCase()
+        if (lKey.includes("banner")) context = "banner"
+        if (lKey.includes("cover") || lKey.includes("poster")) context = "cover"
+
+        if (Array.isArray(val)) {
+          for (const item of val) {
+            if (typeof item === "string") {
+              collectCandidate(item, context)
+            } else if (item && typeof item === "object") {
+              const u =
+                (item as any).url ||
+                (item as any).image ||
+                (item as any).original
+              if (typeof u === "string") collectCandidate(u, context)
+            }
+          }
+        } else if (typeof val === "string") {
+          collectCandidate(val, context)
+        }
+      }
+    }
+  }
+
+  // 3. Deduplicate lower resolution variants ONLY when higher resolution exists in the set
+  const filtered = result.filter((item) => {
+    // MAL: if ...l.jpg exists, drop ...jpg or ...m.jpg
+    if (item.url.endsWith(".jpg") && !item.url.endsWith("l.jpg")) {
+      const highRes = item.url.slice(0, -4) + "l.jpg"
+      if (seen.has(highRes)) return false
+    }
+    // AniList: if /cover/large/ or /cover/extra-large/ exists, drop /cover/medium/
+    if (item.url.includes("/cover/medium/")) {
+      const largeRes = item.url.replace("/cover/medium/", "/cover/large/")
+      const extraLargeRes = item.url.replace(
+        "/cover/medium/",
+        "/cover/extra-large/"
+      )
+      if (seen.has(largeRes) || seen.has(extraLargeRes)) return false
+    }
+    return true
+  })
+
+  return filtered
+}
+
+export function ImagesTab({ coverImage, bannerImage, images }: ImagesTabProps) {
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [activeCategory, setActiveCategory] = useState<ImageCategoryKey>("all")
+
+  // Categorize and deduplicate images
+  const categorizedImages = useMemo(() => {
+    const list = extractMediaImages(coverImage, bannerImage, images)
+    const posters = list
+      .filter((i) => i.category === "posters")
+      .map((i) => i.url)
+    const backgrounds = list
+      .filter((i) => i.category === "backgrounds")
+      .map((i) => i.url)
+    const banners = list
+      .filter((i) => i.category === "banners")
+      .map((i) => i.url)
+    const screencaps = list
+      .filter((i) => i.category === "screencaps")
+      .map((i) => i.url)
+    const all = list.map((i) => i.url)
+
+    return {
+      all,
+      posters,
+      backgrounds,
+      banners,
+      screencaps,
+    }
+  }, [coverImage, bannerImage, images])
+
+  // Build category tabs - ONLY SHOW IF AVAILABLE
+  const availableCategories = useMemo(() => {
+    const tabs: Array<{ key: ImageCategoryKey; label: string; count: number }> =
+      [{ key: "all", label: "All", count: categorizedImages.all.length }]
+
+    if (categorizedImages.posters.length > 0) {
+      tabs.push({
+        key: "posters",
+        label: "Posters & Covers",
+        count: categorizedImages.posters.length,
+      })
+    }
+    if (categorizedImages.backgrounds.length > 0) {
+      tabs.push({
+        key: "backgrounds",
+        label: "Backgrounds",
+        count: categorizedImages.backgrounds.length,
+      })
+    }
+    if (categorizedImages.banners.length > 0) {
+      tabs.push({
+        key: "banners",
+        label: "Banners",
+        count: categorizedImages.banners.length,
+      })
+    }
+    if (categorizedImages.screencaps.length > 0) {
+      tabs.push({
+        key: "screencaps",
+        label: "Screencaps",
+        count: categorizedImages.screencaps.length,
+      })
+    }
+
+    return tabs
+  }, [categorizedImages])
+
+  // Current list based on active category
+  const displayedImages =
+    categorizedImages[activeCategory] || categorizedImages.all
+
+  if (categorizedImages.all.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-border/60 p-8 text-center text-sm text-muted-foreground">
+        No images available for this title.
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Category Filter Pills: Only shown if multiple categories available */}
+      {availableCategories.length > 1 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {availableCategories.map((cat) => {
+            const isActive = activeCategory === cat.key
+            return (
+              <button
+                key={cat.key}
+                type="button"
+                onClick={() => setActiveCategory(cat.key)}
+                className={`rounded-xl px-3 py-1.5 text-xs font-medium transition-colors outline-none select-none ${
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                }`}
+              >
+                {cat.label}
+                <span className="ms-1.5 text-[10px] tabular-nums opacity-70">
+                  ({cat.count})
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Masonry Layout: Natural aspect ratios without vertical gaps */}
+      <div className="columns-2 gap-3 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 min-[2000px]:columns-7">
+        {displayedImages.map((url, idx) => (
+          <div key={idx} className="mb-3 break-inside-avoid">
+            <button
+              type="button"
+              onClick={() => setSelectedImage(url)}
+              className="group relative block w-full cursor-pointer overflow-hidden rounded-2xl border border-border/40 bg-card/60 p-1 text-start transition-all duration-200 outline-none hover:-translate-y-0.5 hover:border-border/80 hover:bg-card focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <img
+                src={url}
+                alt={`Artwork ${idx + 1}`}
+                loading="lazy"
+                className="block h-auto w-full rounded-xl object-contain"
+              />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Full Image Popup Modal */}
+      {selectedImage && (
+        <Dialog
+          isOpen={Boolean(selectedImage)}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) setSelectedImage(null)
+          }}
+          className="gap-3 p-3 sm:max-w-5xl"
+        >
+          <DialogHeader className="border-b border-border/40 pb-2">
+            <DialogTitle className="text-sm font-semibold">
+              Artwork Preview
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="relative flex max-h-[82vh] w-full items-center justify-center overflow-auto rounded-xl bg-black/40 p-2">
+            <img
+              src={selectedImage}
+              alt="Artwork preview"
+              className="max-h-[78vh] w-auto max-w-full rounded-lg object-contain"
+            />
+          </div>
+        </Dialog>
+      )}
+    </div>
+  )
+}

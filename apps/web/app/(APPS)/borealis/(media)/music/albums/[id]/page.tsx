@@ -2,11 +2,11 @@ import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import type { MusicDetails, SimilarMediaItem } from "@IRIS/elysia"
 import { elysia } from "@/lib/elysia"
-import { MediaDetailView } from "@/components/media/media-detail-view"
+import { MediaDetailView } from "@Runa/borealis"
 import type {
   NormalizedMediaData,
   SimilarMediaCardItem,
-} from "@/components/media/media-types"
+} from "@Runa/borealis"
 
 type Props = {
   params: Promise<{ id: string }>
@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   try {
-    const { data } = await elysia.borealis.media.music({ id: numericId }).get()
+    const { data } = await elysia.borealis.music({ id: numericId }).get()
     const albumData = (data as any)?.media ?? (data as any)
     if (!albumData) {
       return {
@@ -64,8 +64,8 @@ export default async function AlbumDetailPage({ params, searchParams }: Props) {
 
   // Parallel fetch album details and similar albums via Elysia client without waterfalls
   const [albumRes, similarRes] = await Promise.all([
-    elysia.borealis.media.music({ id: numericId }).get(),
-    elysia.borealis.media
+    elysia.borealis.music({ id: numericId }).get(),
+    elysia.borealis
       .music({ id: numericId })
       .similar.get({ query: { limit: 50 } }),
   ])
@@ -168,11 +168,15 @@ export default async function AlbumDetailPage({ params, searchParams }: Props) {
     type: item.type ?? item.mediaType ?? "music",
     format: item.format ?? null,
     coverImage: item.coverImage ?? null,
+    bannerImage: item.bannerImage ?? null,
+    description: item.description ?? null,
+    status: item.status ?? null,
     titlePrimary: item.titles?.primary ?? item.titlePrimary ?? "",
     titleSecondary: item.titles?.secondary ?? item.titleSecondary ?? null,
     titleNative: item.titles?.native ?? item.titleNative ?? null,
     year: item.year ?? null,
     score: item.averageScore ?? null,
+    genres: item.genres ?? [],
   }))
 
   return (

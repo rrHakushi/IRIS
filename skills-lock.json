@@ -1,125 +1,137 @@
 {
-  "version": 1,
+  "version": 2,
   "skills": {
     "avalonia": {
       "source": "markpitt/claude-skills",
       "sourceType": "github",
       "skillPath": "skills/avalonia/SKILL.md",
-      "computedHash": "e373cf5ca70a57953b18815e3c9671508e5888d4daab4025cc48d9f7507d4d6b"
+      "computedHash": ""
     },
     "bullmq-specialist": {
       "source": "sickn33/agentic-awesome-skills",
       "sourceType": "github",
       "skillPath": "skills/bullmq-specialist/SKILL.md",
-      "computedHash": "1012ef335f73d4469d0a00dd9189923c9fa666c3a21e032b5f84733c360aa94a"
+      "computedHash": ""
     },
     "data-encryption": {
       "source": "aj-geddes/useful-ai-prompts",
       "sourceType": "github",
       "skillPath": "skills/data-encryption/SKILL.md",
-      "computedHash": "78f45efcae4037f3ec9760dc6c2690bd774560dc587fa88ac46a9ccb6a817b08"
+      "computedHash": ""
+    },
+    "docker-compose-patterns": {
+      "source": "docker/skills",
+      "sourceType": "github",
+      "skillPath": "skills/docker-compose-patterns/SKILL.md",
+      "computedHash": "ab8353137a2f7054f113b7aa565eff12248bca7b41518a4d4183f7da522af2c3"
+    },
+    "documentation-writer": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/documentation-writer/SKILL.md",
+      "computedHash": "b2de0a266264b7a994d9bf1b771d3b35ab3780d16ccd658ffceb2936d3df1db6"
     },
     "dotnet-best-practices": {
       "source": "github/awesome-copilot",
       "sourceType": "github",
       "skillPath": "skills/dotnet-best-practices/SKILL.md",
-      "computedHash": "9ef94db7f06c167d544369817e5a4415eeb7886dcff0d47026837a1aada260e3"
+      "computedHash": ""
     },
     "elysiajs": {
       "source": "elysiajs/skills",
       "sourceType": "github",
       "skillPath": "elysia/SKILL.md",
-      "computedHash": "e0bc0ecce6cecc34f14cf445c72f7df0cec278e64dfd4ea99f26c503e98624d6"
+      "computedHash": ""
     },
     "find-skills": {
       "source": "vercel-labs/skills",
       "sourceType": "github",
       "skillPath": "skills/find-skills/SKILL.md",
-      "computedHash": "b146008599c31057cef1c145774cea5d5afb30e8f43fa802e47a4b461419aaaf"
+      "computedHash": ""
     },
     "git-commit": {
       "source": "github/awesome-copilot",
       "sourceType": "github",
       "skillPath": "skills/git-commit/SKILL.md",
-      "computedHash": "78b6a33700091345cd449f9e3642ddd611b479b341efc9d6c750f7e04d15216a"
+      "computedHash": ""
     },
     "grill-me": {
       "source": "mattpocock/skills",
       "sourceType": "github",
       "skillPath": "skills/productivity/grill-me/SKILL.md",
-      "computedHash": "9cdbb4b8f7a3aeaef82e6230c9e823500d4a8a1214c726cf342cf9829d34fc7d"
+      "computedHash": ""
     },
     "grilling": {
       "source": "mattpocock/skills",
       "sourceType": "github",
       "skillPath": "skills/productivity/grilling/SKILL.md",
-      "computedHash": "ef1641a2047b71b60f1942cd35efb47d3afc9d584dff5a0b01f8c7db923aaa08"
+      "computedHash": ""
     },
     "nextauth": {
       "source": "claude-dev-suite/claude-dev-suite",
       "sourceType": "github",
       "skillPath": "skills/authentication/nextauth/SKILL.md",
-      "computedHash": "8711d137ef1576321eae5f754a590c0945060faebb25564f057826cad6504ef8"
+      "computedHash": ""
     },
     "ponytail": {
       "source": "dietrichgebert/ponytail",
       "sourceType": "github",
       "skillPath": "skills/ponytail/SKILL.md",
-      "computedHash": "061f887d9e3e735f85db3be3655a8936a00f24d5fb65ac4ab74a968a770fe342"
+      "computedHash": ""
     },
     "prisma-cli": {
       "source": "prisma/skills",
       "sourceType": "github",
       "skillPath": "prisma-cli/SKILL.md",
-      "computedHash": "aaec1e0169bb8ae74b0e3c4b39a4ed00cef79741df42fb9c93771736fccf378f"
+      "computedHash": ""
     },
     "prisma-client-api": {
       "source": "prisma/skills",
       "sourceType": "github",
       "skillPath": "prisma-client-api/SKILL.md",
-      "computedHash": "cbbabff961c8e16b2d59f8c1ffb4e7e20be52154e778ab95121e0211d6d09969"
+      "computedHash": ""
     },
     "prisma-compute": {
       "source": "prisma/skills",
       "sourceType": "github",
       "skillPath": "prisma-compute/SKILL.md",
-      "computedHash": "cc1648c5ef56e63a352bcf6b3d6caad44890d4fbe553c83dda9596d6178e9e22"
+      "computedHash": ""
     },
     "prisma-orm-setup": {
       "source": "prisma/skills",
       "sourceType": "github",
       "skillPath": "prisma-orm-setup/SKILL.md",
-      "computedHash": "08c8bc188c5a304f549aea607320905c9edc0485692182bf590a56dfc71617ca"
+      "computedHash": ""
     },
     "prisma-upgrade-v7": {
       "source": "prisma/skills",
       "sourceType": "github",
       "skillPath": "prisma-upgrade-v7/SKILL.md",
-      "computedHash": "9a65f02d4ae2f3d1e81efb6be888f33a083b1c06d866ff5f762cc30786e4c8ce"
+      "computedHash": ""
     },
     "security-review": {
       "source": "github/awesome-copilot",
       "sourceType": "github",
       "skillPath": "skills/security-review/SKILL.md",
-      "computedHash": "9b1791054c648b84ca424fc1342dede2e04759dc73436bb91d21675d5a4c13ea"
+      "computedHash": ""
     },
     "shadcn": {
       "source": "shadcn/ui",
       "sourceType": "github",
       "skillPath": "skills/shadcn/SKILL.md",
-      "computedHash": "b864a958765563321f485a96f4d59c0bb6539f4286ab6d8b8b66895b7ebd302d"
+      "computedHash": ""
     },
     "skill-creator": {
       "source": "anthropics/skills",
       "sourceType": "github",
       "skillPath": "skills/skill-creator/SKILL.md",
-      "computedHash": "5ea13a6d9f0d4bb694405d79acd00cadec0d21bb138c4dd10fcf3c500cb835c2"
+      "computedHash": ""
     },
     "vercel-react-best-practices": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/react-best-practices/SKILL.md",
-      "computedHash": "ca7b0c0c6e5f2750043f7f0cd72d16ac4e2abc48f9b5500d047a4b77a2506212"
+      "computedHash": ""
     }
   }
 }

@@ -8,6 +8,8 @@
   const storage = typeof IrisStorage !== "undefined" ? IrisStorage : ext.storage.local
   const domParser = new DOMParser()
 
+    // Step 1: DOM Template Rendering & HTML Sanitization
+  // Step 1.1: Safe DOMParser Child Replacement & Entity Escaping
   function safeSetTemplate(element, htmlString) {
     element.replaceChildren()
     const doc = domParser.parseFromString(htmlString, "text/html")
@@ -25,6 +27,8 @@
       .replace(/"/g, "&quot;")
   }
 
+    // Step 2: Ephemeral Popup Toast Notifications
+  // Step 2.1: Toast Visibility & Auto-Dismiss Timer
   function showToast(message, duration = 2500) {
     const toast = document.getElementById("popup-toast")
     const toastText = document.getElementById("popup-toast-text")
@@ -40,6 +44,8 @@
   // ----------------------------------------------------
   // Global Popup State
   // ----------------------------------------------------
+    // Step 3: Reactive Centralized Popup State Store
+  // Step 3.1: AppState Object Properties & View Tracking
   const AppState = {
     currentUser: null,
     currentTab: null,

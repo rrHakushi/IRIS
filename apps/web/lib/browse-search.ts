@@ -1,6 +1,6 @@
 import { elysia } from "@/lib/elysia"
 import type { BrowseCategory } from "@/lib/browse-history"
-import type { SearchResultItem } from "@/components/browse/browse-search-results"
+import type { SearchResultItem } from "@Runa/borealis"
 import type { MediaTitleLanguage } from "@IRIS/shared"
 
 export type MusicFilterType = "all" | "tracks" | "albums"
@@ -66,6 +66,7 @@ export interface RawSearchResult extends FormattableMediaTitle {
   coverImage?: string | null
   image?: string | null
   bannerImage?: string | null
+  description?: string | null
   format?: string | null
   type?: "TRACK" | "ALBUM" | string | null
   itemType?: "TRACK" | "ALBUM" | string | null
@@ -86,6 +87,7 @@ export interface RawSearchResult extends FormattableMediaTitle {
   queuedForFetch?: boolean
   isAnimationStudio?: boolean
   gender?: string | null
+  age?: string | number | null
   language?: string | null
   startDate?: string | Date | null
   authors?: string[] | null
@@ -165,11 +167,23 @@ function normalizeSearchResults(
       null
 
     return {
+      ...item,
       id: item.id ?? 0,
       title,
       coverImage,
+      bannerImage: item.bannerImage ?? null,
+      titleNative: item.titleNative ?? null,
+      titleSecondary: item.titleSecondary ?? null,
       format,
       year,
+      seasonYear: year,
+      averageScore: (item as any).averageScore ?? null,
+      chapterCount: (item as any).chapterCount ?? null,
+      episodeCount: (item as any).episodeCount ?? null,
+      volumeCount: (item as any).volumeCount ?? null,
+      status: (item as any).status ?? null,
+      genres: (item as any).genres ?? [],
+      studios: (item as any).studios ?? [],
       queuedForFetch: Boolean(item.queuedForFetch),
       type,
       artist: item.artist || item.artistName || null,
@@ -177,6 +191,15 @@ function normalizeSearchResults(
       duration: item.duration ?? null,
       audioPreviewUrl: item.audioPreviewUrl || item.preview || null,
       explicitLyrics: Boolean(item.explicitLyrics || item.explicit_lyrics),
+      description: item.description ?? null,
+      gender: item.gender ?? (item as any).gender ?? null,
+      age:
+        item.age != null
+          ? String(item.age)
+          : (item as any).age != null
+            ? String((item as any).age)
+            : null,
+      raw: item,
     }
   })
 }

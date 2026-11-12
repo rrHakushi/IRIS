@@ -27,6 +27,10 @@ export const BorealisEntitiesModel = {
         image: t.Nullable(t.String()),
         gender: t.Nullable(t.String()),
         age: t.Nullable(t.String()),
+        description: t.Optional(t.Nullable(t.String())),
+        dateOfBirthYear: t.Optional(t.Nullable(t.Number())),
+        dateOfBirthMonth: t.Optional(t.Nullable(t.Number())),
+        dateOfBirthDay: t.Optional(t.Nullable(t.Number())),
         favorites: t.Nullable(t.Number()),
       })
     ),
@@ -79,6 +83,13 @@ export const BorealisEntitiesModel = {
         primaryOccupations: t.Array(t.String()),
         language: t.Nullable(t.String()),
         gender: t.Nullable(t.String()),
+        description: t.Optional(t.Nullable(t.String())),
+        bloodType: t.Optional(t.Nullable(t.String())),
+        homeTown: t.Optional(t.Nullable(t.String())),
+        birthPlace: t.Optional(t.Nullable(t.String())),
+        dateOfBirthYear: t.Optional(t.Nullable(t.Number())),
+        dateOfBirthMonth: t.Optional(t.Nullable(t.Number())),
+        dateOfBirthDay: t.Optional(t.Nullable(t.Number())),
         favorites: t.Nullable(t.Number()),
       })
     ),
@@ -128,6 +139,7 @@ export const BorealisEntitiesModel = {
         name: t.String(),
         isAnimationStudio: t.Boolean(),
         siteUrl: t.Nullable(t.String()),
+        description: t.Optional(t.Nullable(t.String())),
         favorites: t.Nullable(t.Number()),
       })
     ),

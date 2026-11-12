@@ -1,5 +1,5 @@
 import { Metadata } from "next"
-import { ServarrWantedView } from "@/components/servarr/servarr-wanted-view"
+import { ServarrWantedView } from "@Runa/borealis"
 
 export const metadata: Metadata = {
   title: "Borealis | Servarr > Radarr > Wanted Movies",

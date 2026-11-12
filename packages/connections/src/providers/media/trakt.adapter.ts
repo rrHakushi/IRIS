@@ -44,7 +44,9 @@ export class TraktAdapter extends BaseConnectionAdapter {
   };
 
   private getClientId(): string {
-    return (Bun.env.TRAKT_CLIENT_ID || "").trim();
+    const id = Bun.env.TRAKT_CLIENT_ID?.trim();
+    if (!id) throw new Error("Missing required environment variable: TRAKT_CLIENT_ID");
+    return id;
   }
 
   private getClientSecret(): string {
@@ -222,6 +224,19 @@ export class TraktAdapter extends BaseConnectionAdapter {
       return [];
     }
 
+    const cleanQuery = query.trim();
+    if (!cleanQuery) return [];
+
+    // 1. Check for explicit Trakt ID/slug/IMDb prefixes or URLs (e.g., "id:1390", "trakt:1390", "#1390", "tt0903747", or "https://trakt.tv/shows/breaking-bad")
+    const explicitIdMatch = cleanQuery.match(
+      /^(?:id:|trakt:|imdb:|#|https?:\/\/(?:www\.)?trakt\.tv\/(?:movies|shows)\/)([^/?#\s]+)|^(tt\d+)$/i
+    );
+    if (explicitIdMatch && (explicitIdMatch[1] || explicitIdMatch[2])) {
+      const item = await this.getMediaById(cleanQuery, credentials, options);
+      return item ? [item] : [];
+    }
+
+    const isPlainNumeric = /^\d+$/.test(cleanQuery);
     const limit = Math.min(options?.perPage || 20, 40);
     const page = options?.page || 1;
     const isMovie = options?.type === "MOVIE";
@@ -229,67 +244,84 @@ export class TraktAdapter extends BaseConnectionAdapter {
 
     // If type is explicitly MOVIE or TV, search that specific endpoint; otherwise search movies and shows
     const endpoints = isMovie
-      ? [`/search/movie?query=${encodeURIComponent(query.trim())}&limit=${limit}&page=${page}`]
+      ? [`/search/movie?query=${encodeURIComponent(cleanQuery)}&limit=${limit}&page=${page}`]
       : isTv
-        ? [`/search/show?query=${encodeURIComponent(query.trim())}&limit=${limit}&page=${page}`]
+        ? [`/search/show?query=${encodeURIComponent(cleanQuery)}&limit=${limit}&page=${page}`]
         : [
-            `/search/movie?query=${encodeURIComponent(query.trim())}&limit=${Math.ceil(limit / 2)}&page=${page}`,
-            `/search/show?query=${encodeURIComponent(query.trim())}&limit=${Math.ceil(limit / 2)}&page=${page}`,
+            `/search/movie?query=${encodeURIComponent(cleanQuery)}&limit=${Math.ceil(limit / 2)}&page=${page}`,
+            `/search/show?query=${encodeURIComponent(cleanQuery)}&limit=${Math.ceil(limit / 2)}&page=${page}`,
           ];
 
-    const results: MediaSearchResult[] = [];
+    const fetchTextSearch = async (): Promise<MediaSearchResult[]> => {
+      const results: MediaSearchResult[] = [];
 
-    for (const ep of endpoints) {
-      try {
-        const hits = await this.fetchJson<
-          Array<{
-            type: "movie" | "show";
-            score?: number;
-            movie?: {
-              title: string;
-              year?: number;
-              ids: { trakt: number; slug: string; tmdb?: number; imdb?: string };
-              overview?: string;
-            };
-            show?: {
-              title: string;
-              year?: number;
-              ids: { trakt: number; slug: string; tmdb?: number; imdb?: string };
-              overview?: string;
-            };
-          }>
-        >(`${TraktAdapter.BASE_URL}${ep}`, {
-          headers: this.buildHeaders(credentials),
-        });
-
-        for (const hit of hits || []) {
-          const item = hit.movie || hit.show;
-          if (!item) continue;
-          const mediaType = hit.type === "movie" ? "MOVIE" : "TV";
-          const traktId = item.ids?.trakt;
-          if (!traktId) continue;
-
-          results.push({
-            id: String(traktId),
-            externalId: String(traktId),
-            provider: "TRAKT",
-            mediaType,
-            format: mediaType,
-            title: {
-              userPreferred: item.title,
-              english: item.title,
-            },
-            description: item.overview,
-            releaseYear: item.year,
-            url: `https://trakt.tv/${hit.type === "movie" ? "movies" : "shows"}/${item.ids?.slug || traktId}`,
+      for (const ep of endpoints) {
+        try {
+          const hits = await this.fetchJson<
+            Array<{
+              type: "movie" | "show";
+              score?: number;
+              movie?: {
+                title: string;
+                year?: number;
+                ids: { trakt: number; slug: string; tmdb?: number; imdb?: string };
+                overview?: string;
+              };
+              show?: {
+                title: string;
+                year?: number;
+                ids: { trakt: number; slug: string; tmdb?: number; imdb?: string };
+                overview?: string;
+              };
+            }>
+          >(`${TraktAdapter.BASE_URL}${ep}`, {
+            headers: this.buildHeaders(credentials),
           });
+
+          for (const hit of hits || []) {
+            const item = hit.movie || hit.show;
+            if (!item) continue;
+            const mediaType = hit.type === "movie" ? "MOVIE" : "TV";
+            const traktId = item.ids?.trakt;
+            if (!traktId) continue;
+
+            results.push({
+              id: String(traktId),
+              externalId: String(traktId),
+              provider: "TRAKT",
+              mediaType,
+              format: mediaType,
+              title: {
+                userPreferred: item.title,
+                english: item.title,
+              },
+              description: item.overview,
+              releaseYear: item.year,
+              url: `https://trakt.tv/${hit.type === "movie" ? "movies" : "shows"}/${item.ids?.slug || traktId}`,
+            });
+          }
+        } catch (err: any) {
+          console.warn(`[Trakt] Search failed for endpoint ${ep}:`, err?.message || err);
         }
-      } catch (err: any) {
-        console.warn(`[Trakt] Search failed for endpoint ${ep}:`, err?.message || err);
       }
+
+      return results;
+    };
+
+    if (isPlainNumeric) {
+      const [idResult, textResults] = await Promise.all([
+        this.getMediaById(cleanQuery, credentials, options).catch(() => null),
+        fetchTextSearch().catch(() => [] as MediaSearchResult[]),
+      ]);
+
+      if (idResult) {
+        const deduped = textResults.filter((r) => r.externalId !== idResult.externalId);
+        return [idResult, ...deduped];
+      }
+      return textResults;
     }
 
-    return results;
+    return fetchTextSearch();
   }
 
   async getMediaById(
@@ -297,44 +329,62 @@ export class TraktAdapter extends BaseConnectionAdapter {
     credentials?: ConnectionCredentials,
     options?: SearchOptions
   ): Promise<MediaSearchResult | null> {
-    const isMovie = options?.type === "MOVIE";
-    const endpoint = isMovie
-      ? `/movies/${encodeURIComponent(externalId)}?extended=full`
-      : `/shows/${encodeURIComponent(externalId)}?extended=full`;
+    const raw = externalId.trim();
+    const urlMatch = raw.match(
+      /^https?:\/\/(?:www\.)?trakt\.tv\/(movies|shows)\/([^/?#\s]+)/i
+    );
+    const cleanId = (
+      urlMatch?.[2] || raw.replace(/^(?:id:|trakt:|imdb:|#)/i, "")
+    ).trim();
+    if (!cleanId) return null;
 
-    try {
-      const item = await this.fetchJson<{
-        title: string;
-        year?: number;
-        ids: { trakt: number; slug: string; tmdb?: number; imdb?: string };
-        overview?: string;
-        rating?: number;
-        aired_episodes?: number;
-      }>(`${TraktAdapter.BASE_URL}${endpoint}`, {
-        headers: this.buildHeaders(credentials),
-      });
+    const urlType = urlMatch?.[1]?.toLowerCase();
+    const preferMovie =
+      urlType === "movies" ? true : urlType === "shows" ? false : options?.type === "MOVIE";
 
-      if (!item?.ids?.trakt) return null;
+    const candidateModes = [preferMovie, !preferMovie];
 
-      return {
-        id: String(item.ids.trakt),
-        externalId: String(item.ids.trakt),
-        provider: "TRAKT",
-        mediaType: isMovie ? "MOVIE" : "TV",
-        format: isMovie ? "MOVIE" : "TV",
-        title: {
-          userPreferred: item.title,
-          english: item.title,
-        },
-        description: item.overview,
-        episodes: item.aired_episodes,
-        releaseYear: item.year,
-        averageScore: item.rating ? Math.round(item.rating * 10) : undefined,
-        url: `https://trakt.tv/${isMovie ? "movies" : "shows"}/${item.ids?.slug || item.ids?.trakt}`,
-      };
-    } catch {
-      return null;
+    for (const isMovie of candidateModes) {
+      const endpoint = isMovie
+        ? `/movies/${encodeURIComponent(cleanId)}?extended=full`
+        : `/shows/${encodeURIComponent(cleanId)}?extended=full`;
+
+      try {
+        const item = await this.fetchJson<{
+          title: string;
+          year?: number;
+          ids: { trakt: number; slug: string; tmdb?: number; imdb?: string };
+          overview?: string;
+          rating?: number;
+          aired_episodes?: number;
+        }>(`${TraktAdapter.BASE_URL}${endpoint}`, {
+          headers: this.buildHeaders(credentials),
+        });
+
+        if (!item?.ids?.trakt) continue;
+
+        return {
+          id: String(item.ids.trakt),
+          externalId: String(item.ids.trakt),
+          provider: "TRAKT",
+          mediaType: isMovie ? "MOVIE" : "TV",
+          format: isMovie ? "MOVIE" : "TV",
+          title: {
+            userPreferred: item.title,
+            english: item.title,
+          },
+          description: item.overview,
+          episodes: item.aired_episodes,
+          releaseYear: item.year,
+          averageScore: item.rating ? Math.round(item.rating * 10) : undefined,
+          url: `https://trakt.tv/${isMovie ? "movies" : "shows"}/${item.ids?.slug || item.ids?.trakt}`,
+        };
+      } catch {
+        // Try alternate type (movies <-> shows)
+      }
     }
+
+    return null;
   }
 
   async getLibrary(

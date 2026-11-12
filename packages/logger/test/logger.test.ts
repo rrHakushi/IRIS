@@ -143,13 +143,13 @@ describe("LogFactory (@Iris/logger)", () => {
     LogFactory.setLevel("debug")
 
     // In development -> should log
-    Bun.env.NODE_ENV = "development"
+    Bun.env.BUN_ENV = "development"
     const devLogger = new LogFactory("DevModule")
     devLogger.debug("Dev debug message")
     expect(captured.length).toBe(1)
 
     // In production -> should NOT log debug even if level is debug
-    Bun.env.NODE_ENV = "production"
+    Bun.env.BUN_ENV = "production"
     const prodLogger = new LogFactory("ProdModule")
     prodLogger.debug("Prod debug message")
     expect(captured.length).toBe(1) // unchanged

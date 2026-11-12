@@ -10,14 +10,19 @@ export interface SearchQuery {
     | 'anime'
     | 'manga'
     | 'movies'
+    | 'movie'
     | 'tv'
     | 'games'
+    | 'game'
     | 'music'
     | 'books'
+    | 'book'
     | 'characters'
+    | 'character'
     | 'people'
     | 'staff'
     | 'studios'
+    | 'studio'
     | 'other'
   page?: number
   limit?: number
@@ -120,16 +125,23 @@ export class BorealisSearchServ {
               'titleNative',
               'coverImage',
               'bannerImage',
+              'description',
               'format',
               'status',
+              'source',
               'seasonYear',
               'seasonSeason',
               'episodeCount',
               'averageScore',
+              'popularity',
+              'favorites',
               'alUpdatedAt'
             )
             .include('genres', (g) =>
               g.include('genre', (ge) => ge.select('id', 'name'))
+            )
+            .include('studios', (st) =>
+              st.include('studio', (s) => s.select('id', 'name'))
             )
             .all(),
         ])
@@ -140,6 +152,12 @@ export class BorealisSearchServ {
             .map((g) => ({
               id: g.genre!.id,
               name: g.genre!.name,
+            })),
+          studios: (x.studios || [])
+            .filter((st: any) => Boolean(st.studio))
+            .map((st: any) => ({
+              id: st.studio!.id,
+              name: st.studio!.name,
             })),
         }))
         const { results, total: combinedTotal } = mergeWithExternal(
@@ -182,12 +200,16 @@ export class BorealisSearchServ {
               'titleNative',
               'coverImage',
               'bannerImage',
+              'description',
               'format',
               'status',
+              'source',
               'startDateYear',
               'chapterCount',
               'volumeCount',
               'averageScore',
+              'popularity',
+              'favorites',
               'alUpdatedAt'
             )
             .include('genres', (g) =>
@@ -224,6 +246,7 @@ export class BorealisSearchServ {
         }
       }
 
+      case 'movie':
       case 'movies': {
         const q = prisma.orm.public.Movie.where((m) =>
           or(
@@ -244,13 +267,20 @@ export class BorealisSearchServ {
               'titleNative',
               'coverImage',
               'bannerImage',
+              'description',
+              'status',
               'runtime',
               'releaseDateYear',
               'averageScore',
+              'popularity',
+              'favorites',
               'tvdbUpdatedAt'
             )
             .include('genres', (g) =>
               g.include('genre', (ge) => ge.select('id', 'name'))
+            )
+            .include('studios', (st) =>
+              st.include('studio', (s) => s.select('id', 'name'))
             )
             .all(),
         ])
@@ -262,6 +292,12 @@ export class BorealisSearchServ {
             .map((g) => ({
               id: g.genre!.id,
               name: g.genre!.name,
+            })),
+          studios: (x.studios || [])
+            .filter((st: any) => Boolean(st.studio))
+            .map((st: any) => ({
+              id: st.studio!.id,
+              name: st.studio!.name,
             })),
         }))
         const { results, total: combinedTotal } = mergeWithExternal(
@@ -304,9 +340,13 @@ export class BorealisSearchServ {
               'titleNative',
               'coverImage',
               'bannerImage',
+              'description',
+              'status',
               'episodeCount',
               'firstAiredYear',
               'averageScore',
+              'popularity',
+              'favorites',
               'tvdbUpdatedAt'
             )
             .include('genres', (g) =>
@@ -344,6 +384,7 @@ export class BorealisSearchServ {
         }
       }
 
+      case 'game':
       case 'games': {
         const q = prisma.orm.public.Game.where((g) =>
           or(
@@ -364,13 +405,20 @@ export class BorealisSearchServ {
               'titleNative',
               'coverImage',
               'bannerImage',
+              'description',
               'platforms',
+              'status',
               'releaseDateYear',
               'averageScore',
+              'popularity',
+              'favorites',
               'igdbUpdatedAt'
             )
             .include('genres', (g) =>
               g.include('genre', (ge) => ge.select('id', 'name'))
+            )
+            .include('studios', (st) =>
+              st.include('studio', (s) => s.select('id', 'name'))
             )
             .all(),
         ])
@@ -382,6 +430,12 @@ export class BorealisSearchServ {
             .map((g) => ({
               id: g.genre!.id,
               name: g.genre!.name,
+            })),
+          studios: (x.studios || [])
+            .filter((st: any) => Boolean(st.studio))
+            .map((st: any) => ({
+              id: st.studio!.id,
+              name: st.studio!.name,
             })),
         }))
         const { results, total: combinedTotal } = mergeWithExternal(
@@ -465,6 +519,7 @@ export class BorealisSearchServ {
         }
       }
 
+      case 'book':
       case 'books': {
         const q = prisma.orm.public.Book.where((b) =>
           or(
@@ -481,11 +536,17 @@ export class BorealisSearchServ {
               'id',
               'titlePrimary',
               'titleSecondary',
-              'authors',
               'coverImage',
+              'bannerImage',
+              'description',
+              'format',
+              'authors',
               'pageCount',
+              'chapterCount',
               'releaseDateYear',
-              'averageScore'
+              'averageScore',
+              'popularity',
+              'favorites'
             )
             .include('genres', (g) =>
               g.include('genre', (ge) => ge.select('id', 'name'))
@@ -522,6 +583,7 @@ export class BorealisSearchServ {
         }
       }
 
+      case 'character':
       case 'characters': {
         const q = prisma.orm.public.Character.where((c) =>
           or(
@@ -541,7 +603,10 @@ export class BorealisSearchServ {
               'image',
               'gender',
               'age',
-              'description'
+              'description',
+              'dateOfBirthDay',
+              'dateOfBirthMonth',
+              'favorites'
             )
             .all(),
         ])
@@ -565,6 +630,7 @@ export class BorealisSearchServ {
         }
       }
 
+      case 'staff':
       case 'people': {
         const q = prisma.orm.public.Person.where((p) =>
           or(
@@ -582,9 +648,14 @@ export class BorealisSearchServ {
               'namePrimary',
               'nameNative',
               'image',
+              'gender',
+              'age',
               'language',
               'primaryOccupations',
-              'description'
+              'description',
+              'homeTown',
+              'birthPlace',
+              'favorites'
             )
             .all(),
         ])
@@ -612,6 +683,7 @@ export class BorealisSearchServ {
         }
       }
 
+      case 'studio':
       case 'studios': {
         const q = prisma.orm.public.Studio.where((s) =>
           s.name.ilike(`%${cleanQuery}%`)
@@ -654,8 +726,14 @@ export class BorealisSearchServ {
                 'id',
                 'titlePrimary',
                 'titleSecondary',
+                'titleNative',
                 'coverImage',
+                'bannerImage',
+                'description',
                 'format',
+                'status',
+                'seasonYear',
+                'episodeCount',
                 'averageScore'
               )
               .all(),
@@ -670,8 +748,14 @@ export class BorealisSearchServ {
                 'id',
                 'titlePrimary',
                 'titleSecondary',
+                'titleNative',
                 'coverImage',
+                'bannerImage',
+                'description',
                 'format',
+                'status',
+                'startDateYear',
+                'chapterCount',
                 'averageScore'
               )
               .all(),
@@ -686,7 +770,13 @@ export class BorealisSearchServ {
                 'id',
                 'titlePrimary',
                 'titleSecondary',
+                'titleNative',
                 'coverImage',
+                'bannerImage',
+                'description',
+                'status',
+                'episodeCount',
+                'firstAiredYear',
                 'averageScore'
               )
               .all(),
@@ -701,7 +791,13 @@ export class BorealisSearchServ {
                 'id',
                 'titlePrimary',
                 'titleSecondary',
+                'titleNative',
                 'coverImage',
+                'bannerImage',
+                'description',
+                'status',
+                'runtime',
+                'releaseDateYear',
                 'averageScore'
               )
               .all(),
@@ -716,7 +812,13 @@ export class BorealisSearchServ {
                 'id',
                 'titlePrimary',
                 'titleSecondary',
+                'titleNative',
                 'coverImage',
+                'bannerImage',
+                'description',
+                'status',
+                'platforms',
+                'releaseDateYear',
                 'averageScore'
               )
               .all(),
@@ -732,6 +834,13 @@ export class BorealisSearchServ {
                 'titlePrimary',
                 'titleSecondary',
                 'coverImage',
+                'bannerImage',
+                'description',
+                'format',
+                'authors',
+                'pageCount',
+                'chapterCount',
+                'releaseDateYear',
                 'averageScore'
               )
               .all(),

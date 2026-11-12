@@ -1,12 +1,7 @@
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
-import type { MangaDetails, SimilarMediaItem } from "@IRIS/elysia"
 import { elysia } from "@/lib/elysia"
-import { MediaDetailView } from "@/components/media/media-detail-view"
-import type {
-  NormalizedMediaData,
-  SimilarMediaCardItem,
-} from "@/components/media/media-types"
+import { MediaDetailView, toNormalizedMediaOverview } from "@Runa/borealis"
 
 type Props = {
   params: Promise<{ id: string }>
@@ -23,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   try {
-    const { data } = await elysia.borealis.media.manga({ id: numericId }).get()
+    const { data } = await elysia.borealis.manga({ mangaId: numericId }).get()
     const mangaData = (data as any)?.media ?? data
     if (!mangaData) {
       return {
@@ -51,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function MangaDetailPage({ params, searchParams }: Props) {
+export default async function DetailPage({ params, searchParams }: Props) {
   const { id } = await params
   const { queuedFetch } = await searchParams
   const isQueued = queuedFetch === "true"
@@ -61,104 +56,18 @@ export default async function MangaDetailPage({ params, searchParams }: Props) {
     notFound()
   }
 
-  // Parallel fetch Manga details and similar Manga series via Elysia client
-  const [mangaRes, similarRes] = await Promise.all([
-    elysia.borealis.media.manga({ id: numericId }).get(),
-    elysia.borealis.media.manga({ id: numericId }).similar.get({ query: { limit: 50 } }),
-  ])
-
-  if (mangaRes.error || !mangaRes.data) {
+  // Overview only. Every tab (relations, characters, staff, episodes, images,
+  // stats, similar...) fetches its own data client-side and caches it.
+  const res = await elysia.borealis.manga({ mangaId: numericId }).get()
+  if (res.error || !res.data) {
     notFound()
   }
 
-  const manga: MangaDetails = ((mangaRes.data as any)?.media ?? mangaRes.data) as unknown as MangaDetails
-
-  const normalized: NormalizedMediaData = {
-    id: manga.id,
-    category: "manga",
-    titlePrimary: manga.titlePrimary,
-    titleSecondary: manga.titleSecondary,
-    titleNative: manga.titleNative,
-    coverImage: manga.coverImage,
-    bannerImage: manga.bannerImage,
-    description: manga.description,
-    format: manga.format,
-    status: manga.status,
-    startDateYear: manga.startDateYear,
-    endDateYear: manga.endDateYear,
-    countryOfOrigin: manga.countryOfOrigin,
-    isAdult: manga.isAdult,
-    episodeCount: manga.chapterCount,
-    chapterCount: manga.chapterCount,
-    volumeCount: manga.volumeCount,
-    averageScore: manga.averageScore,
-    favorites: manga.favorites,
-    popularity: manga.popularity,
-    scoredCount: manga.scoredCount,
-    genres: manga.genres ?? [],
-    tags: manga.tags ?? [],
-    studios: [],
-    characters: (manga.characters ?? []).map(
-      (c: MangaDetails["characters"][number]) => ({
-        id: c.id,
-        characterId: c.character.id,
-        namePrimary: c.character.namePrimary,
-        nameNative: c.character.nameNative,
-        image: c.character.image,
-        role: c.role,
-        order: c.order,
-        actor: null,
-      })
-    ),
-    staff: (manga.staff ?? []).map((s: MangaDetails["staff"][number]) => ({
-      id: s.id,
-      personId: s.person.id,
-      role: s.role,
-      customRole: s.customRole,
-      person: {
-        id: s.person.id,
-        namePrimary: s.person.namePrimary,
-        nameNative: s.person.nameNative,
-        image: s.person.image,
-        language: s.person.language,
-      },
-    })),
-    relations: manga.relations ?? [],
-    trailers: null,
-    images: manga.images as Record<string, string[]> | null,
-    sources: manga.sources as NormalizedMediaData["sources"],
-    statusDistribution: manga.statusDistribution as Record<
-      string,
-      number
-    > | null,
-    scoreDistribution: manga.scoreDistribution as Record<string, number> | null,
-    alAverageScore: manga.alAverageScore,
-    malAverageScore: manga.malAverageScore,
-    updatedAt: manga.updatedAt,
-  }
-
-  const rawSimilar = !similarRes.error
-    ? Array.isArray(similarRes.data)
-      ? similarRes.data
-      : (similarRes.data as any)?.items ?? []
-    : []
-
-  const similarList: SimilarMediaCardItem[] = rawSimilar.map((item: any) => ({
-    id: item.id,
-    type: item.type ?? item.mediaType ?? "manga",
-    format: item.format,
-    coverImage: item.coverImage,
-    titlePrimary: item.titles?.primary ?? item.titlePrimary ?? "",
-    titleSecondary: item.titles?.secondary ?? item.titleSecondary ?? null,
-    titleNative: item.titles?.native ?? item.titleNative ?? null,
-    year: item.year ?? null,
-    score: item.averageScore ?? null,
-  }))
+  const raw = (res.data as any)?.media ?? res.data
 
   return (
     <MediaDetailView
-      media={normalized}
-      similarList={similarList}
+      media={toNormalizedMediaOverview("manga", raw)}
       isQueuedFetch={isQueued}
     />
   )
