@@ -122,6 +122,8 @@ services:
       - CHOWN
       - SETGID
       - SETUID
+    environment:
+      SEARXNG_SECRET: ${SEARXNG_SECRET}
     volumes:
       - core_config:/etc/searxng
       - core-data:/var/cache/searxng/
