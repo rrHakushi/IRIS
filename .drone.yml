@@ -151,6 +151,7 @@ steps:
       - docker cp core-config/settings.yml NamelessLiberty-SearXNG:/etc/searxng/settings.yml
       - docker cp core-config/limiter.toml NamelessLiberty-SearXNG:/etc/searxng/limiter.toml
       - docker compose up -d searxng
+      - docker compose restart searxng
     depends_on:
       - deemix
 

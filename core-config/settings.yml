@@ -4,6 +4,7 @@ use_default_settings:
       - duckduckgo
       - google
       - google cse
+      - brave
       - brave.images
       - google cse images
       - bing images
@@ -13,6 +14,14 @@ use_default_settings:
       - google videos
       - bing videos
       - duckduckgo videos
+
+engines:
+  - name: brave
+    disabled: true
+  - name: google
+    disabled: false
+  - name: google images
+    disabled: false
 
 plugins:
   searx.plugins.unit_converter.SXNGPlugin:
