@@ -15,12 +15,12 @@ async function fetchShowcaseData() {
   try {
     const [animeRes, mangaRes, moviesRes, tvRes, gamesRes, booksRes] =
       await Promise.all([
-        elysia.borealis.media.anime({ id: 15 }).get(),
-        elysia.borealis.media.manga({ id: 9 }).get(),
-        elysia.borealis.media.movies({ id: 97 }).get(),
-        elysia.borealis.media.tv({ id: 14 }).get(),
-        elysia.borealis.media.games({ id: 2 }).get(),
-        elysia.borealis.media.books({ id: 2 }).get(),
+        elysia.borealis.anime({ animeId: 15 }).get(),
+        elysia.borealis.manga({ mangaId: 9 }).get(),
+        elysia.borealis.movies({ movieId: 97 }).get(),
+        elysia.borealis.tv({ tvId: 14 }).get(),
+        elysia.borealis.games({ gameId: 2 }).get(),
+        elysia.borealis.books({ bookId: 2 }).get(),
       ])
 
     const extract = (res: any) =>

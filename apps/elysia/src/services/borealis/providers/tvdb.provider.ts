@@ -185,16 +185,11 @@ export class TheTVDBProvider {
   private readonly minDelayMs = 250 // 4 req/s
 
   private getApiKey(): string {
-    return (
-      Bun.env.THETVDB_KEY ||
-      Bun.env.TVDB_API_KEY ||
-      Bun.env.TVDB_KEY ||
-      ''
-    )
-  }
-
-  private getPin(): string {
-    return Bun.env.THETVDB_PIN || Bun.env.TVDB_PIN || ''
+    const key = Bun.env.TVDB_API_KEY
+    if (!key) {
+      throw new Error('[TheTVDBProvider] Missing required environment variable: TVDB_API_KEY')
+    }
+    return key
   }
 
   private async waitForRateLimit(): Promise<void> {
@@ -213,13 +208,7 @@ export class TheTVDBProvider {
     }
 
     const apiKey = this.getApiKey()
-    if (!apiKey) {
-      throw new Error('[TheTVDBProvider] TVDB API key is missing from environment variables')
-    }
-
-    const pin = this.getPin()
     const body: Record<string, string> = { apikey: apiKey }
-    if (pin) body.pin = pin
 
     const res = await fetch(`${this.baseUrl}/login`, {
       method: 'POST',

@@ -411,14 +411,13 @@ export class CarinaConnectionsServ {
       throw new BadRequest(`Provider ${provider} does not support OAuth authentication`)
     }
 
-    const apiBaseUrl =
-      Bun.env.API_BASE_URL ||
-      Bun.env.NEXT_PUBLIC_API_URL ||
-      'http://localhost:4000'
+    if (!Bun.env.NEXT_PUBLIC_URL) {
+      throw new Error('Missing required environment variable: NEXT_PUBLIC_URL')
+    }
+    const apiBaseUrl = `${Bun.env.NEXT_PUBLIC_URL.replace(/\/+$/, '')}/elysia`
 
     const redirectUri =
       query?.redirectUri?.trim() ||
-      Bun.env.CONNECTIONS_REDIRECT_URI ||
       `${apiBaseUrl}/carina/connections/${provider.toLowerCase()}/callback`
 
     // Generate PKCE code verifier (RFC 7636) for providers that support PKCE
@@ -472,10 +471,10 @@ export class CarinaConnectionsServ {
       throw new BadRequest('Missing required OAuth code or state parameter')
     }
 
-    const apiBaseUrl =
-      Bun.env.API_BASE_URL ||
-      Bun.env.NEXT_PUBLIC_API_URL ||
-      'http://localhost:4000'
+    if (!Bun.env.NEXT_PUBLIC_URL) {
+      throw new Error('Missing required environment variable: NEXT_PUBLIC_URL')
+    }
+    const apiBaseUrl = `${Bun.env.NEXT_PUBLIC_URL.replace(/\/+$/, '')}/elysia`
 
     let provider: ConnectionProvider | null = null
     let redirectUri: string

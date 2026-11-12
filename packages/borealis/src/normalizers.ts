@@ -479,7 +479,7 @@ export function normalizeBorealisData(
           namePrimary: actorRaw.namePrimary,
           nameNative: actorRaw.nameNative ?? null,
           image: actorRaw.image ?? null,
-          language: actorRaw.language ?? "Japanese",
+          language: actorRaw.language ?? null,
         }
         : null
 

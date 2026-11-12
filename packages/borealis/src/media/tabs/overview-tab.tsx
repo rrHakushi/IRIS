@@ -4,16 +4,25 @@ import React, { useMemo, useRef } from "react"
 import Link from "next/link"
 import {
   IconArrowRight,
+  IconBuildingCommunity,
+  IconCalendarEvent,
+  IconChartBar,
   IconChevronLeft,
   IconChevronRight,
   IconClock,
   IconCpu,
+  IconDeviceTv,
   IconDisc,
   IconExternalLink,
+  IconFlame,
   IconHash,
+  IconHeartFilled,
+  IconInfoCircle,
+  IconLanguage,
   IconLink,
   IconPhotoOff,
   IconSparkles,
+  IconStarFilled,
   IconTrophy,
   IconWorld,
   IconMicrophone,
@@ -94,7 +103,7 @@ export function OverviewTab({
     }
   }
 
-  // Top 16 characters prioritized by MAIN, with Japanese VA for anime
+  // Top 16 characters prioritized by MAIN, with native/first available VA
   const featuredCharacters = useMemo(() => {
     const isAnime = media.category === "anime"
 
@@ -129,7 +138,8 @@ export function OverviewTab({
 
         if (isJapanese && !existing.japaneseEntry) {
           existing.japaneseEntry = item
-        } else if (!existing.firstEntry) {
+        }
+        if (!existing.firstEntry) {
           existing.firstEntry = item
         }
       }
@@ -139,29 +149,27 @@ export function OverviewTab({
     const uniqueList: CharacterItem[] = []
     for (const { character, japaneseEntry, firstEntry } of charMap.values()) {
       if (isAnime) {
-        // For anime: ONLY show Japanese voice actor. If no Japanese voice actor exists, show null
-        const entryToUse = japaneseEntry ?? character
+        // For anime: show Japanese voice actor if available, otherwise first available voice actor or fallback
+        const entryToUse = japaneseEntry ?? firstEntry ?? character
         uniqueList.push({
           ...entryToUse,
-          actor: japaneseEntry ? japaneseEntry.actor : null,
+          actor: entryToUse.actor ?? null,
         })
       } else {
-        // For other media: use Japanese VA if available, otherwise first available VA or original entry
-        const entryToUse = japaneseEntry ?? firstEntry ?? character
+        // For other media (movies, TV, etc.): use the actor on the character entry or first available actor
+        const entryToUse = character.actor ? character : (firstEntry ?? character)
         uniqueList.push(entryToUse)
       }
     }
 
-    // Sort: MAIN first, characters with Japanese VA (for anime), then by order
+    // Sort: MAIN first, characters with actor, then by order
     uniqueList.sort((a, b) => {
       if (a.role === "MAIN" && b.role !== "MAIN") return -1
       if (b.role === "MAIN" && a.role !== "MAIN") return 1
 
-      if (isAnime) {
-        const aHasJa = a.actor ? 1 : 0
-        const bHasJa = b.actor ? 1 : 0
-        if (aHasJa !== bHasJa) return bHasJa - aHasJa
-      }
+      const aHasActor = a.actor ? 1 : 0
+      const bHasActor = b.actor ? 1 : 0
+      if (aHasActor !== bHasActor) return bHasActor - aHasActor
 
       return (a.order ?? 999) - (b.order ?? 999)
     })
@@ -539,13 +547,13 @@ export function OverviewTab({
                       {nextAiring.isAiringNow
                         ? `Aired today at ${nextAiring.date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`
                         : nextAiring.date.toLocaleDateString("en-US", {
-                            weekday: "short",
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                     </span>
                   )}
                 </div>
@@ -628,39 +636,10 @@ export function OverviewTab({
                         <div className="text-[11px] leading-relaxed whitespace-pre-line text-muted-foreground select-text">
                           {typeof media.requirements.minimum === "string"
                             ? media.requirements.minimum
-                                .replace(/<[^>]*>/g, "")
-                                .trim()
+                              .replace(/<[^>]*>/g, "")
+                              .trim()
                             : Object.entries(media.requirements.minimum).map(
-                                ([k, v]) => (
-                                  <div
-                                    key={k}
-                                    className="flex justify-between border-b border-border/10 py-0.5"
-                                  >
-                                    <span className="font-medium capitalize">
-                                      {k}:
-                                    </span>
-                                    <span className="text-end text-foreground">
-                                      {String(v)}
-                                    </span>
-                                  </div>
-                                )
-                              )}
-                        </div>
-                      </div>
-                    )}
-                    {media.requirements.recommended && (
-                      <div className="flex flex-col gap-1.5 rounded-xl border border-border/30 bg-muted/20 p-3 text-xs">
-                        <span className="text-[11px] font-semibold tracking-wider text-foreground text-muted-foreground uppercase">
-                          Recommended
-                        </span>
-                        <div className="text-[11px] leading-relaxed whitespace-pre-line text-muted-foreground select-text">
-                          {typeof media.requirements.recommended === "string"
-                            ? media.requirements.recommended
-                                .replace(/<[^>]*>/g, "")
-                                .trim()
-                            : Object.entries(
-                                media.requirements.recommended
-                              ).map(([k, v]) => (
+                              ([k, v]) => (
                                 <div
                                   key={k}
                                   className="flex justify-between border-b border-border/10 py-0.5"
@@ -672,7 +651,36 @@ export function OverviewTab({
                                     {String(v)}
                                   </span>
                                 </div>
-                              ))}
+                              )
+                            )}
+                        </div>
+                      </div>
+                    )}
+                    {media.requirements.recommended && (
+                      <div className="flex flex-col gap-1.5 rounded-xl border border-border/30 bg-muted/20 p-3 text-xs">
+                        <span className="text-[11px] font-semibold tracking-wider text-foreground text-muted-foreground uppercase">
+                          Recommended
+                        </span>
+                        <div className="text-[11px] leading-relaxed whitespace-pre-line text-muted-foreground select-text">
+                          {typeof media.requirements.recommended === "string"
+                            ? media.requirements.recommended
+                              .replace(/<[^>]*>/g, "")
+                              .trim()
+                            : Object.entries(
+                              media.requirements.recommended
+                            ).map(([k, v]) => (
+                              <div
+                                key={k}
+                                className="flex justify-between border-b border-border/10 py-0.5"
+                              >
+                                <span className="font-medium capitalize">
+                                  {k}:
+                                </span>
+                                <span className="text-end text-foreground">
+                                  {String(v)}
+                                </span>
+                              </div>
+                            ))}
                         </div>
                       </div>
                     )}
@@ -939,15 +947,77 @@ export function OverviewTab({
         </div>
 
         {/* Info Sidebar: NARROW & ALIGNED TO THE RIGHT */}
-        <aside className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2 rounded-2xl border border-border/40 bg-card/60 p-4 text-xs">
-            <h3 className="mb-1 border-b border-border/40 pb-2 text-sm font-semibold text-foreground">
-              Information
-            </h3>
+        <aside className="flex flex-col gap-3.5">
+          {/* 1. STATS CARD: [avgScore, favorites, popularity] */}
+          <div className="flex flex-col gap-3 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+            <div className="flex items-center justify-between border-b border-border/30 pb-2">
+              <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                Stats
+              </span>
+              <IconChartBar
+                className="size-3.5 text-muted-foreground"
+                aria-hidden="true"
+              />
+            </div>
 
-            <div className="flex flex-col">
+            <div className="grid grid-cols-3 gap-2">
+              <div className="flex flex-col items-center justify-center gap-1 rounded-xl border border-border/30 bg-muted/30 px-2 py-2.5 text-center">
+                <div className="flex items-center gap-1 text-amber-500">
+                  <IconStarFilled className="size-3.5" aria-hidden="true" />
+                  <span className="text-sm font-bold text-foreground tabular-nums">
+                    {typeof media.averageScore === "number" &&
+                      media.averageScore > 0
+                      ? media.averageScore > 10
+                        ? `${Math.round(media.averageScore)}%`
+                        : media.averageScore.toFixed(1)
+                      : "—"}
+                  </span>
+                </div>
+
+              </div>
+
+              <div className="flex flex-col items-center justify-center gap-1 rounded-xl border border-border/30 bg-muted/30 px-2 py-2.5 text-center">
+                <div className="flex items-center gap-1 text-rose-500">
+                  <IconHeartFilled className="size-3.5" aria-hidden="true" />
+                  <span className="text-sm font-bold text-foreground tabular-nums">
+                    {typeof media.favorites === "number"
+                      ? media.favorites.toLocaleString()
+                      : "0"}
+                  </span>
+                </div>
+
+              </div>
+
+              <div className="flex flex-col items-center justify-center gap-1 rounded-xl border border-border/30 bg-muted/30 px-2 py-2.5 text-center">
+                <div className="flex items-center gap-1 text-primary">
+                  <IconFlame className="size-3.5" aria-hidden="true" />
+                  <span className="text-sm font-bold text-foreground tabular-nums">
+                    {typeof media.popularity === "number" &&
+                      media.popularity > 0
+                      ? `#${media.popularity.toLocaleString()}`
+                      : "—"}
+                  </span>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          {/* 2. INFORMATION CARD: Remaining general metadata (no genres, no duplicate rows) */}
+          <div className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+            <div className="flex items-center justify-between border-b border-border/30 pb-2">
+              <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                Information
+              </span>
+              <IconInfoCircle
+                className="size-3.5 text-muted-foreground"
+                aria-hidden="true"
+              />
+            </div>
+
+            <div className="flex flex-col divide-y divide-border/20">
               {/* Format */}
-              <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+              <div className="flex items-center justify-between gap-3 py-1.5">
                 <span className="shrink-0 text-muted-foreground">Format</span>
                 <span className="text-end font-medium text-foreground uppercase">
                   {media.format ?? "Unknown"}
@@ -956,7 +1026,7 @@ export function OverviewTab({
 
               {/* Source Material */}
               {media.source && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                <div className="flex items-center justify-between gap-3 py-1.5">
                   <span className="shrink-0 text-muted-foreground">Source</span>
                   <span className="text-end font-medium text-foreground capitalize">
                     {media.source.replace(/_/g, " ").toLowerCase()}
@@ -965,193 +1035,34 @@ export function OverviewTab({
               )}
 
               {/* Status */}
-              <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                <span className="shrink-0 text-muted-foreground">Status</span>
-                <span className="text-end font-medium text-foreground capitalize">
-                  {media.status?.replace(/_/g, " ").toLowerCase() ?? "Unknown"}
-                </span>
-              </div>
-
-              {/* Next Airing Episode if status is Releasing */}
-              {isReleasing && nextAiring && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">
-                    {nextAiring.isAiringNow ? "Broadcast" : "Next Episode"}
-                  </span>
-                  <div className="flex flex-col items-end text-end">
-                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                      Ep {nextAiring.episodeNumber}{" "}
-                      {nextAiring.isAiringNow && "• Airing Now"}
-                    </span>
-                    {!nextAiring.isAiringNow && nextAiring.date && (
-                      <span className="text-[10px] text-muted-foreground">
-                        {formatTimeUntil(nextAiring.date)}
-                      </span>
-                    )}
-                  </div>
+              {media.status && (
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">Status</span>
+                  <Badge
+                    variant="secondary"
+                    className="text-[10px] font-semibold capitalize"
+                  >
+                    {media.status.toLowerCase().replace(/_/g, " ")}
+                  </Badge>
                 </div>
               )}
 
-              {/* Episode Count */}
-              {typeof media.episodeCount === "number" &&
-                media.episodeCount > 0 && (
-                  <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                    <span className="shrink-0 text-muted-foreground">
-                      Episodes
-                    </span>
-                    <span className="text-end font-medium text-foreground tabular-nums">
-                      {media.episodeCount}
+              {/* Show Type (TV) */}
+              {media.showType &&
+                media.showType.toLowerCase() !==
+                media.format?.toLowerCase() && (
+                  <div className="flex items-center justify-between gap-3 py-1.5">
+                    <span className="shrink-0 text-muted-foreground">Type</span>
+                    <span className="text-end font-medium text-foreground capitalize">
+                      {media.showType}
                     </span>
                   </div>
                 )}
-
-              {/* Episode Duration */}
-              {typeof media.episodeDuration === "number" &&
-                media.episodeDuration > 0 && (
-                  <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                    <span className="shrink-0 text-muted-foreground">
-                      Duration
-                    </span>
-                    <span className="text-end font-medium text-foreground tabular-nums">
-                      {media.episodeDuration} min
-                    </span>
-                  </div>
-                )}
-              {typeof media.runtime === "number" && media.runtime > 0 && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">
-                    Runtime
-                  </span>
-                  <span className="text-end font-medium text-foreground tabular-nums">
-                    {media.runtime} min
-                  </span>
-                </div>
-              )}
-
-              {/* Aired / Released Dates */}
-              {airedRange && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">
-                    {media.category === "movies" ||
-                    media.category === "games" ||
-                    media.category === "books"
-                      ? "Release Date"
-                      : "Aired"}
-                  </span>
-                  <span className="text-end font-medium text-foreground">
-                    {airedRange}
-                  </span>
-                </div>
-              )}
-
-              {/* Season */}
-              {media.seasonYear && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">Season</span>
-                  <span className="text-end font-medium text-foreground capitalize">
-                    {media.seasonSeason
-                      ? `${media.seasonSeason.toLowerCase()} ${media.seasonYear}`
-                      : media.seasonYear}
-                  </span>
-                </div>
-              )}
-
-              {/* Budget (Movies) */}
-              {media.budget && formatCurrency(media.budget) && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">Budget</span>
-                  <span className="text-end font-medium text-foreground tabular-nums">
-                    {formatCurrency(media.budget)}
-                  </span>
-                </div>
-              )}
-
-              {/* Box Office / Revenue (Movies) */}
-              {media.revenue && formatCurrency(media.revenue) && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">
-                    Box Office
-                  </span>
-                  <span className="text-end font-medium text-foreground tabular-nums">
-                    {formatCurrency(media.revenue)}
-                  </span>
-                </div>
-              )}
-
-              {/* Animation Studio (Anime) / Production (Movies) */}
-              {media.category === "movies" ? (
-                (animationStudios.length > 0 || producerStudios.length > 0) && (
-                  <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                    <span className="shrink-0 text-muted-foreground">
-                      Production
-                    </span>
-                    <span className="text-end font-medium text-foreground">
-                      {[...animationStudios, ...producerStudios].map(
-                        (st, idx) => (
-                          <React.Fragment key={st.id || idx}>
-                            {idx > 0 && ", "}
-                            <Link
-                              href={`/borealis/studios/${st.id}`}
-                              className="underline-offset-2 transition-colors hover:text-primary hover:underline"
-                            >
-                              {st.name}
-                            </Link>
-                          </React.Fragment>
-                        )
-                      )}
-                    </span>
-                  </div>
-                )
-              ) : (
-                <>
-                  {animationStudios.length > 0 && (
-                    <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                      <span className="shrink-0 text-muted-foreground">
-                        Studio
-                      </span>
-                      <span className="text-end font-medium text-foreground">
-                        {animationStudios.map((st, idx) => (
-                          <React.Fragment key={st.id || idx}>
-                            {idx > 0 && ", "}
-                            <Link
-                              href={`/borealis/studios/${st.id}`}
-                              className="underline-offset-2 transition-colors hover:text-primary hover:underline"
-                            >
-                              {st.name}
-                            </Link>
-                          </React.Fragment>
-                        ))}
-                      </span>
-                    </div>
-                  )}
-
-                  {producerStudios.length > 0 && (
-                    <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                      <span className="shrink-0 text-muted-foreground">
-                        Producers
-                      </span>
-                      <span className="text-end font-medium text-foreground">
-                        {producerStudios.map((st, idx) => (
-                          <React.Fragment key={st.id || idx}>
-                            {idx > 0 && ", "}
-                            <Link
-                              href={`/borealis/studios/${st.id}`}
-                              className="underline-offset-2 transition-colors hover:text-primary hover:underline"
-                            >
-                              {st.name}
-                            </Link>
-                          </React.Fragment>
-                        ))}
-                      </span>
-                    </div>
-                  )}
-                </>
-              )}
 
               {/* Original Language */}
               {media.originalLanguage &&
                 formatLanguage(media.originalLanguage) && (
-                  <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                  <div className="flex items-center justify-between gap-3 py-1.5">
                     <span className="shrink-0 text-muted-foreground">
                       Language
                     </span>
@@ -1163,7 +1074,7 @@ export function OverviewTab({
 
               {/* Country of Origin */}
               {media.countryOfOrigin && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                <div className="flex items-center justify-between gap-3 py-1.5">
                   <span className="shrink-0 text-muted-foreground">
                     Country
                   </span>
@@ -1173,9 +1084,52 @@ export function OverviewTab({
                 </div>
               )}
 
+              {/* Age Rating & Guide */}
+              {(media.ageRating || media.ageRatingGuide) && (
+                <div className="flex flex-col gap-0.5 py-1.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="shrink-0 text-muted-foreground">
+                      Rating
+                    </span>
+                    <span className="text-end font-medium text-foreground">
+                      {media.ageRating
+                        ? media.ageRating.toUpperCase().replace(/_/g, "-")
+                        : "Not Rated"}
+                    </span>
+                  </div>
+                  {media.ageRatingGuide && (
+                    <span className="text-end text-[10px] leading-tight text-muted-foreground">
+                      {media.ageRatingGuide}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Budget (Movies) */}
+              {media.budget && formatCurrency(media.budget) && (
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">Budget</span>
+                  <span className="text-end font-medium text-foreground tabular-nums">
+                    {formatCurrency(media.budget)}
+                  </span>
+                </div>
+              )}
+
+              {/* Box Office / Revenue (Movies) */}
+              {media.revenue && formatCurrency(media.revenue) && (
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">
+                    Box Office
+                  </span>
+                  <span className="text-end font-medium text-foreground tabular-nums">
+                    {formatCurrency(media.revenue)}
+                  </span>
+                </div>
+              )}
+
               {/* Game: Platforms */}
               {media.platforms && media.platforms.length > 0 && (
-                <div className="flex flex-col gap-1 border-b border-border/20 py-1.5 text-xs">
+                <div className="flex flex-col gap-1 py-1.5">
                   <span className="text-muted-foreground">Platforms</span>
                   <div className="flex flex-wrap justify-end gap-1">
                     {media.platforms.map((plat, idx) => (
@@ -1191,33 +1145,9 @@ export function OverviewTab({
                 </div>
               )}
 
-              {/* Game: Developers */}
-              {media.developers && media.developers.length > 0 && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">
-                    Developers
-                  </span>
-                  <span className="text-end font-medium text-foreground">
-                    {media.developers.join(", ")}
-                  </span>
-                </div>
-              )}
-
-              {/* Game/Book: Publishers */}
-              {media.publishers && media.publishers.length > 0 && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">
-                    Publishers
-                  </span>
-                  <span className="text-end font-medium text-foreground">
-                    {media.publishers.join(", ")}
-                  </span>
-                </div>
-              )}
-
               {/* Game: Franchise */}
               {media.franchise && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                <div className="flex items-center justify-between gap-3 py-1.5">
                   <span className="shrink-0 text-muted-foreground">
                     Franchise
                   </span>
@@ -1229,7 +1159,7 @@ export function OverviewTab({
 
               {/* Game: Game Modes */}
               {media.gameModes && media.gameModes.length > 0 && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                <div className="flex items-start justify-between gap-3 py-1.5">
                   <span className="shrink-0 text-muted-foreground">Modes</span>
                   <span className="text-end font-medium text-foreground">
                     {media.gameModes.join(", ")}
@@ -1240,7 +1170,7 @@ export function OverviewTab({
               {/* Game: Perspectives */}
               {media.playerPerspectives &&
                 media.playerPerspectives.length > 0 && (
-                  <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                  <div className="flex items-start justify-between gap-3 py-1.5">
                     <span className="shrink-0 text-muted-foreground">
                       Perspectives
                     </span>
@@ -1250,9 +1180,21 @@ export function OverviewTab({
                   </div>
                 )}
 
+              {/* Game: Controller Support */}
+              {media.controllerSupport && (
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">
+                    Controller
+                  </span>
+                  <span className="text-end font-medium text-foreground">
+                    {media.controllerSupport}
+                  </span>
+                </div>
+              )}
+
               {/* Game: Steam Deck */}
               {media.steamDeckStatus && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                <div className="flex items-center justify-between gap-3 py-1.5">
                   <span className="shrink-0 text-muted-foreground">
                     Steam Deck
                   </span>
@@ -1265,9 +1207,65 @@ export function OverviewTab({
                 </div>
               )}
 
+              {/* Book: Authors */}
+              {media.authors && media.authors.length > 0 && (
+                <div className="flex items-start justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">
+                    Authors
+                  </span>
+                  <span className="text-end font-medium text-foreground">
+                    {media.authors.join(", ")}
+                  </span>
+                </div>
+              )}
+
+              {/* Book: Series */}
+              {media.series && (
+                <div className="flex items-start justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">Series</span>
+                  <span className="text-end font-medium text-foreground">
+                    {media.series}
+                    {typeof media.seriesPosition === "number"
+                      ? ` #${media.seriesPosition}`
+                      : ""}
+                  </span>
+                </div>
+              )}
+
+              {/* Book: Retail Price */}
+              {typeof media.retailPrice === "number" && (
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="shrink-0 text-muted-foreground">Price</span>
+                  <span className="text-end font-medium text-foreground tabular-nums">
+                    {media.retailPriceCurrency
+                      ? `${media.retailPriceCurrency} `
+                      : "$"}
+                    {media.retailPrice.toFixed(2)}
+                  </span>
+                </div>
+              )}
+
+              {/* Book: Subjects */}
+              {media.subjects && media.subjects.length > 0 && (
+                <div className="flex flex-col gap-1 py-1.5">
+                  <span className="text-muted-foreground">Subjects</span>
+                  <div className="flex flex-wrap justify-end gap-1">
+                    {media.subjects.slice(0, 5).map((subj, idx) => (
+                      <Badge
+                        key={idx}
+                        variant="outline"
+                        className="text-[10px]"
+                      >
+                        {subj}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Music: Artist */}
               {artistDisplay && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                <div className="flex items-center justify-between gap-3 py-1.5">
                   <span className="shrink-0 text-muted-foreground">Artist</span>
                   {media.artistPersonId ? (
                     <Link
@@ -1286,7 +1284,7 @@ export function OverviewTab({
 
               {/* Music: Album (for Tracks) */}
               {albumDisplay && media.albumId && media.format === "TRACK" && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                <div className="flex items-center justify-between gap-3 py-1.5">
                   <span className="shrink-0 text-muted-foreground">Album</span>
                   <Link
                     href={`/borealis/music/albums/${media.albumId}`}
@@ -1299,48 +1297,21 @@ export function OverviewTab({
 
               {/* Music: Track & Disc Number (for Tracks) */}
               {typeof media.trackNumber === "number" && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                <div className="flex items-center justify-between gap-3 py-1.5">
                   <span className="shrink-0 text-muted-foreground">Track</span>
                   <span className="text-end font-medium text-foreground tabular-nums">
                     #{media.trackNumber}
                     {typeof media.discNumber === "number" &&
-                    media.discNumber > 1
+                      media.discNumber > 1
                       ? ` (Disc ${media.discNumber})`
                       : ""}
                   </span>
                 </div>
               )}
 
-              {/* Music: Total Tracks (for Albums) */}
-              {typeof media.totalTracks === "number" &&
-                media.totalTracks > 0 && (
-                  <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                    <span className="shrink-0 text-muted-foreground">
-                      Tracks
-                    </span>
-                    <span className="text-end font-medium text-foreground tabular-nums">
-                      {media.totalTracks}
-                    </span>
-                  </div>
-                )}
-
-              {/* Music: Duration */}
-              {typeof media.duration === "number" && media.duration > 0 && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">
-                    Duration
-                  </span>
-                  <span className="text-end font-mono font-medium text-foreground tabular-nums">
-                    {media.duration >= 3600
-                      ? `${Math.floor(media.duration / 3600)}h ${Math.floor((media.duration % 3600) / 60)}m`
-                      : `${Math.floor(media.duration / 60)}m ${media.duration % 60}s`}
-                  </span>
-                </div>
-              )}
-
               {/* Music: ISRC (for Tracks) */}
               {media.isrc && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                <div className="flex items-center justify-between gap-3 py-1.5">
                   <span className="shrink-0 text-muted-foreground">ISRC</span>
                   <span className="text-end font-mono text-[11px] text-foreground">
                     {media.isrc}
@@ -1351,7 +1322,7 @@ export function OverviewTab({
               {/* Music: Local Listeners */}
               {typeof media.listeners === "number" &&
                 media.category === "music" && (
-                  <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                  <div className="flex items-center justify-between gap-3 py-1.5">
                     <span className="shrink-0 text-muted-foreground">
                       Listeners
                     </span>
@@ -1364,7 +1335,7 @@ export function OverviewTab({
               {/* Music: Local Scrobbles */}
               {typeof media.playCount === "number" &&
                 media.category === "music" && (
-                  <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                  <div className="flex items-center justify-between gap-3 py-1.5">
                     <span className="shrink-0 text-muted-foreground">
                       Scrobbles
                     </span>
@@ -1374,236 +1345,9 @@ export function OverviewTab({
                   </div>
                 )}
 
-              {/* Status */}
-              {media.status && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">Status</span>
-                  <Badge
-                    variant="secondary"
-                    className="text-[10px] font-semibold capitalize"
-                  >
-                    {media.status.toLowerCase().replace(/_/g, " ")}
-                  </Badge>
-                </div>
-              )}
-
-              {/* Show Type (TV) */}
-              {media.showType && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">Type</span>
-                  <span className="text-end font-medium text-foreground capitalize">
-                    {media.showType}
-                  </span>
-                </div>
-              )}
-
-              {/* Seasons Count (TV) */}
-              {typeof media.seasonCount === "number" &&
-                media.seasonCount > 0 && (
-                  <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                    <span className="shrink-0 text-muted-foreground">
-                      Seasons
-                    </span>
-                    <span className="text-end font-medium text-foreground tabular-nums">
-                      {media.seasonCount}
-                    </span>
-                  </div>
-                )}
-
-              {/* Episodes Count (Anime/TV) */}
-              {typeof media.episodeCount === "number" &&
-                media.episodeCount > 0 && (
-                  <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                    <span className="shrink-0 text-muted-foreground">
-                      Episodes
-                    </span>
-                    <span className="text-end font-medium text-foreground tabular-nums">
-                      {media.episodeCount}
-                    </span>
-                  </div>
-                )}
-
-              {/* Episode Duration (Anime/TV) */}
-              {typeof media.episodeDuration === "number" &&
-                media.episodeDuration > 0 && (
-                  <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                    <span className="shrink-0 text-muted-foreground">
-                      Duration
-                    </span>
-                    <span className="text-end font-medium text-foreground tabular-nums">
-                      {media.episodeDuration}m
-                    </span>
-                  </div>
-                )}
-
-              {/* Broadcast Schedule (TV) */}
-              {((media.broadcastDays && media.broadcastDays.length > 0) ||
-                media.broadcastTime) && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">
-                    Broadcast
-                  </span>
-                  <span className="text-end font-medium text-foreground">
-                    {[
-                      media.broadcastDays?.join(", "),
-                      media.broadcastTime ? `at ${media.broadcastTime}` : null,
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                  </span>
-                </div>
-              )}
-
-              {/* TV Networks */}
-              {media.networks && media.networks.length > 0 && (
-                <div className="flex flex-col gap-1 border-b border-border/20 py-1.5 text-xs">
-                  <span className="text-muted-foreground">Networks</span>
-                  <div className="flex flex-wrap justify-end gap-1">
-                    {media.networks.map((net, idx) => (
-                      <Badge
-                        key={idx}
-                        variant="secondary"
-                        className="text-[10px] font-medium"
-                      >
-                        {net}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* TV: First Aired / Last Aired */}
-              {media.firstAiredYear && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">
-                    First Aired
-                  </span>
-                  <span className="text-end font-medium text-foreground">
-                    {formatFullDate(
-                      media.firstAiredYear,
-                      media.firstAiredMonth,
-                      media.firstAiredDay
-                    )}
-                  </span>
-                </div>
-              )}
-              {media.lastAiredYear && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">
-                    Last Aired
-                  </span>
-                  <span className="text-end font-medium text-foreground">
-                    {formatFullDate(
-                      media.lastAiredYear,
-                      media.lastAiredMonth,
-                      media.lastAiredDay
-                    )}
-                  </span>
-                </div>
-              )}
-
-              {/* Game: Controller Support */}
-              {media.controllerSupport && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">
-                    Controller
-                  </span>
-                  <span className="text-end font-medium text-foreground">
-                    {media.controllerSupport}
-                  </span>
-                </div>
-              )}
-
-              {/* Book: Authors */}
-              {media.authors && media.authors.length > 0 && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">
-                    Authors
-                  </span>
-                  <span className="text-end font-medium text-foreground">
-                    {media.authors.join(", ")}
-                  </span>
-                </div>
-              )}
-
-              {/* Book: Series */}
-              {media.series && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">Series</span>
-                  <span className="text-end font-medium text-foreground">
-                    {media.series}
-                    {typeof media.seriesPosition === "number"
-                      ? ` #${media.seriesPosition}`
-                      : ""}
-                  </span>
-                </div>
-              )}
-
-              {/* Book: Page Count */}
-              {typeof media.pageCount === "number" && media.pageCount > 0 && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">Pages</span>
-                  <span className="text-end font-medium text-foreground tabular-nums">
-                    {media.pageCount.toLocaleString()}
-                  </span>
-                </div>
-              )}
-
-              {/* Book: Retail Price */}
-              {typeof media.retailPrice === "number" && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">Price</span>
-                  <span className="text-end font-medium text-foreground tabular-nums">
-                    {media.retailPriceCurrency
-                      ? `${media.retailPriceCurrency} `
-                      : "$"}
-                    {media.retailPrice.toFixed(2)}
-                  </span>
-                </div>
-              )}
-
-              {/* Book: Subjects */}
-              {media.subjects && media.subjects.length > 0 && (
-                <div className="flex flex-col gap-1 border-b border-border/20 py-1.5 text-xs">
-                  <span className="text-muted-foreground">Subjects</span>
-                  <div className="flex flex-wrap justify-end gap-1">
-                    {media.subjects.slice(0, 5).map((subj, idx) => (
-                      <Badge
-                        key={idx}
-                        variant="outline"
-                        className="text-[10px]"
-                      >
-                        {subj}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Age Rating & Guide */}
-              {(media.ageRating || media.ageRatingGuide) && (
-                <div className="flex flex-col gap-0.5 border-b border-border/20 py-1.5 text-xs">
-                  <div className="flex items-start justify-between gap-3">
-                    <span className="shrink-0 text-muted-foreground">
-                      Rating
-                    </span>
-                    <span className="text-end font-medium text-foreground">
-                      {media.ageRating
-                        ? media.ageRating.toUpperCase().replace(/_/g, "-")
-                        : "Not Rated"}
-                    </span>
-                  </div>
-                  {media.ageRatingGuide && (
-                    <span className="text-end text-[10px] leading-tight text-muted-foreground">
-                      {media.ageRatingGuide}
-                    </span>
-                  )}
-                </div>
-              )}
-
               {/* Official Hashtag */}
               {media.hashtag && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                <div className="flex items-start justify-between gap-3 py-1.5">
                   <span className="shrink-0 text-muted-foreground">
                     Hashtag
                   </span>
@@ -1629,27 +1373,9 @@ export function OverviewTab({
                 </div>
               )}
 
-              {/* Genres */}
-              {media.genres && media.genres.length > 0 && (
-                <div className="flex flex-col gap-1.5 border-b border-border/20 py-1.5 text-xs">
-                  <span className="text-muted-foreground">Genres</span>
-                  <div className="flex flex-wrap gap-1">
-                    {media.genres.map((genre) => (
-                      <Badge
-                        key={genre.id}
-                        variant="secondary"
-                        className="text-[11px] font-medium"
-                      >
-                        {genre.name}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* Tags */}
               {media.tags && media.tags.length > 0 && (
-                <div className="flex flex-col gap-1.5 border-b border-border/20 py-1.5 text-xs">
+                <div className="flex flex-col gap-1.5 py-1.5">
                   <span className="text-muted-foreground">Tags</span>
                   <div className="flex flex-wrap gap-1">
                     {media.tags.map((tag) => (
@@ -1665,42 +1391,424 @@ export function OverviewTab({
                   </div>
                 </div>
               )}
-
-              {/* Community metrics */}
-              <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                <span className="shrink-0 text-muted-foreground">
-                  Favorites
-                </span>
-                <span className="text-end font-medium text-foreground tabular-nums">
-                  {typeof media.favorites === "number"
-                    ? media.favorites.toLocaleString()
-                    : "0"}
-                </span>
-              </div>
-              {typeof media.popularity === "number" && media.popularity > 0 && (
-                <div className="flex items-start justify-between gap-3 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">
-                    Popularity
-                  </span>
-                  <span className="text-end font-medium text-foreground tabular-nums">
-                    #{media.popularity}
-                  </span>
-                </div>
-              )}
             </div>
           </div>
 
-          {/* Synonyms / Alternative Titles */}
+          {/* 3. DATES CARD: [start, end, season, broadcast] */}
+          {(startDateFormatted ||
+            endDateFormatted ||
+            media.firstAiredYear ||
+            media.lastAiredYear ||
+            media.seasonYear ||
+            (isReleasing && nextAiring) ||
+            (media.broadcastDays && media.broadcastDays.length > 0) ||
+            media.broadcastTime) && (
+              <div className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+                <div className="flex items-center justify-between border-b border-border/30 pb-2">
+                  <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                    Dates
+                  </span>
+                  <IconCalendarEvent
+                    className="size-3.5 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                </div>
+
+                <div className="flex flex-col divide-y divide-border/20">
+                  {startDateFormatted && (
+                    <div className="flex items-center justify-between gap-3 py-1.5">
+                      <span className="shrink-0 text-muted-foreground">
+                        {media.category === "movies" ||
+                          media.category === "games" ||
+                          media.category === "books" ||
+                          media.category === "music"
+                          ? "Release Date"
+                          : "Start Date"}
+                      </span>
+                      <span className="text-end font-medium text-foreground">
+                        {startDateFormatted}
+                      </span>
+                    </div>
+                  )}
+
+                  {endDateFormatted && (
+                    <div className="flex items-center justify-between gap-3 py-1.5">
+                      <span className="shrink-0 text-muted-foreground">
+                        End Date
+                      </span>
+                      <span className="text-end font-medium text-foreground">
+                        {endDateFormatted}
+                      </span>
+                    </div>
+                  )}
+
+                  {!startDateFormatted && media.firstAiredYear && (
+                    <div className="flex items-center justify-between gap-3 py-1.5">
+                      <span className="shrink-0 text-muted-foreground">
+                        Start Date
+                      </span>
+                      <span className="text-end font-medium text-foreground">
+                        {formatFullDate(
+                          media.firstAiredYear,
+                          media.firstAiredMonth,
+                          media.firstAiredDay
+                        )}
+                      </span>
+                    </div>
+                  )}
+
+                  {!endDateFormatted && media.lastAiredYear && (
+                    <div className="flex items-center justify-between gap-3 py-1.5">
+                      <span className="shrink-0 text-muted-foreground">
+                        End Date
+                      </span>
+                      <span className="text-end font-medium text-foreground">
+                        {formatFullDate(
+                          media.lastAiredYear,
+                          media.lastAiredMonth,
+                          media.lastAiredDay
+                        )}
+                      </span>
+                    </div>
+                  )}
+
+                  {media.seasonYear && (
+                    <div className="flex items-center justify-between gap-3 py-1.5">
+                      <span className="shrink-0 text-muted-foreground">
+                        Season
+                      </span>
+                      <span className="text-end font-medium text-foreground capitalize">
+                        {media.seasonSeason
+                          ? `${media.seasonSeason.toLowerCase()} ${media.seasonYear}`
+                          : media.seasonYear}
+                      </span>
+                    </div>
+                  )}
+
+                  {isReleasing && nextAiring && (
+                    <div className="flex items-start justify-between gap-3 py-1.5">
+                      <span className="shrink-0 text-muted-foreground">
+                        {nextAiring.isAiringNow ? "Broadcast" : "Next Episode"}
+                      </span>
+                      <div className="flex flex-col items-end text-end">
+                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                          Ep {nextAiring.episodeNumber}{" "}
+                          {nextAiring.isAiringNow && "• Airing Now"}
+                        </span>
+                        {!nextAiring.isAiringNow && nextAiring.date && (
+                          <span className="text-[10px] text-muted-foreground">
+                            {formatTimeUntil(nextAiring.date)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {((media.broadcastDays && media.broadcastDays.length > 0) ||
+                    media.broadcastTime) && (
+                      <div className="flex items-start justify-between gap-3 py-1.5">
+                        <span className="shrink-0 text-muted-foreground">
+                          Schedule
+                        </span>
+                        <span className="text-end font-medium text-foreground">
+                          {[
+                            media.broadcastDays?.join(", "),
+                            media.broadcastTime ? `at ${media.broadcastTime}` : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                        </span>
+                      </div>
+                    )}
+                </div>
+              </div>
+            )}
+
+          {/* 4. EPISODE INFO CARD: [Episodes, duration] */}
+          {((typeof media.episodeCount === "number" && media.episodeCount > 0) ||
+            (typeof media.episodeDuration === "number" &&
+              media.episodeDuration > 0) ||
+            (typeof media.runtime === "number" && media.runtime > 0) ||
+            (typeof media.seasonCount === "number" && media.seasonCount > 0) ||
+            (typeof media.chapterCount === "number" && media.chapterCount > 0) ||
+            (typeof media.volumeCount === "number" && media.volumeCount > 0) ||
+            (typeof media.pageCount === "number" && media.pageCount > 0) ||
+            (typeof media.duration === "number" && media.duration > 0) ||
+            (typeof media.totalTracks === "number" &&
+              media.totalTracks > 0)) && (
+              <div className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+                <div className="flex items-center justify-between border-b border-border/30 pb-2">
+                  <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                    {media.category === "manga" || media.category === "books"
+                      ? "Publication Info"
+                      : media.category === "music"
+                        ? "Track Info"
+                        : "Episode Info"}
+                  </span>
+                  <IconDeviceTv
+                    className="size-3.5 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                </div>
+
+                <div className="flex flex-col divide-y divide-border/20">
+                  {typeof media.seasonCount === "number" &&
+                    media.seasonCount > 0 && (
+                      <div className="flex items-center justify-between gap-3 py-1.5">
+                        <span className="shrink-0 text-muted-foreground">
+                          Seasons
+                        </span>
+                        <span className="text-end font-semibold text-foreground tabular-nums">
+                          {media.seasonCount}
+                        </span>
+                      </div>
+                    )}
+
+                  {typeof media.episodeCount === "number" &&
+                    media.episodeCount > 0 &&
+                    media.category !== "manga" &&
+                    media.category !== "books" && (
+                      <div className="flex items-center justify-between gap-3 py-1.5">
+                        <span className="shrink-0 text-muted-foreground">
+                          Episodes
+                        </span>
+                        <span className="text-end font-semibold text-foreground tabular-nums">
+                          {media.episodeCount}
+                        </span>
+                      </div>
+                    )}
+
+                  {typeof media.chapterCount === "number" &&
+                    media.chapterCount > 0 && (
+                      <div className="flex items-center justify-between gap-3 py-1.5">
+                        <span className="shrink-0 text-muted-foreground">
+                          Chapters
+                        </span>
+                        <span className="text-end font-semibold text-foreground tabular-nums">
+                          {media.chapterCount}
+                        </span>
+                      </div>
+                    )}
+
+                  {typeof media.volumeCount === "number" &&
+                    media.volumeCount > 0 && (
+                      <div className="flex items-center justify-between gap-3 py-1.5">
+                        <span className="shrink-0 text-muted-foreground">
+                          Volumes
+                        </span>
+                        <span className="text-end font-semibold text-foreground tabular-nums">
+                          {media.volumeCount}
+                        </span>
+                      </div>
+                    )}
+
+                  {typeof media.pageCount === "number" && media.pageCount > 0 && (
+                    <div className="flex items-center justify-between gap-3 py-1.5">
+                      <span className="shrink-0 text-muted-foreground">
+                        Pages
+                      </span>
+                      <span className="text-end font-semibold text-foreground tabular-nums">
+                        {media.pageCount.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+
+                  {typeof media.totalTracks === "number" &&
+                    media.totalTracks > 0 && (
+                      <div className="flex items-center justify-between gap-3 py-1.5">
+                        <span className="shrink-0 text-muted-foreground">
+                          Tracks
+                        </span>
+                        <span className="text-end font-semibold text-foreground tabular-nums">
+                          {media.totalTracks}
+                        </span>
+                      </div>
+                    )}
+
+                  {typeof media.episodeDuration === "number" &&
+                    media.episodeDuration > 0 && (
+                      <div className="flex items-center justify-between gap-3 py-1.5">
+                        <span className="shrink-0 text-muted-foreground">
+                          Duration
+                        </span>
+                        <span className="text-end font-semibold text-foreground tabular-nums">
+                          {media.episodeDuration} min
+                        </span>
+                      </div>
+                    )}
+
+                  {typeof media.runtime === "number" && media.runtime > 0 && (
+                    <div className="flex items-center justify-between gap-3 py-1.5">
+                      <span className="shrink-0 text-muted-foreground">
+                        Duration
+                      </span>
+                      <span className="text-end font-semibold text-foreground tabular-nums">
+                        {media.runtime} min
+                      </span>
+                    </div>
+                  )}
+
+                  {typeof media.duration === "number" && media.duration > 0 && (
+                    <div className="flex items-center justify-between gap-3 py-1.5">
+                      <span className="shrink-0 text-muted-foreground">
+                        Duration
+                      </span>
+                      <span className="text-end font-semibold text-foreground tabular-nums">
+                        {media.category === "music"
+                          ? media.duration >= 3600
+                            ? `${Math.floor(media.duration / 3600)}h ${Math.floor((media.duration % 3600) / 60)}m`
+                            : `${Math.floor(media.duration / 60)}m ${media.duration % 60}s`
+                          : `${media.duration} min`}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+          {/* 5. PRODUCERS CARD: [Studios, Producers, Networks, Developers, Publishers] */}
+          {(animationStudios.length > 0 ||
+            producerStudios.length > 0 ||
+            (media.networks && media.networks.length > 0) ||
+            (media.developers && media.developers.length > 0) ||
+            (media.publishers && media.publishers.length > 0)) && (
+              <div className="flex flex-col gap-2.5 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+                <div className="flex items-center justify-between border-b border-border/30 pb-2">
+                  <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                    Producers
+                  </span>
+                  <IconBuildingCommunity
+                    className="size-3.5 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                </div>
+
+                <div className="flex flex-col divide-y divide-border/20">
+                  {media.category === "movies" ? (
+                    (animationStudios.length > 0 ||
+                      producerStudios.length > 0) && (
+                      <div className="flex flex-col gap-1.5 py-1.5">
+                        <span className="text-[11px] text-muted-foreground">
+                          Production
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {[...animationStudios, ...producerStudios].map(
+                            (st, idx) => (
+                              <Link
+                                key={st.id || idx}
+                                href={`/borealis/studios/${st.id}`}
+                                className="inline-flex items-center rounded-lg border border-border/40 bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+                              >
+                                {st.name}
+                              </Link>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    )
+                  ) : (
+                    <>
+                      {animationStudios.length > 0 && (
+                        <div className="flex flex-col gap-1.5 py-1.5">
+                          <span className="text-[11px] text-muted-foreground">
+                            Studios
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {animationStudios.map((st, idx) => (
+                              <Link
+                                key={st.id || idx}
+                                href={`/borealis/studios/${st.id}`}
+                                className="inline-flex items-center rounded-lg border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary transition-colors hover:bg-primary/20"
+                              >
+                                {st.name}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {producerStudios.length > 0 && (
+                        <div className="flex flex-col gap-1.5 py-1.5">
+                          <span className="text-[11px] text-muted-foreground">
+                            Producers
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {producerStudios.map((st, idx) => (
+                              <Link
+                                key={st.id || idx}
+                                href={`/borealis/studios/${st.id}`}
+                                className="inline-flex items-center rounded-lg border border-border/40 bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+                              >
+                                {st.name}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {media.networks && media.networks.length > 0 && (
+                    <div className="flex flex-col gap-1.5 py-1.5">
+                      <span className="text-[11px] text-muted-foreground">
+                        Networks
+                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {media.networks.map((net, idx) => (
+                          <Badge
+                            key={idx}
+                            variant="secondary"
+                            className="text-[10px] font-medium"
+                          >
+                            {net}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {media.developers && media.developers.length > 0 && (
+                    <div className="flex items-start justify-between gap-3 py-1.5">
+                      <span className="shrink-0 text-muted-foreground">
+                        Developers
+                      </span>
+                      <span className="text-end font-medium text-foreground">
+                        {media.developers.join(", ")}
+                      </span>
+                    </div>
+                  )}
+
+                  {media.publishers && media.publishers.length > 0 && (
+                    <div className="flex items-start justify-between gap-3 py-1.5">
+                      <span className="shrink-0 text-muted-foreground">
+                        Publishers
+                      </span>
+                      <span className="text-end font-medium text-foreground">
+                        {media.publishers.join(", ")}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+          {/* 6. ALTERNATIVE TITLES CARD */}
           {media.synonyms && media.synonyms.length > 0 && (
-            <div className="flex flex-col gap-2 rounded-2xl border border-border/40 bg-card/60 p-3.5 text-xs">
-              <h4 className="text-[11px] font-semibold tracking-wider text-foreground text-muted-foreground uppercase">
-                Alternative Titles
-              </h4>
-              <ul className="flex flex-col gap-1 text-end">
+            <div className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+              <div className="flex items-center justify-between border-b border-border/30 pb-2">
+                <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                  Alternative Titles
+                </span>
+                <IconLanguage
+                  className="size-3.5 text-muted-foreground"
+                  aria-hidden="true"
+                />
+              </div>
+              <ul className="flex flex-col divide-y divide-border/15">
                 {media.synonyms.map((syn, idx) => (
                   <li
                     key={idx}
-                    className="text-[11px] break-words text-foreground/80"
+                    className="py-1 text-end text-[11px] leading-snug break-words text-foreground/85"
                   >
                     {syn}
                   </li>
@@ -1709,165 +1817,175 @@ export function OverviewTab({
             </div>
           )}
 
-          {/* External Links */}
+          {/* 7. EXTERNAL LINKS CARD */}
           {((media.externalLinks && media.externalLinks.length > 0) ||
+            media.lastFmUrl ||
+            media.spotifyId ||
+            media.appleMusicId ||
+            media.youtubeMusicId ||
+            media.musicBrainzId ||
             media.siteUrl ||
             media.buyLink ||
             media.previewLink ||
             media.infoLink) && (
-            <div className="flex flex-col gap-2 rounded-2xl border border-border/40 bg-card/60 p-3.5 text-xs">
-              <div className="flex items-center justify-between text-[11px] font-semibold tracking-wider text-foreground text-muted-foreground uppercase">
-                <span>External Links</span>
-                <IconWorld className="size-3.5" aria-hidden="true" />
+              <div className="flex flex-col gap-2.5 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+                <div className="flex items-center justify-between border-b border-border/30 pb-2">
+                  <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                    External Links
+                  </span>
+                  <IconWorld
+                    className="size-3.5 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {/* Music streaming links */}
+                  {media.lastFmUrl && (
+                    <a
+                      href={media.lastFmUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg bg-[#D51007]/10 px-2.5 py-1 text-[11px] font-medium text-[#D51007] transition-colors hover:bg-[#D51007]/20"
+                    >
+                      <span>Last.fm</span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  )}
+                  {media.spotifyId && (
+                    <a
+                      href={`https://open.spotify.com/${media.format === "TRACK" ? "track" : "album"}/${media.spotifyId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg bg-[#1DB954]/10 px-2.5 py-1 text-[11px] font-medium text-[#1DB954] transition-colors hover:bg-[#1DB954]/20"
+                    >
+                      <span>Spotify</span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  )}
+                  {media.appleMusicId && (
+                    <a
+                      href={`https://music.apple.com/song/${media.appleMusicId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg bg-[#FA243C]/10 px-2.5 py-1 text-[11px] font-medium text-[#FA243C] transition-colors hover:bg-[#FA243C]/20"
+                    >
+                      <span>Apple Music</span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  )}
+                  {media.youtubeMusicId && (
+                    <a
+                      href={`https://music.youtube.com/watch?v=${media.youtubeMusicId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg bg-[#FF0000]/10 px-2.5 py-1 text-[11px] font-medium text-[#FF0000] transition-colors hover:bg-[#FF0000]/20"
+                    >
+                      <span>YouTube Music</span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  )}
+                  {media.musicBrainzId && (
+                    <a
+                      href={`https://musicbrainz.org/${media.format === "TRACK" ? "recording" : "release-group"}/${media.musicBrainzId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg bg-[#BA478F]/10 px-2.5 py-1 text-[11px] font-medium text-[#BA478F] transition-colors hover:bg-[#BA478F]/20"
+                    >
+                      <span>MusicBrainz</span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  )}
+                  {media.siteUrl && (
+                    <a
+                      href={media.siteUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg border border-border/40 bg-muted/40 px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:border-border hover:bg-muted"
+                    >
+                      <span>Official Site</span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  )}
+                  {media.buyLink && (
+                    <a
+                      href={media.buyLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary/20"
+                    >
+                      <span>Buy</span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  )}
+                  {media.previewLink && (
+                    <a
+                      href={media.previewLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg border border-border/40 bg-muted/40 px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:border-border hover:bg-muted"
+                    >
+                      <span>Preview</span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  )}
+                  {media.infoLink && (
+                    <a
+                      href={media.infoLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg border border-border/40 bg-muted/40 px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:border-border hover:bg-muted"
+                    >
+                      <span>Info</span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  )}
+                  {media.externalLinks?.map((link, idx) => (
+                    <a
+                      key={idx}
+                      href={link.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg border border-border/40 bg-muted/40 px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:border-border hover:bg-muted"
+                    >
+                      <span>{link.site || link.type || "Link"}</span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  ))}
+                </div>
               </div>
-              <div className="flex flex-wrap justify-end gap-1.5 pt-1">
-                {/* Music streaming links */}
-                {media.lastFmUrl && (
-                  <a
-                    href={media.lastFmUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 rounded-lg bg-[#D51007]/10 px-2 py-1 text-[11px] font-medium text-[#D51007] hover:bg-[#D51007]/20"
-                  >
-                    <span>Last.fm</span>
-                    <IconExternalLink
-                      className="size-3 opacity-60"
-                      aria-hidden="true"
-                    />
-                  </a>
-                )}
-                {media.spotifyId && (
-                  <a
-                    href={`https://open.spotify.com/${media.format === "TRACK" ? "track" : "album"}/${media.spotifyId}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 rounded-lg bg-[#1DB954]/10 px-2 py-1 text-[11px] font-medium text-[#1DB954] hover:bg-[#1DB954]/20"
-                  >
-                    <span>Spotify</span>
-                    <IconExternalLink
-                      className="size-3 opacity-60"
-                      aria-hidden="true"
-                    />
-                  </a>
-                )}
-                {media.appleMusicId && (
-                  <a
-                    href={`https://music.apple.com/song/${media.appleMusicId}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 rounded-lg bg-[#FA243C]/10 px-2 py-1 text-[11px] font-medium text-[#FA243C] hover:bg-[#FA243C]/20"
-                  >
-                    <span>Apple Music</span>
-                    <IconExternalLink
-                      className="size-3 opacity-60"
-                      aria-hidden="true"
-                    />
-                  </a>
-                )}
-                {media.youtubeMusicId && (
-                  <a
-                    href={`https://music.youtube.com/watch?v=${media.youtubeMusicId}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 rounded-lg bg-[#FF0000]/10 px-2 py-1 text-[11px] font-medium text-[#FF0000] hover:bg-[#FF0000]/20"
-                  >
-                    <span>YouTube Music</span>
-                    <IconExternalLink
-                      className="size-3 opacity-60"
-                      aria-hidden="true"
-                    />
-                  </a>
-                )}
-                {media.musicBrainzId && (
-                  <a
-                    href={`https://musicbrainz.org/${media.format === "TRACK" ? "recording" : "release-group"}/${media.musicBrainzId}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 rounded-lg bg-[#BA478F]/10 px-2 py-1 text-[11px] font-medium text-[#BA478F] hover:bg-[#BA478F]/20"
-                  >
-                    <span>MusicBrainz</span>
-                    <IconExternalLink
-                      className="size-3 opacity-60"
-                      aria-hidden="true"
-                    />
-                  </a>
-                )}
-                {media.siteUrl && (
-                  <a
-                    href={media.siteUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-[11px] font-medium text-foreground hover:bg-muted/80"
-                  >
-                    <span>Official Site</span>
-                    <IconExternalLink
-                      className="size-3 opacity-60"
-                      aria-hidden="true"
-                    />
-                  </a>
-                )}
-                {media.buyLink && (
-                  <a
-                    href={media.buyLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary hover:bg-primary/20"
-                  >
-                    <span>Buy</span>
-                    <IconExternalLink
-                      className="size-3 opacity-60"
-                      aria-hidden="true"
-                    />
-                  </a>
-                )}
-                {media.previewLink && (
-                  <a
-                    href={media.previewLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-[11px] font-medium text-foreground hover:bg-muted/80"
-                  >
-                    <span>Preview</span>
-                    <IconExternalLink
-                      className="size-3 opacity-60"
-                      aria-hidden="true"
-                    />
-                  </a>
-                )}
-                {media.infoLink && (
-                  <a
-                    href={media.infoLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-[11px] font-medium text-foreground hover:bg-muted/80"
-                  >
-                    <span>Info</span>
-                    <IconExternalLink
-                      className="size-3 opacity-60"
-                      aria-hidden="true"
-                    />
-                  </a>
-                )}
-                {media.externalLinks?.map((link, idx) => (
-                  <a
-                    key={idx}
-                    href={link.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-[11px] font-medium text-foreground hover:bg-muted/80"
-                  >
-                    <span>{link.site || link.type || "Link"}</span>
-                    <IconExternalLink
-                      className="size-3 opacity-60"
-                      aria-hidden="true"
-                    />
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* Provider IDs: Direct clickable links */}
+          {/* 8. PROVIDER IDs CARD */}
           {(media.anilistId ||
             media.malId ||
             media.aniDBId ||
@@ -1877,6 +1995,7 @@ export function OverviewTab({
             media.tmdbId ||
             media.imdbId ||
             media.simklId ||
+            media.tvmazeId ||
             media.igdbId ||
             media.steamAppId ||
             media.rawgId ||
@@ -1885,264 +2004,287 @@ export function OverviewTab({
             media.googleBookId ||
             media.isbn10 ||
             media.isbn13 ||
-            media.openLibraryId) && (
-            <div className="flex flex-col gap-2 rounded-2xl border border-border/40 bg-card/60 p-3.5 text-xs">
-              <h4 className="text-[11px] font-semibold tracking-wider text-foreground text-muted-foreground uppercase">
-                IDs
-              </h4>
-              <div className="flex flex-col gap-1 text-xs">
-                {/* Games IDs */}
-                {media.igdbId && (
-                  <div className="flex items-center justify-between border-b border-border/20 py-1">
-                    <span className="text-muted-foreground">IGDB</span>
-                    <a
-                      href={`https://www.igdb.com/games/${media.igdbId}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-end font-medium text-primary hover:underline"
-                    >
-                      #{media.igdbId}
-                    </a>
-                  </div>
-                )}
-                {media.steamAppId && (
-                  <div className="flex items-center justify-between border-b border-border/20 py-1">
-                    <span className="text-muted-foreground">Steam</span>
-                    <a
-                      href={`https://store.steampowered.com/app/${media.steamAppId}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-end font-medium text-primary hover:underline"
-                    >
-                      #{media.steamAppId}
-                    </a>
-                  </div>
-                )}
-                {media.rawgId && (
-                  <div className="flex items-center justify-between border-b border-border/20 py-1">
-                    <span className="text-muted-foreground">RAWG</span>
-                    <a
-                      href={`https://rawg.io/games/${media.rawgId}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-end font-medium text-primary hover:underline"
-                    >
-                      #{media.rawgId}
-                    </a>
-                  </div>
-                )}
-                {media.giantbombId && (
-                  <div className="flex items-center justify-between border-b border-border/20 py-1">
-                    <span className="text-muted-foreground">Giant Bomb</span>
-                    <span className="text-end font-medium text-foreground">
-                      {media.giantbombId}
-                    </span>
-                  </div>
-                )}
-                {media.vndbId && (
-                  <div className="flex items-center justify-between border-b border-border/20 py-1">
-                    <span className="text-muted-foreground">VNDB</span>
-                    <a
-                      href={`https://vndb.org/v${media.vndbId.replace(/^v/, "")}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-end font-medium text-primary hover:underline"
-                    >
-                      {media.vndbId}
-                    </a>
-                  </div>
-                )}
+            media.openLibraryId ||
+            media.deezerId) && (
+              <div className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card/60 p-4 text-xs shadow-xs backdrop-blur-xs">
+                <div className="flex items-center justify-between border-b border-border/30 pb-2">
+                  <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                    IDs
+                  </span>
+                  <IconHash
+                    className="size-3.5 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                </div>
+                <div className="flex flex-col divide-y divide-border/20 text-xs">
+                  {/* Games IDs */}
+                  {media.igdbId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">IGDB</span>
+                      <a
+                        href={`https://www.igdb.com/games/${media.igdbId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.igdbId}
+                      </a>
+                    </div>
+                  )}
+                  {media.steamAppId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">Steam</span>
+                      <a
+                        href={`https://store.steampowered.com/app/${media.steamAppId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.steamAppId}
+                      </a>
+                    </div>
+                  )}
+                  {media.rawgId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">RAWG</span>
+                      <a
+                        href={`https://rawg.io/games/${media.rawgId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.rawgId}
+                      </a>
+                    </div>
+                  )}
+                  {media.giantbombId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">Giant Bomb</span>
+                      <span className="text-end font-mono text-[11px] font-medium text-foreground">
+                        {media.giantbombId}
+                      </span>
+                    </div>
+                  )}
+                  {media.vndbId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">VNDB</span>
+                      <a
+                        href={`https://vndb.org/v${media.vndbId.replace(/^v/, "")}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        {media.vndbId}
+                      </a>
+                    </div>
+                  )}
 
-                {/* TV IDs */}
-                {media.tvmazeId && (
-                  <div className="flex items-center justify-between border-b border-border/20 py-1">
-                    <span className="text-muted-foreground">TVmaze</span>
-                    <a
-                      href={`https://www.tvmaze.com/shows/${media.tvmazeId}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-end font-medium text-primary hover:underline"
-                    >
-                      #{media.tvmazeId}
-                    </a>
-                  </div>
-                )}
+                  {/* TV IDs */}
+                  {media.tvmazeId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">TVmaze</span>
+                      <a
+                        href={`https://www.tvmaze.com/shows/${media.tvmazeId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.tvmazeId}
+                      </a>
+                    </div>
+                  )}
 
-                {/* Books IDs */}
-                {media.googleBookId && (
-                  <div className="flex items-center justify-between border-b border-border/20 py-1">
-                    <span className="text-muted-foreground">Google Books</span>
-                    <a
-                      href={`https://books.google.com/books?id=${media.googleBookId}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-end font-medium text-primary hover:underline"
-                    >
-                      {media.googleBookId}
-                    </a>
-                  </div>
-                )}
-                {media.isbn13 && (
-                  <div className="flex items-center justify-between border-b border-border/20 py-1">
-                    <span className="text-muted-foreground">ISBN-13</span>
-                    <span className="text-end font-medium text-foreground tabular-nums">
-                      {media.isbn13}
-                    </span>
-                  </div>
-                )}
-                {media.isbn10 && (
-                  <div className="flex items-center justify-between border-b border-border/20 py-1">
-                    <span className="text-muted-foreground">ISBN-10</span>
-                    <span className="text-end font-medium text-foreground tabular-nums">
-                      {media.isbn10}
-                    </span>
-                  </div>
-                )}
-                {media.openLibraryId && (
-                  <div className="flex items-center justify-between border-b border-border/20 py-1">
-                    <span className="text-muted-foreground">Open Library</span>
-                    <a
-                      href={`https://openlibrary.org/books/${media.openLibraryId}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-end font-medium text-primary hover:underline"
-                    >
-                      {media.openLibraryId}
-                    </a>
-                  </div>
-                )}
-                {media.imdbId && (
-                  <div className="flex items-center justify-between border-b border-border/20 py-1">
-                    <span className="text-muted-foreground">IMDb</span>
-                    <a
-                      href={`https://www.imdb.com/title/${media.imdbId}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-end font-medium text-primary hover:underline"
-                    >
-                      {media.imdbId}
-                    </a>
-                  </div>
-                )}
-                {media.tmdbId && (
-                  <div className="flex items-center justify-between border-b border-border/20 py-1">
-                    <span className="text-muted-foreground">TMDB</span>
-                    <a
-                      href={
-                        media.category === "movies"
-                          ? `https://www.themoviedb.org/movie/${media.tmdbId}`
-                          : `https://www.themoviedb.org/tv/${media.tmdbId}`
-                      }
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-end font-medium text-primary hover:underline"
-                    >
-                      #{media.tmdbId}
-                    </a>
-                  </div>
-                )}
-                {media.tvDBId && (
-                  <div className="flex items-center justify-between border-b border-border/20 py-1">
-                    <span className="text-muted-foreground">TheTVDB</span>
-                    <a
-                      href={
-                        media.category === "movies"
-                          ? `https://thetvdb.com/dereferrer/movie/${media.tvDBId}`
-                          : `https://thetvdb.com/dereferrer/series/${media.tvDBId}`
-                      }
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-end font-medium text-primary hover:underline"
-                    >
-                      #{media.tvDBId}
-                    </a>
-                  </div>
-                )}
-                {media.simklId && (
-                  <div className="flex items-center justify-between border-b border-border/20 py-1">
-                    <span className="text-muted-foreground">Simkl</span>
-                    <a
-                      href={
-                        media.category === "movies"
-                          ? `https://simkl.com/movies/${media.simklId}`
-                          : `https://simkl.com/anime/${media.simklId}`
-                      }
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-end font-medium text-primary hover:underline"
-                    >
-                      #{media.simklId}
-                    </a>
-                  </div>
-                )}
-                {media.anilistId && (
-                  <div className="flex items-center justify-between border-b border-border/20 py-1">
-                    <span className="text-muted-foreground">AniList</span>
-                    <a
-                      href={`https://anilist.co/anime/${media.anilistId}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-end font-medium text-primary hover:underline"
-                    >
-                      #{media.anilistId}
-                    </a>
-                  </div>
-                )}
-                {media.malId && (
-                  <div className="flex items-center justify-between border-b border-border/20 py-1">
-                    <span className="text-muted-foreground">MyAnimeList</span>
-                    <a
-                      href={`https://myanimelist.net/anime/${media.malId}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-end font-medium text-primary hover:underline"
-                    >
-                      #{media.malId}
-                    </a>
-                  </div>
-                )}
-                {media.aniDBId && (
-                  <div className="flex items-center justify-between border-b border-border/20 py-1">
-                    <span className="text-muted-foreground">AniDB</span>
-                    <a
-                      href={`https://anidb.net/anime/${media.aniDBId}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-end font-medium text-primary hover:underline"
-                    >
-                      #{media.aniDBId}
-                    </a>
-                  </div>
-                )}
-                {media.bangumiId && (
-                  <div className="flex items-center justify-between border-b border-border/20 py-1">
-                    <span className="text-muted-foreground">Bangumi</span>
-                    <a
-                      href={`https://bgm.tv/subject/${media.bangumiId}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-end font-medium text-primary hover:underline"
-                    >
-                      #{media.bangumiId}
-                    </a>
-                  </div>
-                )}
-                {media.kitsuId && (
-                  <div className="flex items-center justify-between py-1">
-                    <span className="text-muted-foreground">Kitsu</span>
-                    <a
-                      href={`https://kitsu.io/anime/${media.kitsuId}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-end font-medium text-primary hover:underline"
-                    >
-                      #{media.kitsuId}
-                    </a>
-                  </div>
-                )}
+                  {/* Books IDs */}
+                  {media.googleBookId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">Google Books</span>
+                      <a
+                        href={`https://books.google.com/books?id=${media.googleBookId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        {media.googleBookId}
+                      </a>
+                    </div>
+                  )}
+                  {media.isbn13 && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">ISBN-13</span>
+                      <span className="text-end font-mono text-[11px] font-medium text-foreground tabular-nums">
+                        {media.isbn13}
+                      </span>
+                    </div>
+                  )}
+                  {media.isbn10 && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">ISBN-10</span>
+                      <span className="text-end font-mono text-[11px] font-medium text-foreground tabular-nums">
+                        {media.isbn10}
+                      </span>
+                    </div>
+                  )}
+                  {media.openLibraryId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">Open Library</span>
+                      <a
+                        href={`https://openlibrary.org/books/${media.openLibraryId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        {media.openLibraryId}
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Music IDs */}
+                  {media.deezerId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">Deezer</span>
+                      <a
+                        href={`https://www.deezer.com/${media.format?.toUpperCase() === "ALBUM" ? "album" : "track"}/${media.deezerId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.deezerId}
+                      </a>
+                    </div>
+                  )}
+
+                  {media.imdbId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">IMDb</span>
+                      <a
+                        href={`https://www.imdb.com/title/${media.imdbId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        {media.imdbId}
+                      </a>
+                    </div>
+                  )}
+                  {media.tmdbId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">TMDB</span>
+                      <a
+                        href={
+                          media.category === "movies"
+                            ? `https://www.themoviedb.org/movie/${media.tmdbId}`
+                            : `https://www.themoviedb.org/tv/${media.tmdbId}`
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.tmdbId}
+                      </a>
+                    </div>
+                  )}
+                  {media.tvDBId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">TheTVDB</span>
+                      <a
+                        href={
+                          media.category === "movies"
+                            ? `https://thetvdb.com/dereferrer/movie/${media.tvDBId}`
+                            : `https://thetvdb.com/dereferrer/series/${media.tvDBId}`
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.tvDBId}
+                      </a>
+                    </div>
+                  )}
+                  {media.simklId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">Simkl</span>
+                      <a
+                        href={
+                          media.category === "movies"
+                            ? `https://simkl.com/movies/${media.simklId}`
+                            : `https://simkl.com/anime/${media.simklId}`
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.simklId}
+                      </a>
+                    </div>
+                  )}
+                  {media.anilistId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">AniList</span>
+                      <a
+                        href={`https://anilist.co/${media.category === "manga" ? "manga" : "anime"}/${media.anilistId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.anilistId}
+                      </a>
+                    </div>
+                  )}
+                  {media.malId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">MyAnimeList</span>
+                      <a
+                        href={`https://myanimelist.net/${media.category === "manga" ? "manga" : "anime"}/${media.malId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.malId}
+                      </a>
+                    </div>
+                  )}
+                  {media.aniDBId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">AniDB</span>
+                      <a
+                        href={`https://anidb.net/anime/${media.aniDBId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.aniDBId}
+                      </a>
+                    </div>
+                  )}
+                  {media.bangumiId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">Bangumi</span>
+                      <a
+                        href={`https://bgm.tv/subject/${media.bangumiId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.bangumiId}
+                      </a>
+                    </div>
+                  )}
+                  {media.kitsuId && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-muted-foreground">Kitsu</span>
+                      <a
+                        href={`https://kitsu.io/${media.category === "manga" ? "manga" : "anime"}/${media.kitsuId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-end font-mono text-[11px] font-medium text-primary hover:underline"
+                      >
+                        #{media.kitsuId}
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </aside>
       </div>
     </div>

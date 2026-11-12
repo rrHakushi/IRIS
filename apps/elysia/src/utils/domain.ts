@@ -24,7 +24,7 @@ export function getDomainConfig() {
     cookieDomain = parts.length >= 2 ? `.${parts.slice(-2).join('.')}` : `.${hostname}`
   }
 
-  const isSecure = Bun.env.NODE_ENV === 'production' && !isLocalhost
+  const isSecure = Bun.env.BUN_ENV === 'production' && !isLocalhost
 
   return {
     url: urlStr,

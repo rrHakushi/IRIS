@@ -20,9 +20,8 @@ export interface ResolvedCacheOptions extends Required<Omit<CacheOptions, 'redis
  * with environment variables.
  *
  * Reads:
- * - `REDIS_URL` or `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_USERNAME`, `REDIS_DB`, `REDIS_TLS`
+ * - `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_USERNAME`, `REDIS_DB`, `REDIS_TLS`
  * - `CACHE_DEFAULT_TTL`
- * - `CACHE_MEMORY_MAX_ITEMS`
  *
  * @param options - User-provided CacheOptions
  * @returns Fully populated `ResolvedCacheOptions`
@@ -48,7 +47,6 @@ export function resolveCacheOptions(options: CacheOptions = {}): ResolvedCacheOp
   const hasExplicitTarget = Boolean(redisConfig.url || redisConfig.host);
 
   if (autoEnv) {
-    const envUrl = Bun.env['REDIS_URL'];
     const envHost = Bun.env['REDIS_HOST'];
     const envPort = Bun.env['REDIS_PORT'];
     const envPassword = Bun.env['REDIS_PASSWORD'];
@@ -56,50 +54,44 @@ export function resolveCacheOptions(options: CacheOptions = {}): ResolvedCacheOp
     const envDb = Bun.env['REDIS_DB'];
     const envTls = Bun.env['REDIS_TLS'];
 
-    if (!redisConfig.url && envUrl) {
-      redisConfig.url = envUrl;
+    if (!redisConfig.host && envHost) {
+      redisConfig.host = envHost;
+    }
+    if (!redisConfig.port && envPort) {
+      const parsedPort = parseInt(envPort, 10);
+      if (Number.isNaN(parsedPort)) {
+        throw new MissingEnvError(
+          ['REDIS_PORT'],
+          `Invalid REDIS_PORT environment variable value: "${envPort}". Expected a number.`,
+        );
+      }
+      redisConfig.port = parsedPort;
+    }
+    if (!redisConfig.password && envPassword) {
+      redisConfig.password = envPassword;
+    }
+    if (!redisConfig.username && envUsername) {
+      redisConfig.username = envUsername;
+    }
+    if (redisConfig.db === undefined && envDb) {
+      const parsedDb = parseInt(envDb, 10);
+      if (Number.isNaN(parsedDb)) {
+        throw new MissingEnvError(
+          ['REDIS_DB'],
+          `Invalid REDIS_DB environment variable value: "${envDb}". Expected an integer.`,
+        );
+      }
+      redisConfig.db = parsedDb;
+    }
+    if (redisConfig.tls === undefined && (envTls === 'true' || envTls === '1')) {
+      redisConfig.tls = {};
     }
 
-    if (!redisConfig.url) {
-      if (!redisConfig.host && envHost) {
-        redisConfig.host = envHost;
-      }
-      if (!redisConfig.port && envPort) {
-        const parsedPort = parseInt(envPort, 10);
-        if (Number.isNaN(parsedPort)) {
-          throw new MissingEnvError(
-            ['REDIS_PORT'],
-            `Invalid REDIS_PORT environment variable value: "${envPort}". Expected a number.`,
-          );
-        }
-        redisConfig.port = parsedPort;
-      }
-      if (!redisConfig.password && envPassword) {
-        redisConfig.password = envPassword;
-      }
-      if (!redisConfig.username && envUsername) {
-        redisConfig.username = envUsername;
-      }
-      if (redisConfig.db === undefined && envDb) {
-        const parsedDb = parseInt(envDb, 10);
-        if (Number.isNaN(parsedDb)) {
-          throw new MissingEnvError(
-            ['REDIS_DB'],
-            `Invalid REDIS_DB environment variable value: "${envDb}". Expected an integer.`,
-          );
-        }
-        redisConfig.db = parsedDb;
-      }
-      if (redisConfig.tls === undefined && (envTls === 'true' || envTls === '1')) {
-        redisConfig.tls = {};
-      }
-    }
-
-    // If no explicit target was given and neither REDIS_URL nor REDIS_HOST was found in env
-    if (!hasExplicitTarget && !redisConfig.url && !redisConfig.host) {
+    // If no explicit target was given and REDIS_HOST was not found in env
+    if (!hasExplicitTarget && !redisConfig.host) {
       throw new MissingEnvError(
-        ['REDIS_URL', 'REDIS_HOST'],
-        'Neither REDIS_URL nor REDIS_HOST is defined in environment variables, and no explicit redis config was provided.',
+        ['REDIS_HOST'],
+        'REDIS_HOST is not defined in environment variables, and no explicit redis config was provided.',
       );
     }
   }
@@ -121,17 +113,7 @@ export function resolveCacheOptions(options: CacheOptions = {}): ResolvedCacheOp
     defaultTtlSeconds = parsedTtl;
   }
 
-  let maxMemoryItems = options.memory?.maxItems ?? 5000;
-  if (options.memory?.maxItems === undefined && autoEnv && Bun.env['CACHE_MEMORY_MAX_ITEMS']) {
-    const parsedMax = parseInt(Bun.env['CACHE_MEMORY_MAX_ITEMS'], 10);
-    if (Number.isNaN(parsedMax)) {
-      throw new MissingEnvError(
-        ['CACHE_MEMORY_MAX_ITEMS'],
-        `Invalid CACHE_MEMORY_MAX_ITEMS environment variable value: "${Bun.env['CACHE_MEMORY_MAX_ITEMS']}". Expected a number.`,
-      );
-    }
-    maxMemoryItems = parsedMax;
-  }
+  const maxMemoryItems = options.memory?.maxItems ?? 5000;
 
   return {
     redis: redisConfig,

@@ -355,6 +355,10 @@ export interface NormalizedMediaData {
   lastFmUrl?: string | null
 
   // Other / Custom item fields
+  creatorId?: string | null
+  creatorUsername?: string | null
+  creatorDisplayName?: string | null
+  lyricsSource?: string | null
   progressFields?: Array<{
     key: string
     label: string

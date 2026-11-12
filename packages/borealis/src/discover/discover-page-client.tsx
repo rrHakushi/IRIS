@@ -363,7 +363,7 @@ const mapMediaItem = (x: any): DiscoverItem => ({
           }
         } else {
           const targetCat = getMediaCategory(category)
-          const { data, error } = await elysia.borealis.media[targetCat].filters.get()
+          const { data, error } = await (elysia.borealis as any)[targetCat].filters.get()
 
           if (!error && data && data.success) {
             setFacets({
@@ -502,15 +502,14 @@ const mapMediaItem = (x: any): DiscoverItem => ({
           }
         } else {
           const targetCat = getMediaCategory(category)
-          const { data, error } = await elysia.borealis.media[targetCat].get({
+          const { data, error } = await (elysia.borealis as any)[targetCat].get({
             query: {
               page: 1,
-              limit: 32,
+              limit: 50,
               statuses: statusParam,
               formats: formatsParam,
               genres: genresParam,
               years: yearsParam,
-              season: seasonsParam,
               sortBy: sortBy as any,
               sortOrder: sortOrder as any,
               search: cleanSearch || undefined,
@@ -519,9 +518,9 @@ const mapMediaItem = (x: any): DiscoverItem => ({
 
           if (!error && data && data.success) {
             setItems((data.items || []).map(mapMediaItem))
-            setNextCursor(data.pagination?.hasMore ? 2 : null)
-            setHasMore(Boolean(data.pagination?.hasMore))
-            setTotalCount(data.pagination?.total ?? 0)
+            setNextCursor((data as any).nextCursor ?? (data.pagination?.hasMore ? 2 : null))
+            setHasMore(Boolean((data as any).hasMore ?? data.pagination?.hasMore))
+            setTotalCount((data as any).total ?? data.pagination?.total ?? 0)
           } else {
             setItems([])
             setNextCursor(null)
@@ -645,15 +644,16 @@ const mapMediaItem = (x: any): DiscoverItem => ({
         }
       } else {
         const targetCat = getMediaCategory(category)
-        const { data, error } = await elysia.borealis.media[targetCat].get({
+        const isCursor = typeof nextCursor === "number" && nextCursor > 100
+        const { data, error } = await (elysia.borealis as any)[targetCat].get({
           query: {
-            page: pageToFetch,
-            limit: 32,
+            cursor: isCursor ? nextCursor : undefined,
+            page: isCursor ? undefined : pageToFetch,
+            limit: 50,
             statuses: statusParam,
             formats: formatsParam,
             genres: genresParam,
             years: yearsParam,
-            season: seasonsParam,
             sortBy: sortBy as any,
             sortOrder: sortOrder as any,
             search: cleanSearch || undefined,
@@ -663,8 +663,8 @@ const mapMediaItem = (x: any): DiscoverItem => ({
         if (!error && data && data.success) {
           const newItems = (data.items || []).map(mapMediaItem)
           setItems((prev) => [...prev, ...newItems])
-          setNextCursor(data.pagination?.hasMore ? pageToFetch + 1 : null)
-          setHasMore(Boolean(data.pagination?.hasMore))
+          setNextCursor((data as any).nextCursor ?? (data.pagination?.hasMore ? pageToFetch + 1 : null))
+          setHasMore(Boolean((data as any).hasMore ?? data.pagination?.hasMore))
         } else {
           setHasMore(false)
         }

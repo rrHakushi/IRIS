@@ -44,7 +44,9 @@ export class TraktAdapter extends BaseConnectionAdapter {
   };
 
   private getClientId(): string {
-    return (Bun.env.TRAKT_CLIENT_ID || "").trim();
+    const id = Bun.env.TRAKT_CLIENT_ID?.trim();
+    if (!id) throw new Error("Missing required environment variable: TRAKT_CLIENT_ID");
+    return id;
   }
 
   private getClientSecret(): string {

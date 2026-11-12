@@ -3,14 +3,10 @@ import { session } from '../../../plugins/session'
 import { BorealisListsModel } from '../../models/borealis/lists.model'
 import { BorealisListsServ } from '../../../services/borealis/lists.serv'
 
-export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
+// Split into small Elysia instances to avoid TS2589 (excessively deep type instantiation).
+const routes1 = new Elysia()
   .use(session())
 
-  // ===========================================================================
-  // 1. Media Lists: Anime
-  // ===========================================================================
-
-  // GET /borealis/lists/anime (Get anime list - 40 per page)
   .get(
     '/anime',
     {
@@ -123,6 +119,10 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   )
 
   // DELETE /borealis/lists/anime/:animeId (Remove anime from list)
+
+const routes2 = new Elysia()
+  .use(session())
+
   .delete(
     '/anime/:animeId',
     {
@@ -240,6 +240,10 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   )
 
   // GET /borealis/lists/manga/:mangaId (Check / get manga in user list)
+
+const routes3 = new Elysia()
+  .use(session())
+
   .get(
     '/manga/:mangaId',
     {
@@ -359,6 +363,10 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   )
 
   // GET /borealis/lists/movies/stats (Get movies list statistics)
+
+const routes4 = new Elysia()
+  .use(session())
+
   .get(
     '/movies/stats',
     {
@@ -472,6 +480,10 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   )
 
   // POST /borealis/lists/movies/:movieId/increment (Increment rewatch progress)
+
+const routes5 = new Elysia()
+  .use(session())
+
   .post(
     '/movies/:movieId/increment',
     {
@@ -588,6 +600,10 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   )
 
   // POST /borealis/lists/tv/:tvId (Add or update TV series in list)
+
+const routes6 = new Elysia()
+  .use(session())
+
   .post(
     '/tv/:tvId',
     {
@@ -708,6 +724,10 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   )
 
   // GET /borealis/lists/games/filters (Get available games list filters)
+
+const routes7 = new Elysia()
+  .use(session())
+
   .get(
     '/games/filters',
     {
@@ -826,6 +846,10 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   // ===========================================================================
 
   // GET /borealis/lists/books (Get books list - 40 per page)
+
+const routes8 = new Elysia()
+  .use(session())
+
   .get(
     '/books',
     {
@@ -938,6 +962,10 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   )
 
   // DELETE /borealis/lists/books/:bookId (Remove book from list)
+
+const routes9 = new Elysia()
+  .use(session())
+
   .delete(
     '/books/:bookId',
     {
@@ -1055,6 +1083,10 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   )
 
   // GET /borealis/lists/music/:musicId (Check / get album/track in user list)
+
+const routes10 = new Elysia()
+  .use(session())
+
   .get(
     '/music/:musicId',
     {
@@ -1173,6 +1205,10 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   )
 
   // GET /borealis/lists/other/stats (Get other list statistics)
+
+const routes11 = new Elysia()
+  .use(session())
+
   .get(
     '/other/stats',
     {
@@ -1284,6 +1320,10 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   )
 
   // POST /borealis/lists/other/:otherId/increment (Increment custom progress)
+
+const routes12 = new Elysia()
+  .use(session())
+
   .post(
     '/other/:otherId/increment',
     {
@@ -1396,6 +1436,10 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   )
 
   // POST /borealis/lists/import (Import lists from JSON / external backups)
+
+const routes13 = new Elysia()
+  .use(session())
+
   .post(
     '/import',
     {
@@ -1480,5 +1524,20 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
       return await BorealisListsServ.getAllWatchingMedia(targetUserId, query?.limit)
     }
   )
+
+export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
+  .use(routes1)
+  .use(routes2)
+  .use(routes3)
+  .use(routes4)
+  .use(routes5)
+  .use(routes6)
+  .use(routes7)
+  .use(routes8)
+  .use(routes9)
+  .use(routes10)
+  .use(routes11)
+  .use(routes12)
+  .use(routes13)
 
 export default borealisLists

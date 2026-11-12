@@ -1,19 +1,44 @@
+import { createRequire } from "node:module";
 import postgres from "@prisma/orm-postgres/runtime";
 import { contractFromJson } from "@prisma/orm-postgres/static";
 import type { Contract } from "./contract.js";
-import contractJson from "./contract.json" with { type: "json" };
+
+const require = createRequire(import.meta.url);
+const contractJson = require("./contract.json");
 
 export const contract = contractFromJson<Contract>(contractJson);
 
 export type PrismaClient = ReturnType<typeof postgres<Contract>>;
 
-const url =
-  (typeof Bun !== "undefined" ? Bun.env.DATABASE_URL : process.env.DATABASE_URL) ||
-  "postgresql://dummy:dummy@localhost:5432/dummy";
+export function buildDatabaseUrl(): string {
+  const env = typeof Bun !== "undefined" ? Bun.env : process.env;
+  const user = env.POSTGRE_USER;
+  const pass = env.POSTGRE_PASS;
+  const host = env.POSTGRE_HOST;
+  const port = env.POSTGRE_PORT;
+  const db = env.POSTGRE_DB;
+
+  if (!user || !pass || !host || !port || !db) {
+    const missing = [
+      !user && "POSTGRE_USER",
+      !pass && "POSTGRE_PASS",
+      !host && "POSTGRE_HOST",
+      !port && "POSTGRE_PORT",
+      !db && "POSTGRE_DB",
+    ].filter(Boolean);
+    throw new Error(
+      `Database connection failed: missing required environment variable(s): ${missing.join(", ")}`
+    );
+  }
+
+  return `postgresql://${user}:${pass}@${host}:${port}/${db}`;
+}
+
+const url = buildDatabaseUrl();
 
 // Mask sensitive info for logging
 const maskedUrl = url.replace(/:.+@/, ":****@");
-console.info(`[PRISMA] DATABASE_URL: ${maskedUrl}`);
+console.info(`[PRISMA] Database connected: ${maskedUrl}`);
 
 declare global {
   var prismaGlobal: undefined | PrismaClient;
@@ -29,7 +54,7 @@ export const prisma: PrismaClient =
 export const db = prisma;
 
 if (
-  (typeof Bun !== "undefined" ? Bun.env.NODE_ENV : process.env.NODE_ENV) !==
+  (typeof Bun !== "undefined" ? Bun.env.BUN_ENV : process.env.BUN_ENV) !==
   "production"
 ) {
   globalThis.prismaGlobal = prisma;

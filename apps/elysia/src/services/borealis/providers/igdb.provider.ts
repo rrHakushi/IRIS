@@ -47,11 +47,19 @@ export class IGDBProvider {
   private readonly minDelayMs = 250 // 4 req/s
 
   private getClientId(): string {
-    return Bun.env.IGDB_CLIENT_ID || ''
+    const id = Bun.env.IGDB_CLIENT_ID
+    if (!id) {
+      throw new Error('[IGDBProvider] Missing required environment variable: IGDB_CLIENT_ID')
+    }
+    return id
   }
 
   private getClientSecret(): string {
-    return Bun.env.IGDB_CLIENT_SECRET || ''
+    const secret = Bun.env.IGDB_CLIENT_SECRET
+    if (!secret) {
+      throw new Error('[IGDBProvider] Missing required environment variable: IGDB_CLIENT_SECRET')
+    }
+    return secret
   }
 
   private async waitForRateLimit(): Promise<void> {

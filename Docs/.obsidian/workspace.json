@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "plugins/akaromi-firefox/lib/crypto.md",
+                "file": "Getting Started.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "crypto"
+              "title": "Getting Started"
             }
           }
         ]
@@ -189,6 +189,8 @@
   },
   "active": "5339bc15b0f10c68",
   "lastOpenFiles": [
+    "New api.md",
+    "plugins/akaromi-firefox/lib/crypto.md",
     "plugins/akaromi-firefox/lib/icons.md",
     "plugins/akaromi-firefox/lib/api.md",
     "plugins/akaromi-firefox/README.md",
@@ -208,14 +210,12 @@
     "plugins/akaromi-firefox/lib/qr-decoder.md",
     "plugins/akaromi-firefox/lib/noble.md",
     "plugins/akaromi-firefox/lib/matching.md",
-    "plugins/akaromi-firefox/lib/crypto.md",
     "plugins/akaromi-firefox/content/passkey-injected.md",
     "plugins/akaromi-firefox/content/menu.md",
     "plugins/akaromi-firefox/content/fill.md",
     "plugins/akaromi-firefox/content/detection.md",
     "plugins/akaromi-firefox/content/content.md",
     "plugins/akaromi-firefox/background/vault.md",
-    "plugins/akaromi-firefox/content/badge.md",
     "plugins/akaromi-firefox/popup",
     "plugins/akaromi-firefox/lib",
     "plugins/akaromi-firefox/content",

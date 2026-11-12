@@ -198,34 +198,35 @@ export function MediaListModal({
         return
       }
       setIsFetchingTvSeasons(true)
-      elysia.borealis.media
-        .tv({ id: Number(media.id) })
-        .get()
-        .then((res: any) => {
-          const raw = res?.data
-          const data = raw?.media ?? raw
-          if (data && data.seasons && data.seasons.length > 0) {
+      Promise.all([
+        elysia.borealis.tv({ tvId: Number(media.id) }).seasons.get(),
+        elysia.borealis.tv({ tvId: Number(media.id) }).episodes.get(),
+      ])
+        .then(([seasonsRes, episodesRes]: any[]) => {
+          const pick = (r: any, k: string) =>
+            Array.isArray(r?.data) ? r.data : (r?.data?.[k] ?? r?.data?.items ?? [])
+          const seasons: any[] = pick(seasonsRes, "seasons")
+          const episodes: any[] = pick(episodesRes, "episodes").map((e: any) => ({
+            ...e,
+            number: e.number ?? e.episodeNumber,
+          }))
+          if (seasons.length > 0) {
             setFetchedTvSeasons(
-              data.seasons.map((s: any) => ({
+              seasons.map((s: any) => ({
                 id: s.id,
                 seasonNumber: s.seasonNumber,
                 title: s.titlePrimary || s.title || null,
                 titlePrimary: s.titlePrimary || null,
                 episodeCount:
                   s.episodeCount ??
-                  (data.episodes?.filter(
-                    (ep: any) =>
-                      ep.seasonNumber === s.seasonNumber ||
-                      ep.season === s.seasonNumber
-                  )?.length || null),
+                  (episodes.filter(
+                    (ep: any) => ep.seasonNumber === s.seasonNumber
+                  ).length || null),
               }))
             )
-            if (data.episodes && data.episodes.length > 0) {
-              setFetchedTvEpisodes(data.episodes)
-            }
+            if (episodes.length > 0) setFetchedTvEpisodes(episodes)
           }
-        })
-        .catch((err: unknown) => {
+        })        .catch((err: unknown) => {
           console.error("Failed to fetch tv seasons for modal:", err)
         })
         .finally(() => {
@@ -244,17 +245,19 @@ export function MediaListModal({
         setFetchedAnimeEpisodes(null)
         return
       }
-      elysia.borealis.media
-        .anime({ id: Number(media.id) })
-        .get()
+      elysia.borealis
+        .anime({ animeId: Number(media.id) })
+        .episodes.get()
         .then((res: any) => {
-          const raw = res?.data
-          const data = raw?.media ?? raw
-          if (data && data.episodes && data.episodes.length > 0) {
-            setFetchedAnimeEpisodes(data.episodes)
+          const list = Array.isArray(res?.data)
+            ? res.data
+            : (res?.data?.episodes ?? res?.data?.items ?? [])
+          if (list.length > 0) {
+            setFetchedAnimeEpisodes(
+              list.map((e: any) => ({ ...e, number: e.number ?? e.episodeNumber }))
+            )
           }
-        })
-        .catch((err: unknown) => {
+        })        .catch((err: unknown) => {
           console.error("Failed to fetch anime episodes for modal:", err)
         })
     } else if (!isOpen) {

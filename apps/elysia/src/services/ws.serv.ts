@@ -216,7 +216,19 @@ export class WsServ {
 
       const msg = parsed as Record<string, unknown>
 
-      // Authenticate via signed JWT token frame
+      // Authenticate via signed JWT token frame (or mock userId in test mode)
+      if (
+        msg.type === 'auth' &&
+        typeof msg.userId === 'string' &&
+        Bun.env.BUN_ENV === 'test'
+      ) {
+        const uid = msg.userId.trim()
+        const conn = (ws as any).raw ?? ws
+        this.register(conn, uid)
+        this.send(conn, 'auth:success', { userId: uid })
+        return
+      }
+
       if (
         msg.type === 'auth' &&
         typeof msg.token === 'string' &&

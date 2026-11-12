@@ -13,13 +13,14 @@ import { StaffTab } from "./tabs/staff-tab"
 import { EpisodesTab } from "./tabs/episodes-tab"
 import { TracksTab } from "./tabs/tracks-tab"
 import { LyricsTab } from "./tabs/lyrics-tab"
-import { ImagesTab, extractMediaImages } from "./tabs/images-tab"
+import { ImagesTab } from "./tabs/images-tab"
 import { TrailersTab } from "./tabs/trailers-tab"
 import { StatsTab } from "./tabs/stats-tab"
 import { FriendsMediaTab } from "./tabs/friends-tab"
 import { PeopleTab } from "./tabs/people-tab"
 import { RecommendationsMediaTab } from "./tabs/recommendations-tab"
 import { MediaFooter } from "./media-footer"
+import { useMediaSection, pickList, type MediaSection } from "./use-media-section"
 import { addBrowseVisitToStore, type BrowseCategory } from "@/lib/browse-history"
 import type {
   MediaTabItem,
@@ -28,9 +29,53 @@ import type {
   SimilarMediaCardItem,
 } from "./media-types"
 
+function mapCharacter(c: any) {
+  const d = c.characterData ?? c.character ?? {}
+  const a = c.actorData ?? c.actor ?? null
+  return {
+    id: c.id,
+    characterId: c.characterId ?? d.id,
+    namePrimary: d.namePrimary ?? "",
+    nameNative: d.nameNative ?? null,
+    image: d.image ?? null,
+    role: c.role,
+    order: c.order ?? null,
+    description: d.description ?? null,
+    gender: d.gender ?? null,
+    age: d.age ?? null,
+    actor: a
+      ? {
+          id: a.id,
+          namePrimary: a.namePrimary,
+          nameNative: a.nameNative ?? null,
+          image: a.image ?? null,
+          language: a.language ?? null,
+        }
+      : null,
+  }
+}
+
+function mapStaff(s: any) {
+  const p = s.personData ?? s.person ?? {}
+  return {
+    id: s.id,
+    personId: s.personId ?? p.id,
+    role: s.role,
+    customRole: s.customRole ?? null,
+    person: {
+      id: p.id,
+      namePrimary: p.namePrimary ?? "",
+      nameNative: p.nameNative ?? null,
+      image: p.image ?? null,
+      language: p.language ?? null,
+      description: p.description ?? null,
+      gender: p.gender ?? null,
+    },
+  }
+}
 interface MediaDetailViewProps {
   media: NormalizedMediaData
-  similarList: SimilarMediaCardItem[]
+  similarList?: SimilarMediaCardItem[]
   isQueuedFetch?: boolean
 }
 
@@ -123,116 +168,146 @@ export function MediaDetailView({
     isQueuedFetch,
   ])
 
-  // Compute available tabs according to media category and available data
+  // Static tab list (no counts): sections load lazily from their own endpoints
   const availableTabs = useMemo(() => {
-    const uniqueCharCount = new Set(media.characters.map((c) => c.characterId))
-      .size
-
     const tabs: MediaTabItem[] = [{ key: "overview", label: "Overview" }]
+    const cat = media.category
+    const isMusic = cat === "music"
 
-    // Relations tab (if relations exist)
-    if (media.relations && media.relations.length > 0) {
-      tabs.push({
-        key: "relations",
-        label: "Relations",
-        count: media.relations.length,
-      })
+    tabs.push({ key: "relations", label: "Relations" })
+
+    if (isMusic && media.tracks && media.tracks.length > 0) {
+      tabs.push({ key: "tracks", label: "Tracks" })
     }
-
-    // Music: Tracks tab for albums
-    if (media.category === "music" && media.tracks && media.tracks.length > 0) {
-      tabs.push({
-        key: "tracks",
-        label: "Tracks",
-        count: media.tracks.length,
-      })
+    if (isMusic && (media.lyrics || media.syncedLyrics)) {
+      tabs.push({ key: "lyrics", label: "Lyrics" })
     }
-
-    // Music: Lyrics tab for tracks
-    if (media.category === "music" && (media.lyrics || media.syncedLyrics)) {
-      tabs.push({
-        key: "lyrics",
-        label: "Lyrics",
-      })
+    if (cat !== "other" && !isMusic) {
+      tabs.push({ key: "characters", label: "Characters" })
     }
-
-    // Characters tab (only if characters exist or not music/other)
-    if (
-      (media.category !== "music" && media.category !== "other") ||
-      uniqueCharCount > 0
-    ) {
-      tabs.push({
-        key: "characters",
-        label: "Characters",
-        count: uniqueCharCount > 0 ? uniqueCharCount : undefined,
-      })
+    if (cat !== "other") {
+      tabs.push({ key: "staff", label: isMusic ? "Credits" : "Staff" })
     }
-
-    // Staff tab (not for other media)
-    if (
-      media.category !== "other" &&
-      (media.staff.length > 0 || media.category !== "music")
-    ) {
-      tabs.push({
-        key: "staff",
-        label: media.category === "music" ? "Credits" : "Staff",
-        count: media.staff.length > 0 ? media.staff.length : undefined,
-      })
+    if (cat === "anime" || cat === "tv") {
+      tabs.push({ key: "episodes", label: "Episodes" })
     }
-
-    // Episodes tab for Anime and TV
-    if (media.category === "anime" || media.category === "tv") {
-      tabs.push({
-        key: "episodes",
-        label: "Episodes",
-        count: media.episodes?.length ?? media.episodeCount ?? undefined,
-      })
+    if (cat !== "other") {
+      tabs.push({ key: "images", label: "Images" })
     }
-
-    // Images tab (not for other media)
-    if (media.category !== "other") {
-      const extracted = extractMediaImages(
-        media.coverImage,
-        media.bannerImage,
-        media.images
-      )
-      const imageCount = extracted.length
-      tabs.push({
-        key: "images",
-        label: "Images",
-        count: imageCount > 0 ? imageCount : undefined,
-      })
+    if (!isMusic && (media.trailers?.length ?? 0) > 0) {
+      tabs.push({ key: "trailers", label: "Trailers" })
     }
-
-    // Trailers tab (only for non-music media with trailers)
-    if (media.category !== "music") {
-      const trailerCount = media.trailers?.length ?? 0
-      if (trailerCount > 0) {
-        tabs.push({
-          key: "trailers",
-          label: "Trailers",
-          count: trailerCount,
-        })
-      }
-    }
-
-    // Stats, Friends, People, Recommendations
     tabs.push(
       { key: "stats", label: "Stats" },
       { key: "friends", label: "Friends" },
       { key: "people", label: "People" },
       { key: "recommendations", label: "Recommendations" }
     )
-
     return tabs
-  }, [media])
-
+  }, [
+    media.category,
+    media.tracks,
+    media.lyrics,
+    media.syncedLyrics,
+    media.trailers,
+  ])
   // Fallback if URL tab is not in available tabs
   const validActiveTab = useMemo(() => {
     const exists = availableTabs.some((t) => t.key === activeTab)
     return exists ? activeTab : "overview"
   }, [availableTabs, activeTab])
 
+  // Lazy per-tab data (cached across tab switches)
+  const hasSections = media.category !== "other"
+  const sec = (name: MediaSection, tabs: MediaTabKey[]) =>
+    useMediaSection(
+      media.category,
+      media.id,
+      name,
+      hasSections && tabs.includes(validActiveTab)
+    )
+  const similarSec = sec("similar", ["overview"])
+  const charactersSec = sec("characters", ["characters"])
+  const relationsSec = sec("relations", ["relations"])
+  const staffSec = sec("staff", ["staff"])
+  const episodesSec = sec("episodes", ["episodes"])
+  const seasonsSec = useMediaSection(
+    media.category,
+    media.id,
+    "seasons",
+    media.category === "tv" && validActiveTab === "episodes"
+  )
+  const imagesSec = sec("images", ["images"])
+  const statsSec = sec("stats", ["stats"])
+
+  const fullMedia = useMemo<NormalizedMediaData>(() => {
+    const m: NormalizedMediaData = {
+      ...media,
+      characters: (media.characters ?? []).map((c: any) =>
+        c.characterData ? mapCharacter(c) : c
+      ),
+      staff: media.staff ?? [],
+      relations: media.relations ?? [],
+    }
+    if (charactersSec.data) {
+      m.characters = pickList(charactersSec.data, ["characters", "items"]).map(
+        mapCharacter
+      )
+    }
+    if (staffSec.data) {
+      m.staff = pickList(staffSec.data, ["staff", "items"]).map(mapStaff)
+    }
+    if (relationsSec.data) {
+      m.relations = pickList(relationsSec.data, ["relations", "items"]).map(
+        (r: any) => ({ ...r, target: r.target ?? r.data ?? null })
+      )
+    }
+    if (episodesSec.data) {
+      m.episodes = pickList(episodesSec.data, ["episodes", "items"]).map(
+        (e: any) => ({ ...e, number: e.number ?? e.episodeNumber })
+      )
+    }
+    if (seasonsSec.data) {
+      m.seasons = pickList(seasonsSec.data, ["seasons", "items"])
+    }
+    if (imagesSec.data) {
+      const d: any = imagesSec.data
+      m.images = d.images ?? d
+    }
+    if (statsSec.data) {
+      const d: any = (statsSec.data as any).stats ?? statsSec.data
+      Object.assign(m, d)
+    }
+    return m
+  }, [
+    media,
+    charactersSec.data,
+    staffSec.data,
+    relationsSec.data,
+    episodesSec.data,
+    seasonsSec.data,
+    imagesSec.data,
+    statsSec.data,
+  ])
+
+  const similarItems = useMemo<SimilarMediaCardItem[]>(() => {
+    if (!similarSec.data) return similarList ?? []
+    return pickList(similarSec.data, ["items", "similar"]).map((item: any) => ({
+      id: item.id,
+      type: item.type ?? item.mediaType ?? media.category,
+      format: item.format ?? null,
+      coverImage: item.coverImage ?? null,
+      bannerImage: item.bannerImage ?? null,
+      description: item.description ?? null,
+      status: item.status ?? null,
+      titlePrimary: item.titlePrimary ?? "",
+      titleSecondary: item.titleSecondary ?? null,
+      titleNative: item.titleNative ?? null,
+      year: item.startDateYear ?? item.year ?? null,
+      score: item.averageScore ?? null,
+      genres: item.genres ?? [],
+    }))
+  }, [similarSec.data, similarList, media.category])
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
       {/* Top Hero Section with Navigation Tabs integrated at the bottom */}
@@ -248,8 +323,8 @@ export function MediaDetailView({
       <main className="w-full flex-1 px-4 py-8 sm:px-6 lg:px-8">
         {validActiveTab === "overview" && (
           <OverviewTab
-            media={media}
-            similarList={similarList}
+            media={fullMedia}
+            similarList={similarItems}
             onViewAllCharacters={() => setActiveTab("characters")}
             onViewAllTracks={() => setActiveTab("tracks")}
             onViewAllLyrics={() => setActiveTab("lyrics")}
@@ -258,7 +333,7 @@ export function MediaDetailView({
 
         {validActiveTab === "relations" && (
           <RelationsTab
-            relations={media.relations ?? []}
+            relations={fullMedia.relations ?? []}
             titlePreference={titlePreference}
           />
         )}
@@ -281,15 +356,15 @@ export function MediaDetailView({
         )}
 
         {validActiveTab === "characters" && (
-          <CharactersTab characters={media.characters} />
+          <CharactersTab characters={fullMedia.characters} />
         )}
 
-        {validActiveTab === "staff" && <StaffTab staff={media.staff} />}
+        {validActiveTab === "staff" && <StaffTab staff={fullMedia.staff} />}
 
         {validActiveTab === "episodes" && (
           <EpisodesTab
-            episodes={media.episodes ?? []}
-            seasons={media.seasons}
+            episodes={fullMedia.episodes ?? []}
+            seasons={fullMedia.seasons}
             airingSchedule={media.airingSchedule}
             nextAiringEpisodeNumber={media.nextAiringEpisodeNumber}
             nextAiringAt={media.nextAiringAt}
@@ -301,7 +376,7 @@ export function MediaDetailView({
           <ImagesTab
             coverImage={media.coverImage}
             bannerImage={media.bannerImage}
-            images={media.images ?? null}
+            images={fullMedia.images ?? null}
           />
         )}
 
@@ -309,7 +384,7 @@ export function MediaDetailView({
           <TrailersTab trailers={media.trailers ?? null} />
         )}
 
-        {validActiveTab === "stats" && <StatsTab media={media} />}
+        {validActiveTab === "stats" && <StatsTab media={fullMedia} />}
 
         {validActiveTab === "friends" && (
           <FriendsMediaTab mediaCategory={media.category} mediaId={media.id} />

@@ -2,9 +2,9 @@
     - Stremio plugin for borealis
     - In media pages (anime, manga etc) add tab People in which it will list all users who have that media in list (that is public and media is not private)
     - Link manga list entries to books since its kinda the same
-
-
     - test phone/touch experience with new borealisCard
+
+
 
     
 # Akaromi [Password manager]
@@ -26,6 +26,10 @@
     - Dev tools (floating popup like nextjs has), onclick open sidebar with tools [metadata viewer, send notification, trigger events/workers... ]
     - .md version of every single page
     - mcp server for all the apps
+    - Switch to https://github.com/Infisical/infisical for secret management
+    - update docker compose to include all needed services (postgres, redis etc) and already be preconfigured and ready to go
+
+    - migrate to namelessliberty.com
 
 
 # Apertune [Music player]
@@ -65,7 +69,8 @@
 
 # Elysia [Backend powering all this]
     --- Elysia 2 docs https://next.elysiajs.com/at-glance/
-    - disable ws and public route logs (show only in dev)
+
+    - RE existing elysia openapi plugin and create custom version of it
 
 # Next
     - pnpm add @elysia/eden@next if not already
@@ -81,6 +86,15 @@
 # JellyBorealis 
     - Add support for other list (idk we'll see)
     - detect music button in the player ui (next to borealis icon) to detect currently playing music in the playback
+
+# BorealisReader
+    - cross-platform epub reader
+    - folders
+    - sync reading progress with borealis
+        - when a book is opened, prompt with a search to link it to a borealis entry (if not already)
+        - select on which chapters/page to actually increment progress
+        - when finished reading show a popup to either increment volume or set status to finished
+        - if a folder is linked to entry instead then all books in that folder will be linked to the same entry 
 
 # Akaromi For Firefox
     - 

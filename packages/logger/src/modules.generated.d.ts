@@ -1,0 +1,42 @@
+// This file is auto-generated at runtime by @Iris/logger. Do not edit manually.
+export interface KnownModules {
+  "ActivityServ": true
+  "AniList": true
+  "Api": true
+  "Auth": true
+  "Borealis:EntitySyncer": true
+  "Borealis:ExternalSearch": true
+  "Borealis:Freshness": true
+  "Borealis:PreviewSyncer": true
+  "Borealis:Provider:AniList": true
+  "Borealis:Provider:AnimeMapping": true
+  "Borealis:Provider:Deezer": true
+  "Borealis:Provider:GoogleBooks": true
+  "Borealis:Provider:IGDB": true
+  "Borealis:Provider:TheTVDB": true
+  "BullMQ:ConnectionSync": true
+  "BullMQ:Emails": true
+  "BullMQ:MediaQueue": true
+  "CarinaAuth": true
+  "CarinaNotifications": true
+  "Controller": true
+  "Database": true
+  "DevModule": true
+  "Elysia": true
+  "Elysia:Cluster": true
+  "Elysia:Server": true
+  "Elysia:WebSocket": true
+  "ElysiaMain": true
+  "EmailService": true
+  "Mailer": true
+  "MediaQueue": true
+  "MediaStatsServ": true
+  "NotificationService": true
+  "ProdModule": true
+  "Scoped": true
+  "SubModule": true
+  "Test": true
+  "Worker:ConnectionSync": true
+  "Worker:Email": true
+  "Worker:Media": true
+}

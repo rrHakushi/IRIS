@@ -23,9 +23,13 @@ const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mon
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_URL ||
-      process.env.NEXT_PUBLIC_APP_URL ||
-      "http://localhost:3000"
+    (() => {
+      const url = process.env.NEXT_PUBLIC_URL
+      if (!url) {
+        throw new Error("Missing required environment variable: NEXT_PUBLIC_URL")
+      }
+      return url
+    })()
   ),
   title: "IRIS",
   description:

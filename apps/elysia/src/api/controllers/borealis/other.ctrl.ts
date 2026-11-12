@@ -4,8 +4,46 @@ import { hasPermission, IRISFlags } from '@IRIS/permissions'
 import { BorealisOtherModel } from '../../models/borealis/other.model'
 import { BorealisOtherServ } from '../../../services/borealis/other.serv'
 
-export const borealisOther = new Elysia({ prefix: '/borealis/other' })
+// Split into small Elysia instances to avoid TS2589 (excessively deep type instantiation).
+const routes1 = new Elysia()
   .use(session())
+
+  .get(
+    '',
+    {
+      query: BorealisOtherModel.catalogQuery,
+      detail: {
+        summary: 'Get public custom items catalog',
+        description: 'Returns 50 published custom items per page with cursor/page pagination.',
+        tags: ['Borealis - Other'],
+      },
+      response: {
+        200: BorealisOtherModel.catalogResponse,
+        422: BorealisOtherModel.validationError,
+      },
+    },
+    async ({ query }) => {
+      return await BorealisOtherServ.getCatalog(query)
+    }
+  )
+
+  // GET /borealis/other/filters (Aggregated filters)
+  .get(
+    '/filters',
+    {
+      detail: {
+        summary: 'Get catalog filters for custom items',
+        description: 'Returns available formats and statuses for custom items.',
+        tags: ['Borealis - Other'],
+      },
+      response: {
+        200: BorealisOtherModel.filtersResponse,
+      },
+    },
+    async () => {
+      return await BorealisOtherServ.getFilters()
+    }
+  )
 
   // POST /borealis/other/upload (Upload image asset <= 1MB)
   .post(
@@ -56,6 +94,10 @@ export const borealisOther = new Elysia({ prefix: '/borealis/other' })
   )
 
   // GET /borealis/other/:otherId (Get custom item details)
+
+const routes2 = new Elysia()
+  .use(session())
+
   .get(
     '/:otherId',
     {
@@ -158,5 +200,100 @@ export const borealisOther = new Elysia({ prefix: '/borealis/other' })
       return await BorealisOtherServ.forkItem(user.id, otherId, isAdmin)
     }
   )
+
+  // GET /borealis/other/:otherId/stats (Stats)
+
+const routes3 = new Elysia()
+  .use(session())
+
+  .get(
+    '/:otherId/stats',
+    {
+      params: BorealisOtherModel.otherParam,
+      detail: {
+        summary: 'Get stats for custom item',
+        description: 'Returns score and status distributions, favorites, and popularity.',
+        tags: ['Borealis - Other'],
+      },
+      response: {
+        200: BorealisOtherModel.statsResponse,
+        404: BorealisOtherModel.notFoundError,
+        422: BorealisOtherModel.validationError,
+      },
+    },
+    async ({ params: { otherId } }) => {
+      return await BorealisOtherServ.getStats(otherId)
+    }
+  )
+
+  // GET /borealis/other/:otherId/friends (Friends list entries)
+  .get(
+    '/:otherId/friends',
+    {
+      params: BorealisOtherModel.otherParam,
+      detail: {
+        summary: 'Get friends tracking this custom item',
+        description: 'Returns public list entries for accepted friends tracking this custom item.',
+        tags: ['Borealis - Other'],
+      },
+      response: {
+        200: BorealisOtherModel.friendsResponse,
+        404: BorealisOtherModel.notFoundError,
+        422: BorealisOtherModel.validationError,
+      },
+    },
+    async ({ params: { otherId }, session: userSession }) => {
+      const user = userSession.getUser()
+      return await BorealisOtherServ.getFriends(otherId, user?.id)
+    }
+  )
+
+  // GET /borealis/other/:otherId/people (All public list entries)
+  .get(
+    '/:otherId/people',
+    {
+      params: BorealisOtherModel.otherParam,
+      query: BorealisOtherModel.peopleQuery,
+      detail: {
+        summary: 'Get all public users tracking this custom item',
+        description: 'Paginated list of users tracking this item with primary and secondary progress.',
+        tags: ['Borealis - Other'],
+      },
+      response: {
+        200: BorealisOtherModel.peopleResponse,
+        404: BorealisOtherModel.notFoundError,
+        422: BorealisOtherModel.validationError,
+      },
+    },
+    async ({ params: { otherId }, query }) => {
+      return await BorealisOtherServ.getPeople(otherId, query)
+    }
+  )
+
+  // GET /borealis/other/:otherId/recommendations (Recommendations)
+  .get(
+    '/:otherId/recommendations',
+    {
+      params: BorealisOtherModel.otherParam,
+      detail: {
+        summary: 'Get recommendations for this custom item',
+        description: 'Returns community recommendations for this custom item.',
+        tags: ['Borealis - Other'],
+      },
+      response: {
+        200: BorealisOtherModel.recommendationsResponse,
+        404: BorealisOtherModel.notFoundError,
+        422: BorealisOtherModel.validationError,
+      },
+    },
+    async ({ params: { otherId } }) => {
+      return await BorealisOtherServ.getRecommendations(otherId)
+    }
+  )
+
+export const borealisOther = new Elysia({ prefix: '/borealis/other' })
+  .use(routes1)
+  .use(routes2)
+  .use(routes3)
 
 export default borealisOther

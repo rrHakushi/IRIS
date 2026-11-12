@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   try {
-    const { data } = await elysia.borealis.media.music({ id: numericId }).get()
+    const { data } = await elysia.borealis.music({ id: numericId }).get()
     const trackData = (data as any)?.media ?? (data as any)
     if (!trackData) {
       return {
@@ -64,8 +64,8 @@ export default async function TrackDetailPage({ params, searchParams }: Props) {
 
   // Parallel fetch track details and similar tracks via Elysia client without waterfalls
   const [trackRes, similarRes] = await Promise.all([
-    elysia.borealis.media.music({ id: numericId }).get(),
-    elysia.borealis.media
+    elysia.borealis.music({ id: numericId }).get(),
+    elysia.borealis
       .music({ id: numericId })
       .similar.get({ query: { limit: 50 } }),
   ])

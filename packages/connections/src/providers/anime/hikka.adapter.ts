@@ -42,11 +42,15 @@ export class HikkaAdapter extends BaseConnectionAdapter {
   };
 
   private getClientId(): string {
-    return Bun.env.HIKKA_CLIENT_ID || "";
+    const id = Bun.env.HIKKA_CLIENT_ID;
+    if (!id) throw new Error("Missing required environment variable: HIKKA_CLIENT_ID");
+    return id;
   }
 
   private getClientSecret(): string {
-    return Bun.env.HIKKA_CLIENT_SECRET || "";
+    const secret = Bun.env.HIKKA_CLIENT_SECRET;
+    if (!secret) throw new Error("Missing required environment variable: HIKKA_CLIENT_SECRET");
+    return secret;
   }
 
   private getAuthToken(credentials?: ConnectionCredentials): string | undefined {

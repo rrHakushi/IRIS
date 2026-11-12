@@ -6,9 +6,7 @@ import type { TagColor } from "./types.js"
  */
 export const isColorSupported =
   !("NO_COLOR" in (Bun.env || {})) &&
-  (Bun.env?.TERM !== "dumb" ||
-    Boolean(Bun.env?.CI) ||
-    Boolean(process.stdout?.isTTY))
+  Boolean(process.stdout?.isTTY)
 
 const format = (open: number, close: number) => (str: unknown) =>
   isColorSupported ? `\x1b[${open}m${str}\x1b[${close}m` : String(str)

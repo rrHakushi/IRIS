@@ -1,11 +1,13 @@
 "use client"
 
 import React, { useMemo, useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
   IconClock,
   IconExternalLink,
   IconRefresh,
+  IconUser,
   IconWorld,
 } from "@tabler/icons-react"
 import { Button } from "@workspace/ui/components/button"
@@ -33,7 +35,169 @@ export function MediaFooter({ media }: MediaFooterProps) {
     return false
   }, [user])
 
-  const sources = media.sources ? Object.entries(media.sources) : []
+  const getSourceUrlFromMap = (key: string): string | null => {
+    if (!media.sources || typeof media.sources !== "object") return null
+    const entry = (media.sources as Record<string, any>)[key]
+    if (!entry) return null
+    if (typeof entry === "string" && (entry.startsWith("http://") || entry.startsWith("https://"))) {
+      return entry
+    }
+    if (typeof entry === "object" && typeof entry.url === "string") {
+      return entry.url
+    }
+    return null
+  }
+
+  const dataSources = useMemo(() => {
+    const items: Array<{ key: string; name: string; href: string; external: boolean }> = []
+
+    switch (media.category) {
+      case "anime": {
+        items.push({
+          key: "anilist",
+          name: "AniList",
+          href:
+            getSourceUrlFromMap("anilist") ||
+            getSourceUrlFromMap("al") ||
+            (media.anilistId ? `https://anilist.co/anime/${media.anilistId}` : "https://anilist.co"),
+          external: true,
+        })
+        items.push({
+          key: "mal",
+          name: "MyAnimeList",
+          href:
+            getSourceUrlFromMap("mal") ||
+            (media.malId ? `https://myanimelist.net/anime/${media.malId}` : "https://myanimelist.net"),
+          external: true,
+        })
+        items.push({
+          key: "thetvdb",
+          name: "TheTVDB",
+          href:
+            getSourceUrlFromMap("thetvdb") ||
+            (media.tvDBId ? `https://thetvdb.com/dereferrer/series/${media.tvDBId}` : "https://thetvdb.com"),
+          external: true,
+        })
+        items.push({
+          key: "fribb",
+          name: "Fribb/anime-lists",
+          href: "https://github.com/Fribb/anime-lists",
+          external: true,
+        })
+        break
+      }
+      case "manga": {
+        items.push({
+          key: "anilist",
+          name: "AniList",
+          href:
+            getSourceUrlFromMap("anilist") ||
+            getSourceUrlFromMap("al") ||
+            (media.anilistId ? `https://anilist.co/manga/${media.anilistId}` : "https://anilist.co"),
+          external: true,
+        })
+        items.push({
+          key: "mal",
+          name: "MyAnimeList",
+          href:
+            getSourceUrlFromMap("mal") ||
+            (media.malId ? `https://myanimelist.net/manga/${media.malId}` : "https://myanimelist.net"),
+          external: true,
+        })
+        items.push({
+          key: "fribb",
+          name: "Fribb/anime-lists",
+          href: "https://github.com/Fribb/anime-lists",
+          external: true,
+        })
+        break
+      }
+      case "movies": {
+        items.push({
+          key: "thetvdb",
+          name: "TheTVDB",
+          href:
+            getSourceUrlFromMap("thetvdb") ||
+            (media.tvDBId ? `https://thetvdb.com/dereferrer/movie/${media.tvDBId}` : "https://thetvdb.com"),
+          external: true,
+        })
+        break
+      }
+      case "tv": {
+        items.push({
+          key: "thetvdb",
+          name: "TheTVDB",
+          href:
+            getSourceUrlFromMap("thetvdb") ||
+            (media.tvDBId ? `https://thetvdb.com/dereferrer/series/${media.tvDBId}` : "https://thetvdb.com"),
+          external: true,
+        })
+        break
+      }
+      case "games": {
+        items.push({
+          key: "igdb",
+          name: "IGDB",
+          href:
+            getSourceUrlFromMap("igdb") ||
+            (media.igdbId ? `https://www.igdb.com/games/${media.igdbId}` : "https://www.igdb.com"),
+          external: true,
+        })
+        break
+      }
+      case "books": {
+        items.push({
+          key: "googlebooks",
+          name: "Google Books",
+          href:
+            getSourceUrlFromMap("googleBooks") ||
+            getSourceUrlFromMap("googlebooks") ||
+            (media.googleBookId
+              ? `https://books.google.com/books?id=${media.googleBookId}`
+              : "https://books.google.com"),
+          external: true,
+        })
+        break
+      }
+      case "music": {
+        const isAlbum = media.format?.toUpperCase() === "ALBUM"
+        items.push({
+          key: "deezer",
+          name: "Deezer",
+          href:
+            getSourceUrlFromMap("deezer") ||
+            (media.deezerId
+              ? `https://www.deezer.com/${isAlbum ? "album" : "track"}/${media.deezerId}`
+              : "https://www.deezer.com"),
+          external: true,
+        })
+        items.push({
+          key: "lrclib",
+          name: "LRCLIB",
+          href: getSourceUrlFromMap("lrclib") || "https://lrclib.net",
+          external: true,
+        })
+        break
+      }
+      case "other": {
+        const creatorSlug = media.creatorUsername || media.creatorId
+        const creatorLabel =
+          media.creatorDisplayName ||
+          (media.creatorUsername ? `@${media.creatorUsername}` : "Creator")
+        if (creatorSlug) {
+          items.push({
+            key: "creator",
+            name: `Creator (${creatorLabel})`,
+            href: `/carina/users/${creatorSlug}`,
+            external: false,
+          })
+        }
+        break
+      }
+    }
+
+    return items
+  }, [media])
 
   const formatUpdatedDate = (dateVal: string | Date) => {
     const d = new Date(dateVal)
@@ -59,27 +223,25 @@ export function MediaFooter({ media }: MediaFooterProps) {
 
       switch (media.category) {
         case "anime":
-          res = await elysia.borealis.media.anime({ id: media.id }).refresh.post()
+          res = await (elysia.borealis as any).anime({ animeId: media.id }).refresh.post()
           break
         case "manga":
-          res = await elysia.borealis.media.manga({ id: media.id }).refresh.post()
+          res = await (elysia.borealis as any).manga({ mangaId: media.id }).refresh.post()
           break
         case "tv":
-          res = await elysia.borealis.media.tv({ id: media.id }).refresh.post()
+          res = await (elysia.borealis as any).tv({ tvId: media.id }).refresh.post()
           break
         case "movies":
-          res = await elysia.borealis.media
-            .movies({ id: media.id })
-            .refresh.post()
+          res = await (elysia.borealis as any).movies({ movieId: media.id }).refresh.post()
           break
         case "games":
-          res = await elysia.borealis.media.games({ id: media.id }).refresh.post()
+          res = await (elysia.borealis as any).games({ gameId: media.id }).refresh.post()
           break
         case "books":
-          res = await elysia.borealis.media.books({ id: media.id }).refresh.post()
+          res = await (elysia.borealis as any).books({ bookId: media.id }).refresh.post()
           break
         case "music":
-          res = await elysia.borealis.media.music({ id: media.id }).refresh.post()
+          res = await (elysia.borealis as any).music({ musicId: media.id }).refresh.post()
           break
       }
 
@@ -112,51 +274,34 @@ export function MediaFooter({ media }: MediaFooterProps) {
             <span>Data Sources</span>
           </div>
 
-          {sources.length > 0 ? (
+          {dataSources.length > 0 ? (
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-              {sources.map(([provider, info]) => {
-                const url =
-                  typeof info === "object" &&
-                  info !== null &&
-                  "url" in info &&
-                  typeof info.url === "string"
-                    ? info.url
-                    : typeof info === "string" &&
-                        (info.startsWith("http://") ||
-                          info.startsWith("https://"))
-                      ? info
-                      : null
-                if (!url) return null
-                const name =
-                  provider === "mal"
-                    ? "MyAnimeList"
-                    : provider === "al" || provider === "anilist"
-                      ? "AniList"
-                      : provider === "thetvdb"
-                        ? "TheTVDB"
-                        : provider === "deezer"
-                          ? "Deezer"
-                          : provider === "lrclib"
-                            ? "LRCLIB"
-                            : provider.charAt(0).toUpperCase() +
-                              provider.slice(1)
-
-                return (
+              {dataSources.map((source) =>
+                source.external ? (
                   <a
-                    key={provider}
-                    href={url}
+                    key={source.key}
+                    href={source.href}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-1 text-muted-foreground outline-none hover:text-foreground hover:underline focus-visible:underline"
                   >
-                    <span>{name}</span>
+                    <span>{source.name}</span>
                     <IconExternalLink
                       className="size-3 opacity-60"
                       aria-hidden="true"
                     />
                   </a>
+                ) : (
+                  <Link
+                    key={source.key}
+                    href={source.href}
+                    className="inline-flex items-center gap-1 text-muted-foreground outline-none hover:text-foreground hover:underline focus-visible:underline"
+                  >
+                    <IconUser className="size-3 opacity-70" aria-hidden="true" />
+                    <span>{source.name}</span>
+                  </Link>
                 )
-              })}
+              )}
             </div>
           ) : (
             <span className="text-muted-foreground/70 italic">

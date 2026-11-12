@@ -4,14 +4,10 @@ import { BorealisPlaylistsModel } from '../../models/borealis/playlists.model'
 import { BorealisPlaylistsServ } from '../../../services/borealis/playlists.serv'
 import { BadRequest } from '../../../lib/errors'
 
-export const borealisPlaylists = new Elysia({ prefix: '/borealis/playlists' })
+// Split into small Elysia instances to avoid TS2589 (excessively deep type instantiation).
+const routes1 = new Elysia()
   .use(session())
 
-  // ===========================================================================
-  // Playlists (Custom Lists) Root Endpoints
-  // ===========================================================================
-
-  // GET /borealis/playlists (Get user custom playlists)
   .get(
     '',
     {
@@ -138,6 +134,10 @@ export const borealisPlaylists = new Elysia({ prefix: '/borealis/playlists' })
   )
 
   // DELETE /borealis/playlists/:playlistId/entries (Remove entry from playlist)
+
+const routes2 = new Elysia()
+  .use(session())
+
   .delete(
     '/:playlistId/entries',
     {
@@ -286,6 +286,10 @@ export const borealisPlaylists = new Elysia({ prefix: '/borealis/playlists' })
   )
 
   // DELETE /borealis/playlists/:playlistId/collaborators/:collaboratorId
+
+const routes3 = new Elysia()
+  .use(session())
+
   .delete(
     '/:playlistId/collaborators/:collaboratorId',
     {
@@ -420,6 +424,10 @@ export const borealisPlaylists = new Elysia({ prefix: '/borealis/playlists' })
   // ===========================================================================
 
   // PATCH /borealis/playlists/:playlistId (Update playlist details)
+
+const routes4 = new Elysia()
+  .use(session())
+
   .patch(
     '/:playlistId',
     {
@@ -468,5 +476,11 @@ export const borealisPlaylists = new Elysia({ prefix: '/borealis/playlists' })
       return await BorealisPlaylistsServ.deletePlaylist(user.id, playlistId)
     }
   )
+
+export const borealisPlaylists = new Elysia({ prefix: '/borealis/playlists' })
+  .use(routes1)
+  .use(routes2)
+  .use(routes3)
+  .use(routes4)
 
 export default borealisPlaylists

@@ -169,9 +169,9 @@ export async function processMediaJob(job: Job<MediaJobData>): Promise<boolean> 
   )
 
   if (data.type === 'weekly-active-sync') {
-    if (process.env.NODE_ENV !== 'production') {
+    if (Bun.env.BUN_ENV !== 'production') {
       logger.info(
-        `${c.yellow('⏩ [Cron Skipped]')}: Weekly active media sync is disabled in development mode (NODE_ENV=${process.env.NODE_ENV || 'development'})`
+        `${c.yellow('⏩ [Cron Skipped]')}: Weekly active media sync is disabled in development mode (BUN_ENV=${Bun.env.BUN_ENV || 'development'})`
       )
       return true
     }
@@ -277,8 +277,15 @@ export function createMediaWorker(opts?: CreateMediaWorkerOptions): Worker<Media
     logger.info(`${c.dim('💤 [Queue Drained]')} All jobs in media-updates queue have been processed`)
   })
 
-  worker.on('error', (err) => {
-    logger.warn(`${c.red('⚠️ [Worker Error]')}: ${err.message}`)
+  worker.on('error', (err: any) => {
+    const isSocketReset =
+      err?.code === 'ECONNRESET' ||
+      err?.code === 'EPIPE' ||
+      err?.code === 'ETIMEDOUT' ||
+      /ECONNRESET|EPIPE|ETIMEDOUT/i.test(err?.message || '')
+
+    if (isSocketReset) return
+    logger.warn(`${c.red('⚠️ [Worker Error]')}: ${err?.message || err}`)
   })
 
   return worker

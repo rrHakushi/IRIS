@@ -4,7 +4,7 @@ import createNextIntlPlugin from "next-intl/plugin"
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts")
 
 const rawApiUrl =
-  (typeof Bun !== "undefined" ? Bun.env.NEXT_PUBLIC_API_URL : process.env.NEXT_PUBLIC_API_URL) || "http://localhost:4000"
+  (typeof Bun !== "undefined" ? Bun.env.ELYSIA_URL : process.env.ELYSIA_URL) || "http://localhost:4000"
 const apiUrl = rawApiUrl.replace(/\$\{ELYSIA_PORT\}|\$ELYSIA_PORT/g, "4000")
 
 const nextConfig: NextConfig = {
@@ -37,30 +37,6 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**" },
       { protocol: "http", hostname: "**" },
     ],
-  },
-  async redirects() {
-    return [
-      {
-        source: "/IRIS-search/:path*",
-        destination: "/kiroshi/:path*",
-        permanent: true,
-      },
-      {
-        source: "/IRIS-account/:path*",
-        destination: "/carina/:path*",
-        permanent: true,
-      },
-      {
-        source: "/IRIS-list/:path*",
-        destination: "/borealis/:path*",
-        permanent: true,
-      },
-      {
-        source: "/IRIS-pass/:path*",
-        destination: "/akaromi/:path*",
-        permanent: true,
-      },
-    ]
   },
   async rewrites() {
     return [

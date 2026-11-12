@@ -25,15 +25,17 @@ export function getTransporter(): Transporter | null {
   const user = Bun.env.SMTP_USER
   const pass = Bun.env.SMTP_PASS
 
-  if (host && port) {
-    transporter = nodemailer.createTransport({
-      host,
-      port: parseInt(port, 10),
-      secure: port === '465',
-      auth: user && pass ? { user, pass } : undefined,
-    })
-    logger.info(`SMTP client configured for ${c.cyan(`${host}:${port}`)}`)
+  if (!host || !port || !user || !pass) {
+    throw new Error('Missing required SMTP environment variable(s): SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS')
   }
+
+  transporter = nodemailer.createTransport({
+    host,
+    port: parseInt(port, 10),
+    secure: port === '465',
+    auth: { user, pass },
+  })
+  logger.info(`SMTP client configured for ${c.cyan(`${host}:${port}`)}`)
 
   return transporter
 }
@@ -43,7 +45,7 @@ export function getTransporter(): Transporter | null {
  *
  * Rules:
  * - In production: Always sends via SMTP.
- * - In development: If `USE_MAIL_IN_DEV === "true"`, sends via SMTP.
+ * - In development: If `SEND_EMAIL_IN_DEV === "true"`, sends via SMTP.
  *   Otherwise, logs to the dev console outbox.
  */
 export async function sendDirectMail({
@@ -52,12 +54,15 @@ export async function sendDirectMail({
   html,
   text,
 }: SendMailParams): Promise<boolean> {
-  const isDev = Bun.env.NODE_ENV === 'development' || !Bun.env.NODE_ENV
-  const useMailInDev = Bun.env.USE_MAIL_IN_DEV === 'true'
-  const shouldSendRealMail = !isDev || useMailInDev
+  const isDev = Bun.env.BUN_ENV === 'development' || !Bun.env.BUN_ENV
+  const sendEmailInDev = Bun.env.SEND_EMAIL_IN_DEV === 'true'
+  const shouldSendRealMail = !isDev || sendEmailInDev
 
-  const from = Bun.env.SMTP_FROM || 'noreply@iris.local'
-  const activeTransporter = getTransporter()
+  const from = Bun.env.SMTP_FROM
+  if (!from) {
+    throw new Error('Missing required environment variable: SMTP_FROM')
+  }
+  const activeTransporter = shouldSendRealMail ? getTransporter() : null
 
   if (shouldSendRealMail && activeTransporter) {
     try {

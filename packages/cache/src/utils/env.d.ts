@@ -17,9 +17,8 @@ export interface ResolvedCacheOptions extends Required<Omit<CacheOptions, 'redis
  * with environment variables.
  *
  * Reads:
- * - `REDIS_URL` or `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_USERNAME`, `REDIS_DB`, `REDIS_TLS`
+ * - `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_USERNAME`, `REDIS_DB`, `REDIS_TLS`
  * - `CACHE_DEFAULT_TTL`
- * - `CACHE_MEMORY_MAX_ITEMS`
  *
  * @param options - User-provided CacheOptions
  * @returns Fully populated `ResolvedCacheOptions`

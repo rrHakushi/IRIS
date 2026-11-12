@@ -49,11 +49,15 @@ export class AniListAdapter extends BaseConnectionAdapter {
   };
 
   private getClientId(): string {
-    return Bun.env.ANILIST_CLIENT_ID || "";
+    const id = Bun.env.ANILIST_CLIENT_ID;
+    if (!id) throw new Error("Missing required environment variable: ANILIST_CLIENT_ID");
+    return id;
   }
 
   private getClientSecret(): string {
-    return Bun.env.ANILIST_CLIENT_SECRET || "";
+    const secret = Bun.env.ANILIST_CLIENT_SECRET;
+    if (!secret) throw new Error("Missing required environment variable: ANILIST_CLIENT_SECRET");
+    return secret;
   }
 
   async getAuthUrl(options: AuthUrlOptions): Promise<AuthUrlResult> {

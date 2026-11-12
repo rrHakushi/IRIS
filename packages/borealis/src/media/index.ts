@@ -14,3 +14,5 @@ export * from "./music/music-tracklist"
 export * from "./list"
 export * from "./tabs"
 
+export * from "./normalize-media"
+export * from "./use-media-section"

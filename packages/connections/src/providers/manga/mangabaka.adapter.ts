@@ -45,11 +45,15 @@ export class MangaBakaAdapter extends BaseConnectionAdapter {
   };
 
   private getClientId(): string {
-    return (Bun.env.MANGABAKA_CLIENT_ID || "").trim();
+    const id = Bun.env.MANGABAKA_CLIENT_ID?.trim();
+    if (!id) throw new Error("Missing required environment variable: MANGABAKA_CLIENT_ID");
+    return id;
   }
 
   private getClientSecret(): string {
-    return (Bun.env.MANGABAKA_CLIENT_SECRET || "").trim();
+    const secret = Bun.env.MANGABAKA_CLIENT_SECRET?.trim();
+    if (!secret) throw new Error("Missing required environment variable: MANGABAKA_CLIENT_SECRET");
+    return secret;
   }
 
   private getAuthToken(credentials?: ConnectionCredentials): string | undefined {

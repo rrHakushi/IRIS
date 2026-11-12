@@ -1,13 +1,7 @@
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
-import type { AnimeDetails, SimilarMediaItem } from "@IRIS/elysia"
 import { elysia } from "@/lib/elysia"
-import { MediaDetailView } from "@Runa/borealis"
-import type {
-  NormalizedMediaData,
-  SimilarMediaCardItem,
-  ThemeSongsData,
-} from "@Runa/borealis"
+import { MediaDetailView, toNormalizedMediaOverview } from "@Runa/borealis"
 
 type Props = {
   params: Promise<{ id: string }>
@@ -24,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   try {
-    const { data } = await elysia.borealis.media.anime({ id: numericId }).get()
+    const { data } = await elysia.borealis.anime({ animeId: numericId }).get()
     const animeData = (data as any)?.media ?? data
     if (!animeData) {
       return {
@@ -52,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function AnimeDetailPage({ params, searchParams }: Props) {
+export default async function DetailPage({ params, searchParams }: Props) {
   const { id } = await params
   const { queuedFetch } = await searchParams
   const isQueued = queuedFetch === "true"
@@ -62,143 +56,18 @@ export default async function AnimeDetailPage({ params, searchParams }: Props) {
     notFound()
   }
 
-  // Parallel fetch: Media details and similar media via Elysia client without waterfalls
-  const [animeRes, similarRes] = await Promise.all([
-    elysia.borealis.media.anime({ id: numericId }).get(),
-    elysia.borealis.media.anime({ id: numericId }).similar.get({ query: { limit: 50 } }),
-  ])
-
-  if (animeRes.error || !animeRes.data) {
+  // Overview only. Every tab (relations, characters, staff, episodes, images,
+  // stats, similar...) fetches its own data client-side and caches it.
+  const res = await elysia.borealis.anime({ animeId: numericId }).get()
+  if (res.error || !res.data) {
     notFound()
   }
 
-  const anime: AnimeDetails = ((animeRes.data as any)?.media ?? animeRes.data) as unknown as AnimeDetails
-
-  const normalized: NormalizedMediaData = {
-    id: anime.id,
-    category: "anime",
-    titlePrimary: anime.titlePrimary,
-    titleSecondary: anime.titleSecondary,
-    titleNative: anime.titleNative,
-    coverImage: anime.coverImage,
-    bannerImage: anime.bannerImage,
-    description: anime.description,
-    format: anime.format,
-    status: anime.status,
-    seasonSeason: anime.seasonSeason,
-    seasonYear: anime.seasonYear,
-    startDateYear: anime.startDateYear,
-    startDateMonth: anime.startDateMonth,
-    startDateDay: anime.startDateDay,
-    endDateYear: anime.endDateYear,
-    endDateMonth: anime.endDateMonth,
-    endDateDay: anime.endDateDay,
-    source: anime.source,
-    hashtag: anime.hashtag,
-    synonyms: anime.synonyms,
-    siteUrl: anime.siteUrl,
-    externalLinks: anime.externalLinks as NormalizedMediaData["externalLinks"],
-    ageRating: anime.ageRating,
-    ageRatingGuide: anime.ageRatingGuide,
-    anilistId: anime.anilistId,
-    malId: anime.malId,
-    aniDBId: anime.aniDBId,
-    tvDBId: anime.tvDBId,
-    bangumiId: anime.bangumiId,
-    kitsuId: anime.kitsuId,
-    countryOfOrigin: anime.countryOfOrigin,
-    isAdult: anime.isAdult,
-    episodeCount: anime.episodeCount,
-    episodeDuration: anime.episodeDuration,
-    averageScore: anime.averageScore,
-    favorites: anime.favorites,
-    popularity: anime.popularity,
-    scoredCount: anime.scoredCount,
-    genres: anime.genres,
-    tags: anime.tags,
-    studios: anime.studios,
-    characters: anime.characters.map(
-      (c: AnimeDetails["characters"][number]) => ({
-        id: c.id,
-        characterId: c.character.id,
-        namePrimary: c.character.namePrimary,
-        nameNative: c.character.nameNative,
-        image: c.character.image,
-        role: c.role,
-        order: c.order,
-        description: (c.character as any)?.description ?? null,
-        gender: (c.character as any)?.gender ?? null,
-        age: (c.character as any)?.age ?? null,
-        actor: c.actor
-          ? {
-              id: c.actor.id,
-              namePrimary: c.actor.namePrimary,
-              nameNative: c.actor.nameNative,
-              image: c.actor.image,
-              language: c.actor.language,
-            }
-          : null,
-      })
-    ),
-    staff: anime.staff.map((s: AnimeDetails["staff"][number]) => ({
-      id: s.id,
-      personId: s.person.id,
-      role: s.role,
-      customRole: s.customRole,
-      person: {
-        id: s.person.id,
-        namePrimary: s.person.namePrimary,
-        nameNative: s.person.nameNative,
-        image: s.person.image,
-        language: s.person.language,
-        description: (s.person as any)?.description ?? null,
-      },
-    })),
-    episodes: anime.episodes,
-    airingSchedule: anime.airingSchedule,
-    nextAiringEpisodeNumber: anime.nextAiringEpisodeNumber,
-    nextAiringAt: anime.nextAiringAt,
-    relations: anime.relations ?? [],
-    themeSongs: anime.themeSongs as ThemeSongsData | null,
-    trailers: anime.trailers as NormalizedMediaData["trailers"],
-    images: anime.images as Record<string, string[]> | null,
-    sources: anime.sources as NormalizedMediaData["sources"],
-    statusDistribution: anime.statusDistribution as Record<
-      string,
-      number
-    > | null,
-    scoreDistribution: anime.scoreDistribution as Record<string, number> | null,
-    alAverageScore: anime.alAverageScore,
-    malAverageScore: anime.malAverageScore,
-    updatedAt: anime.updatedAt,
-  }
-
-  const rawSimilar = !similarRes.error
-    ? Array.isArray(similarRes.data)
-      ? similarRes.data
-      : (similarRes.data as any)?.items ?? []
-    : []
-
-  const similarList: SimilarMediaCardItem[] = rawSimilar.map((item: any) => ({
-    id: item.id,
-    type: item.type ?? item.mediaType ?? "anime",
-    format: item.format,
-    coverImage: item.coverImage,
-    bannerImage: item.bannerImage ?? null,
-    description: item.description ?? null,
-    status: item.status ?? null,
-    titlePrimary: item.titles?.primary ?? item.titlePrimary ?? "",
-    titleSecondary: item.titles?.secondary ?? item.titleSecondary ?? null,
-    titleNative: item.titles?.native ?? item.titleNative ?? null,
-    year: item.year ?? null,
-    score: item.averageScore ?? null,
-    genres: item.genres ?? [],
-  }))
+  const raw = (res.data as any)?.media ?? res.data
 
   return (
     <MediaDetailView
-      media={normalized}
-      similarList={similarList}
+      media={toNormalizedMediaOverview("anime", raw)}
       isQueuedFetch={isQueued}
     />
   )

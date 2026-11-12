@@ -29,7 +29,7 @@ const authTimeouts = new WeakMap<object, ReturnType<typeof setTimeout>>()
 const requestStartTimes = new WeakMap<Request, number>()
 
 // In development, auto-sync static controllers manifest when running against source
-if (Bun.env.NODE_ENV !== 'production' && Bun.env.NODE_ENV !== 'test') {
+if (Bun.env.BUN_ENV !== 'production' && Bun.env.BUN_ENV !== 'test') {
   try {
     generateControllersManifest()
   } catch (err: any) {
@@ -37,16 +37,24 @@ if (Bun.env.NODE_ENV !== 'production' && Bun.env.NODE_ENV !== 'test') {
   }
 }
 
-const isDev = Bun.env.NODE_ENV !== 'production'
+const isDev = Bun.env.BUN_ENV !== 'production'
+
+function isWsOrPublicRoute(pathname: string): boolean {
+  return (
+    pathname === '/ws' ||
+    pathname.startsWith('/ws?') ||
+    pathname.startsWith('/ws/') ||
+    pathname === '/public' ||
+    pathname.startsWith('/public/') ||
+    pathname === '/carina/public' ||
+    pathname.startsWith('/carina/public/')
+  )
+}
+
 const allowedOrigins = new Set<string>()
 if (Bun.env.NEXT_PUBLIC_URL) {
   try {
     allowedOrigins.add(new URL(Bun.env.NEXT_PUBLIC_URL).origin)
-  } catch {}
-}
-if (Bun.env.NEXT_PUBLIC_API_URL) {
-  try {
-    allowedOrigins.add(new URL(Bun.env.NEXT_PUBLIC_API_URL).origin)
   } catch {}
 }
 if (isDev) {
@@ -71,11 +79,23 @@ export const app = new Elysia()
   )
   .use(rateLimiter())
   .onRequest(({ request }) => {
-    if (request.url.startsWith(`${Bun.env.NEXT_PUBLIC_API_URL}/ws`)) return
+    let pathname = ''
+    try {
+      pathname = new URL(request.url).pathname
+    } catch {}
+    if (!isDev && isWsOrPublicRoute(pathname)) return
     requestStartTimes.set(request, performance.now())
   })
   .onAfterResponse(({ request, path, set, responseValue }) => {
-    if (request.url.startsWith(`${Bun.env.NEXT_PUBLIC_API_URL}/ws`)) return
+    let pathname = path || ''
+    try {
+      const parsed = new URL(request.url)
+      pathname = parsed.pathname + parsed.search
+    } catch { }
+
+    const routeOnly = pathname.split('?')[0] || ''
+    if (!isDev && isWsOrPublicRoute(routeOnly)) return
+
     const start = requestStartTimes.get(request)
     const duration = start ? (performance.now() - start).toFixed(1) : '?'
     let status = typeof set.status === 'number' ? set.status : 200
@@ -83,13 +103,7 @@ export const app = new Elysia()
       status = responseValue.status
     }
 
-    const { method, url } = request
-    let pathname = path
-    try {
-      const parsed = new URL(url)
-      pathname = parsed.pathname + parsed.search
-    } catch { }
-
+    const { method } = request
     const formattedDuration = c.dim(`(${duration}ms)`)
     const formattedMethod = c.bold(method)
 
@@ -145,7 +159,7 @@ export const app = new Elysia()
       status: 500,
       code: 'internal-server-error',
       detail:
-        Bun.env.NODE_ENV === 'production'
+        Bun.env.BUN_ENV === 'production'
           ? 'An unexpected internal server error occurred.'
           : error instanceof Error
             ? error.message
@@ -161,15 +175,10 @@ export const app = new Elysia()
       },
       documentation: {
         servers: [
-
-          {
-            url: Bun.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000",
-            description: 'Direct API url',
-          },
           {
             url: `${Bun.env.NEXT_PUBLIC_URL}/elysia`,
-            description: 'Proxied api url thru page url',
-          }
+            description: 'Proxied API URL',
+          },
         ],
       },
     })
@@ -198,7 +207,9 @@ export const app = new Elysia()
 
       if (authenticatedUserId) {
         wsHub.register(conn as any, authenticatedUserId)
-        logger.info(`WebSocket connected: user ${authenticatedUserId}`)
+        if (isDev) {
+          logger.info(`WebSocket connected: user ${authenticatedUserId}`)
+        }
         wsHub.send(conn as any, 'auth:success', { userId: authenticatedUserId })
       } else {
         // Allow a 5-second grace period for client to authenticate via auth message frame
@@ -225,7 +236,7 @@ export const app = new Elysia()
       }
       const hadUser = wsHub.hasConnection(conn as any)
       wsHub.unregister(conn as any)
-      if (hadUser) {
+      if (hadUser && isDev) {
         logger.info('WebSocket disconnected')
       }
     },
@@ -237,10 +248,15 @@ export type App = ControllersApp
  * Starts listening for incoming HTTP connections.
  * Uses reusePort: true for kernel-level multi-threaded connection distribution across cluster workers.
  */
-export function startServer(port = Number(Bun.env.ELYSIA_PORT || 4000)) {
+export function startServer(port?: number) {
+  const resolvedPort = port ?? Number(Bun.env.ELYSIA_PORT)
+  if (!resolvedPort || Number.isNaN(resolvedPort)) {
+    throw new Error('Missing or invalid environment variable: ELYSIA_PORT')
+  }
+
   const server = app.listen(
     {
-      port,
+      port: resolvedPort,
       reusePort: true,
     },
     ({ hostname, port }) => {

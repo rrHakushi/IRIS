@@ -92,7 +92,7 @@ function loadExistingModules(): Set<string> {
 const registeredModules = loadExistingModules()
 
 function persistGeneratedModules(): void {
-  if (Bun.env.NODE_ENV === "production") return
+  if (Bun.env.BUN_ENV === "production") return
   try {
     const list = Array.from(registeredModules).sort()
     const content = `// This file is auto-generated at runtime by @Iris/logger. Do not edit manually.\nexport interface KnownModules {\n${list.map((m) => `  ${JSON.stringify(m)}: true`).join("\n")}\n}\n`
@@ -132,7 +132,7 @@ let globalLogLevel: LogLevel = (() => {
 let globalSink: LogSink | null = null
 
 function isDevelopment(): boolean {
-  const env = Bun.env.NODE_ENV
+  const env = Bun.env.BUN_ENV
   return !env || env === "development"
 }
 
@@ -143,7 +143,7 @@ function isJsonMode(instanceJsonOverride?: boolean): boolean {
   if (Bun.env.LOG_FORMAT === "json") {
     return true
   }
-  return Bun.env.NODE_ENV === "production"
+  return Bun.env.BUN_ENV === "production"
 }
 
 /**

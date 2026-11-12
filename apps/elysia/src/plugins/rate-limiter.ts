@@ -2,7 +2,9 @@ import { createHash } from "node:crypto"
 import { Elysia, type Context } from "elysia"
 import type { Session } from "./session"
 
-const DEFAULT_CAPACITY = 100
+const DEFAULT_AUTHENTICATED_CAPACITY = 500
+const DEFAULT_UNAUTHENTICATED_CAPACITY = 100
+const DEFAULT_CAPACITY = DEFAULT_UNAUTHENTICATED_CAPACITY
 const DEFAULT_DURATION = 60_000
 const DEFAULT_COST = 1
 const DEFAULT_IP = "127.0.0.1"
@@ -41,6 +43,36 @@ export function getClientIp(request?: Request): string {
   if (realIp) return realIp.trim()
 
   return DEFAULT_IP
+}
+
+/**
+ * Checks if the request context indicates an authenticated (logged-in) user or client.
+ */
+export function isContextAuthenticated(ctx?: RateLimitContext): boolean {
+  if (!ctx) return false
+  const session = ctx.session as any
+  if (session?.getUser?.()?.id || session?.user?.id || session?.apiKeyId) {
+    return true
+  }
+
+  const request = ctx.request
+  if (!request?.headers?.get) return false
+
+  if (
+    request.headers.get("x-api-key") ||
+    request.headers.get("apikey") ||
+    request.headers.get("authorization")?.startsWith("ApiKey ") ||
+    request.headers.get("authorization")?.startsWith("Bearer ")
+  ) {
+    return true
+  }
+
+  const cookieHeader = request.headers.get("cookie")
+  if (cookieHeader && /(?:^|;\s*)session=/.test(cookieHeader)) {
+    return true
+  }
+
+  return false
 }
 
 /**
@@ -140,9 +172,7 @@ export function resolveRateLimitKey(ctx?: RateLimitContext): string {
  * ```
  */
 export function createRateLimiter(config: RateLimitConfig = {}) {
-  const capacity = config.capacity ?? config.max ?? DEFAULT_CAPACITY
   const duration = config.duration ?? DEFAULT_DURATION
-  const refillRate = config.refillRate ?? capacity / (duration / 1000)
   const cost = config.cost ?? DEFAULT_COST
 
   const store = new Map<string, TokenBucketRecord>()
@@ -151,7 +181,7 @@ export function createRateLimiter(config: RateLimitConfig = {}) {
   const timer = setInterval(() => {
     const now = Date.now()
     for (const [key, record] of store.entries()) {
-      if (now - record.lastRefill > duration && record.tokens >= capacity) {
+      if (now - record.lastRefill > duration && record.tokens >= record.capacity) {
         store.delete(key)
       }
     }
@@ -174,18 +204,40 @@ export function createRateLimiter(config: RateLimitConfig = {}) {
       ? config.keyGenerator(ctx as any)
       : resolveRateLimitKey(ctx as any)
 
+    const isLoggedIn =
+      isContextAuthenticated(ctx as any) ||
+      key.startsWith("usr:") ||
+      key.startsWith("key:") ||
+      key.startsWith("tok:") ||
+      key.startsWith("ses:")
+
+    const resolvedCapacity =
+      config.capacity ??
+      config.max ??
+      (isLoggedIn
+        ? config.authenticatedCapacity ?? DEFAULT_AUTHENTICATED_CAPACITY
+        : config.unauthenticatedCapacity ?? DEFAULT_UNAUTHENTICATED_CAPACITY)
+
+    const resolvedRefillRate =
+      config.refillRate ?? resolvedCapacity / (duration / 1000)
+
     const now = Date.now()
     let record = store.get(key)
 
     if (!record) {
-      record = { tokens: capacity, lastRefill: now }
+      record = {
+        tokens: resolvedCapacity,
+        lastRefill: now,
+        capacity: resolvedCapacity,
+      }
       store.set(key, record)
     } else {
+      record.capacity = resolvedCapacity
       // Smooth token replenishment
       const elapsedSeconds = (now - record.lastRefill) / 1000
       record.tokens = Math.min(
-        capacity,
-        record.tokens + elapsedSeconds * refillRate
+        resolvedCapacity,
+        record.tokens + elapsedSeconds * resolvedRefillRate
       )
       record.lastRefill = now
     }
@@ -194,11 +246,13 @@ export function createRateLimiter(config: RateLimitConfig = {}) {
     if (record.tokens >= cost) {
       record.tokens -= cost
       const remaining = Math.floor(record.tokens)
-      const resetSeconds = Math.ceil((capacity - record.tokens) / refillRate)
+      const resetSeconds = Math.ceil(
+        (resolvedCapacity - record.tokens) / resolvedRefillRate
+      )
 
       if (set) {
         if (!set.headers) set.headers = {}
-        set.headers["ratelimit-limit"] = String(capacity)
+        set.headers["ratelimit-limit"] = String(resolvedCapacity)
         set.headers["ratelimit-remaining"] = String(remaining)
         set.headers["ratelimit-reset"] = String(resetSeconds)
       }
@@ -208,13 +262,15 @@ export function createRateLimiter(config: RateLimitConfig = {}) {
 
     // Tokens exhausted -> 429 Too Many Requests
     const deficit = cost - record.tokens
-    const retryAfter = Math.max(1, Math.ceil(deficit / refillRate))
-    const resetSeconds = Math.ceil((capacity - record.tokens) / refillRate)
+    const retryAfter = Math.max(1, Math.ceil(deficit / resolvedRefillRate))
+    const resetSeconds = Math.ceil(
+      (resolvedCapacity - record.tokens) / resolvedRefillRate
+    )
 
     if (set) {
       set.status = 429
       if (!set.headers) set.headers = {}
-      set.headers["ratelimit-limit"] = String(capacity)
+      set.headers["ratelimit-limit"] = String(resolvedCapacity)
       set.headers["ratelimit-remaining"] = "0"
       set.headers["ratelimit-reset"] = String(resetSeconds)
       set.headers["retry-after"] = String(retryAfter)
@@ -272,14 +328,24 @@ export interface RateLimitErrorResponse {
 
 export interface RateLimitConfig {
   /**
-   * Maximum capacity of the token bucket (maximum burst allowance).
+   * Maximum capacity for authenticated (logged in) users.
+   * @default 500
+   */
+  authenticatedCapacity?: number
+
+  /**
+   * Maximum capacity for unauthenticated (anonymous / not logged in) users.
    * @default 100
+   */
+  unauthenticatedCapacity?: number
+
+  /**
+   * Maximum capacity of the token bucket (overrides both authenticated and unauthenticated if provided).
    */
   capacity?: number
 
   /**
    * Alias for `capacity` for backwards-compatibility.
-   * @default 100
    */
   max?: number
 
@@ -333,6 +399,11 @@ export interface TokenBucketRecord {
    * Epoch millisecond timestamp when the bucket was last refilled.
    */
   lastRefill: number
+
+  /**
+   * Bucket maximum capacity.
+   */
+  capacity: number
 }
 
 /**

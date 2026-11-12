@@ -1,6 +1,13 @@
 import { describe, expect, it, beforeEach } from 'bun:test'
 import { Elysia, ValidationError } from 'elysia'
-import { borealisMedia } from '../../src/api/controllers/borealis/media.ctrl'
+import { borealisAnime } from '../../src/api/controllers/borealis/anime.ctrl'
+import { borealisManga } from '../../src/api/controllers/borealis/manga.ctrl'
+import { borealisTv } from '../../src/api/controllers/borealis/tv.ctrl'
+import { borealisMovies } from '../../src/api/controllers/borealis/movies.ctrl'
+import { borealisBooks } from '../../src/api/controllers/borealis/books.ctrl'
+import { borealisGames } from '../../src/api/controllers/borealis/games.ctrl'
+import { borealisMusic } from '../../src/api/controllers/borealis/music.ctrl'
+import { borealisOther } from '../../src/api/controllers/borealis/other.ctrl'
 import { isHttpError } from '../../src/lib/errors'
 import { prisma } from '@Iris/db'
 
@@ -545,7 +552,14 @@ const app = new Elysia()
       detail: error instanceof Error ? error.message : String(error),
     }
   })
-  .use(borealisMedia)
+  .use(borealisAnime)
+  .use(borealisManga)
+  .use(borealisTv)
+  .use(borealisMovies)
+  .use(borealisBooks)
+  .use(borealisGames)
+  .use(borealisMusic)
+  .use(borealisOther)
 
 describe('Borealis Media Metadata Test Suite', () => {
   beforeEach(() => {
@@ -556,8 +570,8 @@ describe('Borealis Media Metadata Test Suite', () => {
   // 1. Anime Metadata Tests
   // ===========================================================================
   describe('Media Metadata: Anime', () => {
-    it('GET /borealis/media/anime returns paginated catalog (40 per page default)', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/anime?page=1&limit=40'))
+    it('GET /borealis/anime returns paginated catalog (40 per page default)', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/anime?page=1&limit=40'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -568,8 +582,8 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(data.items[0].mediaType).toBe('anime')
     })
 
-    it('GET /borealis/media/anime/filters returns facet counts for statuses, formats, genres, years', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/anime/filters'))
+    it('GET /borealis/anime/filters returns facet counts for statuses, formats, genres, years', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/anime/filters'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -579,8 +593,8 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(Array.isArray(data.years)).toBe(true)
     })
 
-    it('GET /borealis/media/anime/:id returns detailed anime metadata with relations', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/anime/1'))
+    it('GET /borealis/anime/:id returns detailed anime metadata with relations', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/anime/1'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -589,14 +603,14 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(data.media.relations).toBeDefined()
     })
 
-    it('GET /borealis/media/anime/:id fails (404) when anime does not exist', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/anime/999'))
+    it('GET /borealis/anime/:id fails (404) when anime does not exist', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/anime/999'))
       expect(res.status).toBe(404)
     })
 
-    it('POST /borealis/media/anime/:id/refresh queues metadata refresh', async () => {
+    it('POST /borealis/anime/:id/refresh queues metadata refresh', async () => {
       const res = await app.handle(
-        new Request('http://localhost/borealis/media/anime/1/refresh', {
+        new Request('http://localhost/borealis/anime/1/refresh', {
           method: 'POST',
         })
       )
@@ -607,8 +621,8 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(data.timestamp).toBeDefined()
     })
 
-    it('GET /borealis/media/anime/:id/similar returns improved multi-factor recommendations with match reasons', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/anime/1/similar?limit=10'))
+    it('GET /borealis/anime/:id/similar returns improved multi-factor recommendations with match reasons', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/anime/1/similar?limit=10'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -629,8 +643,8 @@ describe('Borealis Media Metadata Test Suite', () => {
   // 2. Manga Metadata Tests
   // ===========================================================================
   describe('Media Metadata: Manga', () => {
-    it('GET /borealis/media/manga returns paginated manga catalog', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/manga?page=1&limit=40'))
+    it('GET /borealis/manga returns paginated manga catalog', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/manga?page=1&limit=40'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -638,8 +652,8 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(data.items[0].mediaType).toBe('manga')
     })
 
-    it('GET /borealis/media/manga/filters returns facet counts for manga', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/manga/filters'))
+    it('GET /borealis/manga/filters returns facet counts for manga', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/manga/filters'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -649,8 +663,8 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(Array.isArray(data.years)).toBe(true)
     })
 
-    it('GET /borealis/media/manga/:id returns detailed manga metadata', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/manga/1'))
+    it('GET /borealis/manga/:id returns detailed manga metadata', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/manga/1'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -658,14 +672,14 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(data.media.titlePrimary).toBe('Chainsaw Man')
     })
 
-    it('GET /borealis/media/manga/:id fails (404) when manga does not exist', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/manga/999'))
+    it('GET /borealis/manga/:id fails (404) when manga does not exist', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/manga/999'))
       expect(res.status).toBe(404)
     })
 
-    it('POST /borealis/media/manga/:id/refresh queues metadata refresh', async () => {
+    it('POST /borealis/manga/:id/refresh queues metadata refresh', async () => {
       const res = await app.handle(
-        new Request('http://localhost/borealis/media/manga/1/refresh', {
+        new Request('http://localhost/borealis/manga/1/refresh', {
           method: 'POST',
         })
       )
@@ -675,8 +689,8 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(data.message).toContain('Metadata refresh requested')
     })
 
-    it('GET /borealis/media/manga/:id/similar returns author and theme matched recommendations', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/manga/1/similar?limit=10'))
+    it('GET /borealis/manga/:id/similar returns author and theme matched recommendations', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/manga/1/similar?limit=10'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -696,8 +710,8 @@ describe('Borealis Media Metadata Test Suite', () => {
   // 3. Movie Metadata Tests
   // ===========================================================================
   describe('Media Metadata: Movies', () => {
-    it('GET /borealis/media/movies returns paginated movie catalog', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/movies?page=1&limit=40'))
+    it('GET /borealis/movies returns paginated movie catalog', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/movies?page=1&limit=40'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -706,8 +720,8 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(data.items[0].format).toBe('MOVIE')
     })
 
-    it('GET /borealis/media/movies/filters returns facet counts for movies', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/movies/filters'))
+    it('GET /borealis/movies/filters returns facet counts for movies', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/movies/filters'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -716,8 +730,8 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(Array.isArray(data.years)).toBe(true)
     })
 
-    it('GET /borealis/media/movies/:id returns detailed movie metadata', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/movies/1'))
+    it('GET /borealis/movies/:id returns detailed movie metadata', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/movies/1'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -725,14 +739,14 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(data.media.titlePrimary).toBe('Inception')
     })
 
-    it('GET /borealis/media/movies/:id fails (404) when movie does not exist', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/movies/999'))
+    it('GET /borealis/movies/:id fails (404) when movie does not exist', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/movies/999'))
       expect(res.status).toBe(404)
     })
 
-    it('POST /borealis/media/movies/:id/refresh queues metadata refresh', async () => {
+    it('POST /borealis/movies/:id/refresh queues metadata refresh', async () => {
       const res = await app.handle(
-        new Request('http://localhost/borealis/media/movies/1/refresh', {
+        new Request('http://localhost/borealis/movies/1/refresh', {
           method: 'POST',
         })
       )
@@ -742,8 +756,8 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(data.message).toContain('Metadata refresh requested')
     })
 
-    it('GET /borealis/media/movies/:id/similar returns director and studio matched recommendations', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/movies/1/similar?limit=10'))
+    it('GET /borealis/movies/:id/similar returns director and studio matched recommendations', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/movies/1/similar?limit=10'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -763,8 +777,8 @@ describe('Borealis Media Metadata Test Suite', () => {
   // 4. TV Metadata Tests
   // ===========================================================================
   describe('Media Metadata: TV', () => {
-    it('GET /borealis/media/tv returns paginated TV catalog', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/tv?page=1&limit=40'))
+    it('GET /borealis/tv returns paginated TV catalog', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/tv?page=1&limit=40'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -772,8 +786,8 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(data.items[0].mediaType).toBe('tv')
     })
 
-    it('GET /borealis/media/tv/filters returns facet counts for TV', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/tv/filters'))
+    it('GET /borealis/tv/filters returns facet counts for TV', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/tv/filters'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -782,8 +796,8 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(Array.isArray(data.genres)).toBe(true)
     })
 
-    it('GET /borealis/media/tv/:id returns detailed TV metadata', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/tv/1'))
+    it('GET /borealis/tv/:id returns detailed TV metadata', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/tv/1'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -791,14 +805,14 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(data.media.titlePrimary).toBe('Breaking Bad')
     })
 
-    it('GET /borealis/media/tv/:id fails (404) when TV series does not exist', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/tv/999'))
+    it('GET /borealis/tv/:id fails (404) when TV series does not exist', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/tv/999'))
       expect(res.status).toBe(404)
     })
 
-    it('POST /borealis/media/tv/:id/refresh queues metadata refresh', async () => {
+    it('POST /borealis/tv/:id/refresh queues metadata refresh', async () => {
       const res = await app.handle(
-        new Request('http://localhost/borealis/media/tv/1/refresh', {
+        new Request('http://localhost/borealis/tv/1/refresh', {
           method: 'POST',
         })
       )
@@ -808,8 +822,8 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(data.message).toContain('Metadata refresh requested')
     })
 
-    it('GET /borealis/media/tv/:id/similar returns creator and network matched recommendations', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/tv/1/similar?limit=10'))
+    it('GET /borealis/tv/:id/similar returns creator and network matched recommendations', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/tv/1/similar?limit=10'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -829,8 +843,8 @@ describe('Borealis Media Metadata Test Suite', () => {
   // 5. Books Metadata Tests
   // ===========================================================================
   describe('Media Metadata: Books', () => {
-    it('GET /borealis/media/books returns paginated books catalog', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/books?page=1&limit=40'))
+    it('GET /borealis/books returns paginated books catalog', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/books?page=1&limit=40'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -838,8 +852,8 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(data.items[0].mediaType).toBe('book')
     })
 
-    it('GET /borealis/media/books/filters returns facet counts for books', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/books/filters'))
+    it('GET /borealis/books/filters returns facet counts for books', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/books/filters'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -848,8 +862,8 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(Array.isArray(data.genres)).toBe(true)
     })
 
-    it('GET /borealis/media/books/:id returns detailed book metadata', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/books/1'))
+    it('GET /borealis/books/:id returns detailed book metadata', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/books/1'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -857,14 +871,14 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(data.media.titlePrimary).toBe('The Hobbit')
     })
 
-    it('GET /borealis/media/books/:id fails (404) when book does not exist', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/books/999'))
+    it('GET /borealis/books/:id fails (404) when book does not exist', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/books/999'))
       expect(res.status).toBe(404)
     })
 
-    it('POST /borealis/media/books/:id/refresh queues metadata refresh', async () => {
+    it('POST /borealis/books/:id/refresh queues metadata refresh', async () => {
       const res = await app.handle(
-        new Request('http://localhost/borealis/media/books/1/refresh', {
+        new Request('http://localhost/borealis/books/1/refresh', {
           method: 'POST',
         })
       )
@@ -874,8 +888,8 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(data.message).toContain('Metadata refresh requested')
     })
 
-    it('GET /borealis/media/books/:id/similar returns author matched recommendations', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/books/1/similar?limit=10'))
+    it('GET /borealis/books/:id/similar returns author matched recommendations', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/books/1/similar?limit=10'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -895,8 +909,8 @@ describe('Borealis Media Metadata Test Suite', () => {
   // 6. Games Metadata Tests
   // ===========================================================================
   describe('Media Metadata: Games', () => {
-    it('GET /borealis/media/games returns paginated games catalog', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/games?page=1&limit=40'))
+    it('GET /borealis/games returns paginated games catalog', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/games?page=1&limit=40'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -904,8 +918,8 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(data.items[0].mediaType).toBe('game')
     })
 
-    it('GET /borealis/media/games/filters returns facet counts for games', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/games/filters'))
+    it('GET /borealis/games/filters returns facet counts for games', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/games/filters'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -913,8 +927,8 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(Array.isArray(data.genres)).toBe(true)
     })
 
-    it('GET /borealis/media/games/:id returns detailed game metadata', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/games/1'))
+    it('GET /borealis/games/:id returns detailed game metadata', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/games/1'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -922,14 +936,14 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(data.media.titlePrimary).toBe('Elden Ring')
     })
 
-    it('GET /borealis/media/games/:id fails (404) when game does not exist', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/games/999'))
+    it('GET /borealis/games/:id fails (404) when game does not exist', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/games/999'))
       expect(res.status).toBe(404)
     })
 
-    it('POST /borealis/media/games/:id/refresh queues metadata refresh', async () => {
+    it('POST /borealis/games/:id/refresh queues metadata refresh', async () => {
       const res = await app.handle(
-        new Request('http://localhost/borealis/media/games/1/refresh', {
+        new Request('http://localhost/borealis/games/1/refresh', {
           method: 'POST',
         })
       )
@@ -939,8 +953,8 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(data.message).toContain('Metadata refresh requested')
     })
 
-    it('GET /borealis/media/games/:id/similar returns developer matched recommendations', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/games/1/similar?limit=10'))
+    it('GET /borealis/games/:id/similar returns developer matched recommendations', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/games/1/similar?limit=10'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -960,8 +974,8 @@ describe('Borealis Media Metadata Test Suite', () => {
   // 7. Music Metadata Tests
   // ===========================================================================
   describe('Media Metadata: Music', () => {
-    it('GET /borealis/media/music returns paginated music catalog', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/music?page=1&limit=40'))
+    it('GET /borealis/music returns paginated music catalog', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/music?page=1&limit=40'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -969,8 +983,8 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(data.items[0].mediaType).toBe('music')
     })
 
-    it('GET /borealis/media/music/filters returns facet counts for music', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/music/filters'))
+    it('GET /borealis/music/filters returns facet counts for music', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/music/filters'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -979,8 +993,8 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(Array.isArray(data.genres)).toBe(true)
     })
 
-    it('GET /borealis/media/music/:id returns detailed music metadata', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/music/1'))
+    it('GET /borealis/music/:id returns detailed music metadata', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/music/1'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)
@@ -988,14 +1002,14 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(data.media.titlePrimary).toBe('Bohemian Rhapsody')
     })
 
-    it('GET /borealis/media/music/:id fails (404) when track does not exist', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/music/999'))
+    it('GET /borealis/music/:id fails (404) when track does not exist', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/music/999'))
       expect(res.status).toBe(404)
     })
 
-    it('POST /borealis/media/music/:id/refresh queues metadata refresh', async () => {
+    it('POST /borealis/music/:id/refresh queues metadata refresh', async () => {
       const res = await app.handle(
-        new Request('http://localhost/borealis/media/music/1/refresh', {
+        new Request('http://localhost/borealis/music/1/refresh', {
           method: 'POST',
         })
       )
@@ -1005,8 +1019,8 @@ describe('Borealis Media Metadata Test Suite', () => {
       expect(data.message).toContain('Metadata refresh requested')
     })
 
-    it('GET /borealis/media/music/:id/similar returns artist matched recommendations', async () => {
-      const res = await app.handle(new Request('http://localhost/borealis/media/music/1/similar?limit=10'))
+    it('GET /borealis/music/:id/similar returns artist matched recommendations', async () => {
+      const res = await app.handle(new Request('http://localhost/borealis/music/1/similar?limit=10'))
       expect(res.status).toBe(200)
       const data = (await res.json()) as any
       expect(data.success).toBe(true)

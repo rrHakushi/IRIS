@@ -66,18 +66,6 @@ export function MediaTabNav({
             )}
           >
             <span>{tab.label}</span>
-            {typeof tab.count === "number" && tab.count > 0 && (
-              <span
-                className={cn(
-                  "py-0.2 rounded-full px-1.5 text-[10px] font-semibold tabular-nums",
-                  isActive
-                    ? "bg-primary-foreground/20 text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                )}
-              >
-                {tab.count}
-              </span>
-            )}
           </button>
         )
       })}

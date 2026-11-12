@@ -77,8 +77,14 @@ export function getMediaQueue(): Queue<MediaJobData> {
       `${c.cyan('🚀 [MediaQueue Initialized]')}: Connected to Redis queue "${c.bold(MEDIA_QUEUE_NAME)}"`
     )
 
-    mediaQueueInstance.on('error', (err) => {
-      logger.warn(`${c.red('⚠️ [Media Queue Error]')}: ${err.message}`)
+    mediaQueueInstance.on('error', (err: any) => {
+      const isSocketReset =
+        err?.code === 'ECONNRESET' ||
+        err?.code === 'EPIPE' ||
+        err?.code === 'ETIMEDOUT' ||
+        /ECONNRESET|EPIPE|ETIMEDOUT/i.test(err?.message || '')
+      if (isSocketReset) return
+      logger.warn(`${c.red('⚠️ [Media Queue Error]')}: ${err?.message || err}`)
     })
   }
 
@@ -378,9 +384,9 @@ export const MediaQueueManager = {
       return null
     }
 
-    if (process.env.NODE_ENV !== 'production') {
+    if (Bun.env.BUN_ENV !== 'production') {
       logger.info(
-        `${c.yellow('⏩ [Schedule Cron Skipped]')}: Weekly active media sync cron is disabled in development mode (NODE_ENV=${process.env.NODE_ENV || 'development'})`
+        `${c.yellow('⏩ [Schedule Cron Skipped]')}: Weekly active media sync cron is disabled in development mode (BUN_ENV=${Bun.env.BUN_ENV || 'development'})`
       )
       return null
     }

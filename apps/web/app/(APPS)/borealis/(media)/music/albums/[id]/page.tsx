@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   try {
-    const { data } = await elysia.borealis.media.music({ id: numericId }).get()
+    const { data } = await elysia.borealis.music({ id: numericId }).get()
     const albumData = (data as any)?.media ?? (data as any)
     if (!albumData) {
       return {
@@ -64,8 +64,8 @@ export default async function AlbumDetailPage({ params, searchParams }: Props) {
 
   // Parallel fetch album details and similar albums via Elysia client without waterfalls
   const [albumRes, similarRes] = await Promise.all([
-    elysia.borealis.media.music({ id: numericId }).get(),
-    elysia.borealis.media
+    elysia.borealis.music({ id: numericId }).get(),
+    elysia.borealis
       .music({ id: numericId })
       .similar.get({ query: { limit: 50 } }),
   ])

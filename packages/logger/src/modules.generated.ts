@@ -35,6 +35,7 @@ export interface KnownModules {
   "ProdModule": true
   "Scoped": true
   "SubModule": true
+  "Test": true
   "Worker:ConnectionSync": true
   "Worker:Email": true
   "Worker:Media": true

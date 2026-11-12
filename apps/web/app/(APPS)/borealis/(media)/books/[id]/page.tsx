@@ -1,12 +1,7 @@
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
-import type { BookDetails, SimilarMediaItem } from "@IRIS/elysia"
 import { elysia } from "@/lib/elysia"
-import { MediaDetailView } from "@Runa/borealis"
-import type {
-  NormalizedMediaData,
-  SimilarMediaCardItem,
-} from "@Runa/borealis"
+import { MediaDetailView, toNormalizedMediaOverview } from "@Runa/borealis"
 
 type Props = {
   params: Promise<{ id: string }>
@@ -23,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   try {
-    const { data } = await elysia.borealis.media.books({ id: numericId }).get()
+    const { data } = await elysia.borealis.books({ bookId: numericId }).get()
     const bookData = (data as any)?.media ?? data
     if (!bookData) {
       return {
@@ -51,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function BookDetailPage({ params, searchParams }: Props) {
+export default async function DetailPage({ params, searchParams }: Props) {
   const { id } = await params
   const { queuedFetch } = await searchParams
   const isQueued = queuedFetch === "true"
@@ -61,136 +56,18 @@ export default async function BookDetailPage({ params, searchParams }: Props) {
     notFound()
   }
 
-  // Parallel fetch book details and similar books via Elysia client
-  const [bookRes, similarRes] = await Promise.all([
-    elysia.borealis.media.books({ id: numericId }).get(),
-    elysia.borealis.media.books({ id: numericId }).similar.get({ query: { limit: 50 } }),
-  ])
-
-  if (bookRes.error || !bookRes.data) {
+  // Overview only. Every tab (relations, characters, staff, episodes, images,
+  // stats, similar...) fetches its own data client-side and caches it.
+  const res = await elysia.borealis.books({ bookId: numericId }).get()
+  if (res.error || !res.data) {
     notFound()
   }
 
-  const book: BookDetails = ((bookRes.data as any)?.media ?? bookRes.data) as unknown as BookDetails
-
-  const normalized: NormalizedMediaData = {
-    id: book.id,
-    category: "books",
-    titlePrimary: book.titlePrimary,
-    titleSecondary: book.titleSecondary || book.subtitle,
-    titleNative: null,
-    coverImage: book.coverImage,
-    bannerImage: book.bannerImage,
-    description: book.description,
-    format: book.format || "BOOK",
-    status: book.status,
-    startDateYear: book.releaseDateYear,
-    startDateMonth: book.releaseDateMonth,
-    startDateDay: book.releaseDateDay,
-    releaseDateYear: book.releaseDateYear,
-    originalLanguage: book.originalLanguage,
-    countryOfOrigin: book.countryOfOrigin,
-    genres: book.genres,
-    tags: book.tags,
-    subjects: book.subjects,
-    publishers: book.publishers,
-    authors: book.authors,
-    series: book.series,
-    seriesPosition: book.seriesPosition,
-    pageCount: book.pageCount,
-    chapterCount: book.chapterCount,
-    volumeCount: book.volumeCount,
-    isAdult: book.isAdult,
-    synonyms: book.synonyms,
-    averageScore: book.averageScore,
-    googleBooksRating: book.googleBooksRating,
-    googleBooksRatingsCount: book.googleBooksRatingsCount,
-    retailPrice: book.retailPrice,
-    retailPriceCurrency: book.retailPriceCurrency,
-    ageRating: book.ageRating,
-    ageRatingGuide: book.ageRatingGuide,
-    googleBookId: book.googleBookId,
-    isbn10: book.isbn10,
-    isbn13: book.isbn13,
-    openLibraryId: book.openLibraryId,
-    previewLink: book.previewLink,
-    infoLink: book.infoLink,
-    buyLink: book.buyLink,
-    siteUrl: book.siteUrl || book.website,
-    favorites: book.favorites,
-    popularity: book.popularity,
-    scoredCount: book.scoredCount,
-    statusDistribution: book.statusDistribution as Record<
-      string,
-      number
-    > | null,
-    scoreDistribution: book.scoreDistribution as Record<string, number> | null,
-    characters: book.characters.map((c: BookDetails["characters"][number]) => ({
-      id: c.id,
-      characterId: c.character.id,
-      namePrimary: c.character.namePrimary,
-      nameNative: c.character.nameNative,
-      image: c.character.image,
-      role: c.role,
-      order: c.order,
-      description: (c.character as any)?.description ?? null,
-      gender: (c.character as any)?.gender ?? null,
-      age: (c.character as any)?.age ?? null,
-      actor: c.actor
-        ? {
-            id: c.actor.id,
-            namePrimary: c.actor.namePrimary,
-            nameNative: c.actor.nameNative,
-            image: c.actor.image,
-            language: c.actor.language,
-          }
-        : null,
-    })),
-    staff: book.staff.map((s: BookDetails["staff"][number]) => ({
-      id: s.id,
-      personId: s.person.id,
-      role: s.role,
-      customRole: s.customRole,
-      person: {
-        id: s.person.id,
-        namePrimary: s.person.namePrimary,
-        nameNative: s.person.nameNative,
-        image: s.person.image,
-        language: s.person.language,
-        description: (s.person as any)?.description ?? null,
-      },
-    })),
-    studios: book.studios,
-    relations: book.relations ?? [],
-    updatedAt: book.updatedAt,
-  }
-
-  const rawSimilar = !similarRes.error
-    ? Array.isArray(similarRes.data)
-      ? similarRes.data
-      : (similarRes.data as any)?.items ?? []
-    : []
-
-  const similarList: SimilarMediaCardItem[] = rawSimilar.map((item: any) => ({
-    id: item.id,
-    type: item.type ?? item.mediaType ?? "books",
-    format: item.format,
-    coverImage: item.coverImage,
-    bannerImage: item.bannerImage ?? null,
-    description: item.description ?? null,
-    status: item.status ?? null,
-    titlePrimary: item.titles?.primary ?? item.titlePrimary ?? "",
-    titleSecondary: item.titles?.secondary ?? item.titleSecondary ?? null,
-    titleNative: item.titles?.native ?? item.titleNative ?? null,
-    year: item.year ?? null,
-    score: item.averageScore ?? null,
-    genres: item.genres ?? [],
-  }))
+  const raw = (res.data as any)?.media ?? res.data
 
   return (
     <MediaDetailView
-      media={normalized}
-      similarList={similarList}
+      media={toNormalizedMediaOverview("books", raw)}
       isQueuedFetch={isQueued}
     />
   )

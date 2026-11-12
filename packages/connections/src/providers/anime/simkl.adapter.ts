@@ -40,7 +40,8 @@ export class SimklAdapter extends BaseConnectionAdapter {
   }
 
   private getClientId(): string {
-    const raw = Bun.env.SIMKL_CLIENT_ID || ""
+    const raw = Bun.env.SIMKL_CLIENT_ID
+    if (!raw) throw new Error("Missing required environment variable: SIMKL_CLIENT_ID");
     return raw
       .trim()
       .replace(/^["']|["']$/g, "")
@@ -48,7 +49,8 @@ export class SimklAdapter extends BaseConnectionAdapter {
   }
 
   private getClientSecret(): string {
-    const raw = Bun.env.SIMKL_CLIENT_SECRET || ""
+    const raw = Bun.env.SIMKL_CLIENT_SECRET
+    if (!raw) throw new Error("Missing required environment variable: SIMKL_CLIENT_SECRET");
     return raw
       .trim()
       .replace(/^["']|["']$/g, "")

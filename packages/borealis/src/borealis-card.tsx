@@ -50,6 +50,7 @@ import {
 } from "@tabler/icons-react"
 import { BorealisDatePicker } from "./date-picker"
 import { cn } from "@workspace/ui/lib/utils"
+import { elysia } from "@/lib/elysia"
 import { Button } from "@workspace/ui/components/button"
 import {
   DropdownMenu,
@@ -259,17 +260,17 @@ export function BorealisCardRoot({
           entryPriority === "MEDIUM" && "border-t-2 border-e-2 border-t-amber-500 border-e-amber-500",
           expanded
             ? cn(
-                "w-full p-2 items-center gap-3 sm:gap-4",
-                imagePosition === "right" || imagePosition === "end"
-                  ? "flex-row-reverse text-start"
-                  : "flex-row text-start"
-              )
+              "w-full p-2 items-center gap-3 sm:gap-4",
+              imagePosition === "right" || imagePosition === "end"
+                ? "flex-row-reverse text-start"
+                : "flex-row text-start"
+            )
             : cn(
-                "flex-col p-1.5 shrink-0",
-                size === "sm" && "w-32 text-xs",
-                size === "md" && "w-40 text-sm",
-                size === "lg" && "w-48 text-base"
-              ),
+              "flex-col p-1.5 shrink-0",
+              size === "sm" && "w-32 text-xs",
+              size === "md" && "w-40 text-sm",
+              size === "lg" && "w-48 text-base"
+            ),
           isHovered ? "z-40" : "z-10",
           className
         )}
@@ -450,36 +451,36 @@ export function BorealisCardImage({
                       />
                       <span>{displayScore}</span>
                     </Button>
-                      <DropdownMenu placement="bottom start" className="max-h-[108px] overflow-y-auto overscroll-contain [scrollbar-width:thin] w-auto min-w-[115px] text-[10px] border border-frost bg-frost text-zinc-100 shadow-2xl backdrop-blur-2xl z-[100]">
-                        {SCORE_OPTIONS.map((scoreVal) => {
-                          const isSelected = currentScoreNum !== null && (currentScoreNum === scoreVal || currentScoreNum / 10 === scoreVal || currentScoreNum === scoreVal * 10)
-                          return (
-                            <DropdownMenuItem
-                              key={scoreVal}
-                              onAction={() => handleScoreSelect(scoreVal)}
-                              className="flex items-center gap-1.5 cursor-pointer font-medium text-[10px] py-1 px-2 min-h-6"
-                            >
-                              <IconStar className="size-3 fill-amber-400 text-amber-400 shrink-0" />
-                              <span className={cn(isSelected && "font-bold text-white")}>
-                                {scoreVal} / 10
-                              </span>
-                              {isSelected && (
-                                <IconCheck className="size-3 ms-auto text-primary shrink-0" />
-                              )}
-                            </DropdownMenuItem>
-                          )
-                        })}
-                        <DropdownMenuItem
-                          onAction={() => handleScoreSelect(null)}
-                          className="flex items-center gap-1.5 cursor-pointer font-medium text-[9px] text-zinc-400 hover:text-white py-1 px-2 min-h-6"
-                        >
-                          <IconX className="size-3 text-zinc-400 shrink-0" />
-                          <span>Clear Rating (N/A)</span>
-                          {!hasScore && (
-                            <IconCheck className="size-3 ms-auto text-primary shrink-0" />
-                          )}
-                        </DropdownMenuItem>
-                      </DropdownMenu>
+                    <DropdownMenu placement="bottom start" className="max-h-[108px] overflow-y-auto overscroll-contain [scrollbar-width:thin] w-auto min-w-[115px] text-[10px] border border-frost bg-frost text-zinc-100 shadow-2xl backdrop-blur-2xl z-[100]">
+                      {SCORE_OPTIONS.map((scoreVal) => {
+                        const isSelected = currentScoreNum !== null && (currentScoreNum === scoreVal || currentScoreNum / 10 === scoreVal || currentScoreNum === scoreVal * 10)
+                        return (
+                          <DropdownMenuItem
+                            key={scoreVal}
+                            onAction={() => handleScoreSelect(scoreVal)}
+                            className="flex items-center gap-1.5 cursor-pointer font-medium text-[10px] py-1 px-2 min-h-6"
+                          >
+                            <IconStar className="size-3 fill-amber-400 text-amber-400 shrink-0" />
+                            <span className={cn(isSelected && "font-bold text-white")}>
+                              {scoreVal} / 10
+                            </span>
+                            {isSelected && (
+                              <IconCheck className="size-3 ms-auto text-primary shrink-0" />
+                            )}
+                          </DropdownMenuItem>
+                        )
+                      })}
+                      <DropdownMenuItem
+                        onAction={() => handleScoreSelect(null)}
+                        className="flex items-center gap-1.5 cursor-pointer font-medium text-[9px] text-zinc-400 hover:text-white py-1 px-2 min-h-6"
+                      >
+                        <IconX className="size-3 text-zinc-400 shrink-0" />
+                        <span>Clear Rating (N/A)</span>
+                        {!hasScore && (
+                          <IconCheck className="size-3 ms-auto text-primary shrink-0" />
+                        )}
+                      </DropdownMenuItem>
+                    </DropdownMenu>
                   </DropdownMenuTrigger>
                 </div>
               )
@@ -1322,58 +1323,6 @@ function getBackendMediaId(data: any): number {
   return 0
 }
 
-function getBorealisBaseUrl(): string {
-  if (typeof window !== "undefined") {
-    const custom = (window as any).__IRIS_API_URL__
-    if (custom) return custom
-    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-      return "http://localhost:4000"
-    }
-  }
-  const envApi = typeof process !== "undefined" ? process.env?.NEXT_PUBLIC_API_URL : undefined
-  if (envApi) return envApi
-  return ""
-}
-
-async function safeBorealisFetch(path: string, init?: RequestInit): Promise<Response> {
-  const base = getBorealisBaseUrl()
-  const cleanPath = path.startsWith("/") ? path : `/${path}`
-
-  // 1. Try direct API base if configured
-  if (base) {
-    try {
-      const res = await fetch(`${base}${cleanPath}`, {
-        credentials: "include",
-        ...init,
-      })
-      if (res.ok) {
-        return res
-      }
-    } catch {
-      // Direct call failed, fall through to relative proxy
-    }
-  }
-
-  // 2. Try relative Next.js proxy (/elysia/...)
-  try {
-    const res = await fetch(`/elysia${cleanPath}`, {
-      credentials: "include",
-      ...init,
-    })
-    if (res.ok) {
-      return res
-    }
-  } catch {
-    // Proxy failed
-  }
-
-  // 3. Fallback direct attempt if not already done
-  return fetch(`${base || "http://localhost:4000"}${cleanPath}`, {
-    credentials: "include",
-    ...init,
-  })
-}
-
 interface CachedEpisodesData {
   episodes: any[]
   seasons: any[]
@@ -2050,6 +1999,54 @@ function BorealisCardHoverEditForm({
 // -----------------------------------------------------------------------------
 const EMPTY_ARRAY: any[] = []
 
+/**
+ * Fetches /borealis/anime/:animeId/episodes (cached + deduped) and reports the
+ * result through `onData`. Returns a cancel function.
+ */
+function loadHoverEpisodes(
+  animeId: number,
+  cacheKey: string,
+  onData: (episodes: any[]) => void
+): () => void {
+  let cancelled = false
+  const emit = (eps: any[]) => {
+    if (!cancelled) onData(eps)
+  }
+
+  const cached = HOVER_EPISODES_CACHE.get(cacheKey)
+  if (cached && Date.now() - cached.timestamp < HOVER_EPISODES_CACHE_TTL) {
+    emit(cached.episodes)
+    return () => {
+      cancelled = true
+    }
+  }
+
+  let promise = HOVER_EPISODES_INFLIGHT.get(cacheKey)
+  if (!promise) {
+    promise = (async () => {
+      const { data: res, error } = await (elysia as any).borealis
+        .anime({ animeId })
+        .episodes.get()
+      if (error) throw error
+      return { episodes: ((res as any)?.episodes ?? []) as any[], seasons: [] as any[] }
+    })().finally(() => {
+      HOVER_EPISODES_INFLIGHT.delete(cacheKey)
+    })
+    HOVER_EPISODES_INFLIGHT.set(cacheKey, promise)
+  }
+
+  promise
+    .then((result) => {
+      HOVER_EPISODES_CACHE.set(cacheKey, { ...result, timestamp: Date.now() })
+      emit(result.episodes)
+    })
+    .catch(() => { })
+
+  return () => {
+    cancelled = true
+  }
+}
+
 function BorealisCardHoverEpisodesTab({
   data,
   config,
@@ -2086,87 +2083,18 @@ function BorealisCardHoverEpisodesTab({
     return EMPTY_ARRAY
   }, [rawMedia?.episodes, data.hoverDetails?.episodes])
 
-  const [fetchedData, setFetchedData] = useState<{ episodes: any[]; seasons: any[] }>(() => {
-    const cached = HOVER_EPISODES_CACHE.get(cacheKey)
-    if (cached && Date.now() - cached.timestamp < HOVER_EPISODES_CACHE_TTL) {
-      return { episodes: cached.episodes, seasons: cached.seasons }
-    }
-    return { episodes: [], seasons: [] }
-  })
-  const [loadingEpisodes, setLoadingEpisodes] = useState(false)
+  const [fetchedEpisodes, setFetchedEpisodes] = useState<any[] | null>(
+    () => HOVER_EPISODES_CACHE.get(cacheKey)?.episodes ?? null
+  )
 
   useEffect(() => {
-    let isMounted = true
-    if (!mediaId || mediaId <= 0) return
-    if (backendMediaType !== "ANIME") return
+    if (backendMediaType !== "ANIME" || !mediaId) return
+    return loadHoverEpisodes(mediaId, cacheKey, setFetchedEpisodes)
+  }, [cacheKey, mediaId, backendMediaType])
 
-    // If initial data already has meaningful episode titles, no need to fetch
-    const hasTitles = initialEpisodes.some((e) => {
-      const t = e.titlePrimary || e.titleSecondary || e.titleNative || e.title || e.name
-      return Boolean(t && !/^#?\s*0*\d+$/.test(t) && !/^Episode\s*0*\d+$/i.test(t))
-    })
-    if (hasTitles) return
-
-    // Check cache
-    const cached = HOVER_EPISODES_CACHE.get(cacheKey)
-    if (cached && Date.now() - cached.timestamp < HOVER_EPISODES_CACHE_TTL) {
-      setFetchedData((prev) => {
-        if (prev.episodes === cached.episodes && prev.seasons === cached.seasons) {
-          return prev
-        }
-        return { episodes: cached.episodes, seasons: cached.seasons }
-      })
-      return
-    }
-
-    let promise = HOVER_EPISODES_INFLIGHT.get(cacheKey)
-    if (!promise) {
-      const endpoint = `/borealis/media/anime/${mediaId}`
-
-      promise = safeBorealisFetch(endpoint)
-        .then(async (res) => {
-          if (!res.ok) throw new Error(`HTTP ${res.status}`)
-          return res.json()
-        })
-        .then((json) => {
-          const media = json?.media ?? {}
-          const epList = Array.isArray(media.episodes) ? media.episodes : []
-          const seasonList = Array.isArray(media.seasons) ? media.seasons : []
-          const result = { episodes: epList, seasons: seasonList }
-          HOVER_EPISODES_CACHE.set(cacheKey, { ...result, timestamp: Date.now() })
-          return result
-        })
-        .finally(() => {
-          HOVER_EPISODES_INFLIGHT.delete(cacheKey)
-        })
-
-      HOVER_EPISODES_INFLIGHT.set(cacheKey, promise)
-    }
-
-    setLoadingEpisodes(true)
-    promise
-      .then((result) => {
-        if (!isMounted) return
-        setFetchedData(result)
-      })
-      .catch((err) => {
-        console.warn("[BorealisCard] Failed to fetch episodes:", err)
-      })
-      .finally(() => {
-        if (isMounted) {
-          setLoadingEpisodes(false)
-        }
-      })
-
-    return () => {
-      isMounted = false
-    }
-  }, [mediaId, backendMediaType, cacheKey])
-
-  const seasons: any[] =
-    fetchedData.seasons.length > 0 ? fetchedData.seasons : initialSeasons
+  const seasons: any[] = initialSeasons
   const episodes: any[] =
-    fetchedData.episodes.length > 0 ? fetchedData.episodes : initialEpisodes
+    fetchedEpisodes && fetchedEpisodes.length > 0 ? fetchedEpisodes : initialEpisodes
 
   const regularSeasons = seasons.filter((s) => s.seasonNumber > 0)
   const candidateSeasons = regularSeasons.length > 0 ? regularSeasons : seasons
@@ -2877,12 +2805,10 @@ function BorealisCardHoverConnectionsTab({
         })
         if (explicitId) params.set("id", explicitId)
 
-        const res = await fetch(`/elysia/carina/connections/search?${params.toString()}`, {
-          credentials: "include",
-        })
-        if (!res.ok) throw new Error(`Search failed (${res.status})`)
-        const json = await res.json()
-        const raw: any[] = Array.isArray(json?.results) ? json.results : []
+        let raw: any[] = []
+        if ((config as any).onSearchConnections) {
+          raw = await (config as any).onSearchConnections(provider.key, q, searchCategoryType)
+        }
 
         const mapped = raw
           .map((r: any, idx: number) => {
@@ -3313,9 +3239,10 @@ function BorealisCardHoverWatchlistsTab({
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    let isMounted = true
-
-    // Check TTL cache
+    if (!mediaId) {
+      setLoading(false)
+      return
+    }
     const cached = HOVER_PLAYLISTS_CACHE.get(cacheKey)
     if (cached && Date.now() - cached.timestamp < HOVER_PLAYLISTS_CACHE_TTL && refreshKey === 0) {
       setLists(cached.lists)
@@ -3323,61 +3250,40 @@ function BorealisCardHoverWatchlistsTab({
       return
     }
 
+    let cancelled = false
     setLoading(true)
     setError(null)
 
-    // Deduplicate concurrent in-flight fetches for the same media
-    let fetchPromise = HOVER_PLAYLISTS_INFLIGHT.get(cacheKey)
-    if (!fetchPromise) {
-      const params = new URLSearchParams({ limit: "100" })
-      if (mediaId && mediaId > 0) {
-        params.set("mediaType", backendMediaType)
-        params.set("mediaId", String(mediaId))
-      }
-
-      fetchPromise = safeBorealisFetch(`/borealis/playlists?${params.toString()}`)
-        .then(async (res) => {
-          if (!res.ok) {
-            throw new Error(`HTTP ${res.status}`)
-          }
-          return res.json()
+    let promise = HOVER_PLAYLISTS_INFLIGHT.get(cacheKey)
+    if (!promise || refreshKey > 0) {
+      promise = (async () => {
+        const { data: res, error: err } = await (elysia as any).borealis.playlists.get({
+          query: { mediaType: backendMediaType, mediaId, limit: 100 },
         })
-        .then((json) => {
-          const rawLists = Array.isArray(json?.playlists)
-            ? json.playlists
-            : Array.isArray(json?.data?.playlists)
-              ? json.data.playlists
-              : []
-          HOVER_PLAYLISTS_CACHE.set(cacheKey, { lists: rawLists, timestamp: Date.now() })
-          return rawLists
-        })
-        .finally(() => {
-          HOVER_PLAYLISTS_INFLIGHT.delete(cacheKey)
-        })
-
-      HOVER_PLAYLISTS_INFLIGHT.set(cacheKey, fetchPromise)
+        if (err) throw err
+        return ((res as any)?.playlists ?? []) as any[]
+      })().finally(() => {
+        HOVER_PLAYLISTS_INFLIGHT.delete(cacheKey)
+      })
+      HOVER_PLAYLISTS_INFLIGHT.set(cacheKey, promise)
     }
 
-    fetchPromise
-      .then((rawLists) => {
-        if (!isMounted) return
-        setLists(rawLists)
+    promise
+      .then((fetched) => {
+        HOVER_PLAYLISTS_CACHE.set(cacheKey, { lists: fetched, timestamp: Date.now() })
+        if (!cancelled) setLists(fetched)
       })
-      .catch((err) => {
-        if (!isMounted) return
-        console.error("[BorealisCard] Failed to load custom lists:", err)
-        setError("Failed to load custom lists")
+      .catch(() => {
+        if (!cancelled) setError("Failed to load custom lists")
       })
       .finally(() => {
-        if (isMounted) {
-          setLoading(false)
-        }
+        if (!cancelled) setLoading(false)
       })
 
     return () => {
-      isMounted = false
+      cancelled = true
     }
-  }, [mediaId, backendMediaType, refreshKey, cacheKey])
+  }, [cacheKey, mediaId, backendMediaType, refreshKey])
 
   const [operatingIds, setOperatingIds] = useState<Record<string, boolean>>({})
   const [isCreatingList, setIsCreatingList] = useState(false)
@@ -3390,56 +3296,16 @@ function BorealisCardHoverWatchlistsTab({
     const currentlyChecked = isChecked(list)
     const next = !currentlyChecked
 
-    // Optimistically update
     const updated = lists.map((l) =>
       l.id === list.id
         ? {
-            ...l,
-            containsMedia: next,
-            entriesCount: next ? l.entriesCount + 1 : Math.max(0, l.entriesCount - 1),
-          }
+          ...l,
+          containsMedia: next,
+          entriesCount: next ? l.entriesCount + 1 : Math.max(0, l.entriesCount - 1),
+        }
         : l
     )
     setLists(updated)
-    HOVER_PLAYLISTS_CACHE.set(cacheKey, { lists: updated, timestamp: Date.now() })
-
-    setOperatingIds((prev) => ({ ...prev, [list.id]: true }))
-    try {
-      if (next) {
-        await safeBorealisFetch(`/borealis/playlists/${list.id}/entries`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mediaType: backendMediaType, mediaId }),
-        })
-      } else {
-        await safeBorealisFetch(
-          `/borealis/playlists/${list.id}/entries?mediaType=${backendMediaType}&mediaId=${mediaId}`,
-          {
-            method: "DELETE",
-          }
-        )
-      }
-    } catch (err) {
-      console.error("Failed to toggle playlist entry:", err)
-      // Rollback
-      const reverted = lists.map((l) =>
-        l.id === list.id
-          ? {
-              ...l,
-              containsMedia: currentlyChecked,
-              entriesCount: currentlyChecked ? l.entriesCount + 1 : Math.max(0, l.entriesCount - 1),
-            }
-          : l
-      )
-      setLists(reverted)
-      HOVER_PLAYLISTS_CACHE.set(cacheKey, { lists: reverted, timestamp: Date.now() })
-    } finally {
-      setOperatingIds((prev) => {
-        const copy = { ...prev }
-        delete copy[list.id]
-        return copy
-      })
-    }
   }
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -3447,52 +3313,19 @@ function BorealisCardHoverWatchlistsTab({
     const name = newName.trim()
     if (!name || isCreatingList) return
 
-    setIsCreatingList(true)
-    setError(null)
-    try {
-      const res = await safeBorealisFetch("/borealis/playlists", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, isPrivate: false }),
-      })
-      if (!res.ok) throw new Error("Failed to create list")
-      const json = await res.json()
-      const newList = json?.playlist
-      if (newList?.id) {
-        if (mediaId && mediaId > 0) {
-          // Add current item to the newly created playlist
-          await safeBorealisFetch(`/borealis/playlists/${newList.id}/entries`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ mediaType: backendMediaType, mediaId }),
-          })
-        }
-        const updated = [
-          {
-            id: newList.id,
-            name: newList.name,
-            isPrivate: Boolean(newList.isPrivate),
-            entriesCount: mediaId && mediaId > 0 ? 1 : 0,
-            containsMedia: Boolean(mediaId && mediaId > 0),
-          },
-          ...lists,
-        ]
-        setLists(updated)
-        HOVER_PLAYLISTS_CACHE.set(cacheKey, { lists: updated, timestamp: Date.now() })
-        // Clear other media cache entries so newly created list is visible on other cards
-        for (const k of HOVER_PLAYLISTS_CACHE.keys()) {
-          if (k !== cacheKey) {
-            HOVER_PLAYLISTS_CACHE.delete(k)
-          }
-        }
-        setNewName("")
-      }
-    } catch (err) {
-      console.error("Failed to create list:", err)
-      setError("Failed to create list")
-    } finally {
-      setIsCreatingList(false)
-    }
+    const tempId = `temp-${Date.now()}`
+    const updated = [
+      {
+        id: tempId,
+        name,
+        isPrivate: false,
+        entriesCount: 1,
+        containsMedia: true,
+      },
+      ...lists,
+    ]
+    setLists(updated)
+    setNewName("")
   }
 
   const canEdit = config?.canEdit !== false
@@ -3686,10 +3519,10 @@ export function BorealisCardHoverContent({
         if (typeof parsed === "string") {
           try {
             parsed = JSON.parse(parsed)
-          } catch {}
+          } catch { }
         }
         if (Array.isArray(parsed)) list = parsed
-      } catch {}
+      } catch { }
     }
     return list.map((item: any) => ({
       ...item,
@@ -3783,7 +3616,7 @@ export function BorealisCardHoverContent({
     if (progIncreased) {
       if (
         ((maxUnits && draftProgress >= maxUnits) ||
-         (maxChapters && draftChaptersProgress >= maxChapters)) &&
+          (maxChapters && draftChaptersProgress >= maxChapters)) &&
         draftStatus !== "COMPLETED"
       ) {
         setDraftStatus("COMPLETED")
@@ -3838,60 +3671,10 @@ export function BorealisCardHoverContent({
         await config.onSaveEntry(payload)
       }
 
-      // Persist custom list changes and creations
-      const mediaId = getBackendMediaId(data)
-      const backendMediaType = toBackendMediaType(data.type)
-      if (mediaId && !Number.isNaN(mediaId)) {
-        if (draftNewLists.length > 0) {
-          for (const name of draftNewLists) {
-            try {
-              const res = await safeBorealisFetch("/borealis/playlists", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, isPrivate: false }),
-              })
-              if (res.ok) {
-                const json = await res.json()
-                const pid = json?.playlist?.id
-                if (pid) {
-                  await safeBorealisFetch(`/borealis/playlists/${pid}/entries`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ mediaType: backendMediaType, mediaId }),
-                  })
-                }
-              }
-            } catch (e) {
-              console.error("Failed to create custom list and add media:", e)
-            }
-          }
-        }
-        if (Object.keys(draftListChanges).length > 0) {
-          for (const [listId, shouldContain] of Object.entries(draftListChanges)) {
-            try {
-              if (shouldContain) {
-                await safeBorealisFetch(`/borealis/playlists/${listId}/entries`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ mediaType: backendMediaType, mediaId }),
-                })
-              } else {
-                await safeBorealisFetch(
-                  `/borealis/playlists/${listId}/entries?mediaType=${backendMediaType}&mediaId=${mediaId}`,
-                  {
-                    method: "DELETE",
-                  }
-                )
-              }
-            } catch (e) {
-              console.error(`Failed to update custom list ${listId}:`, e)
-            }
-          }
-        }
-        setDraftListChanges({})
-        setDraftNewLists([])
-        setPlaylistRefreshKey((k) => k + 1)
-      }
+      setDraftListChanges({})
+      setDraftNewLists([])
+      setPlaylistRefreshKey((k) => k + 1)
+
 
       setLocalScore?.(payload.score)
       setLocalStatus?.(payload.status)
@@ -3938,141 +3721,12 @@ export function BorealisCardHoverContent({
     (rawEntry as any)?.otherId
   )
 
-  const [fetchedExtra, setFetchedExtra] = useState<MediaHoverExtra | null>(() => {
-    const key = `${data.type}:${mediaId}`
-    return mediaHoverExtraCache.get(key) || null
-  })
-
-  useEffect(() => {
-    const norm = (data.type || "").toLowerCase()
-    const isFetchAllowed =
-      norm === "anime" ||
-      norm === "manga" ||
-      norm === "character" ||
-      norm === "characters" ||
-      norm === "staff" ||
-      norm === "people" ||
-      norm === "person"
-
-    const hasDescription = Boolean(
-      data.description ||
-      data.hoverDetails?.description ||
-      rawMedia?.description
-    )
-    if (
-      !isFetchAllowed ||
-      hasDescription ||
-      (!isHovered && !isHoverCardEditing) ||
-      !mediaId ||
-      isNaN(mediaId)
-    ) {
-      return
-    }
-
-    const key = `${data.type}:${mediaId}`
-    if (mediaHoverExtraCache.has(key)) {
-      setFetchedExtra(mediaHoverExtraCache.get(key)!)
-      return
-    }
-
-    let isMounted = true
-    let promise = inFlightMediaHoverExtra.get(key)
-
-    if (!promise) {
-      promise = (async (): Promise<MediaHoverExtra> => {
-        const norm = (data.type || "").toLowerCase()
-        const result: MediaHoverExtra = {}
-
-        if (norm === "character" || norm === "characters") {
-          try {
-            const res = await safeBorealisFetch(`/borealis/characters/${mediaId}`)
-            if (res.ok) {
-              const json = await res.json()
-              const char = json.character || json
-              if (char) {
-                if (char.description) result.description = char.description
-                if (char.gender) result.gender = char.gender
-                if (char.age) result.age = String(char.age)
-              }
-            }
-          } catch {}
-          mediaHoverExtraCache.set(key, result)
-          return result
-        }
-
-        if (norm === "staff" || norm === "people" || norm === "person") {
-          try {
-            const res = await safeBorealisFetch(`/borealis/people/${mediaId}`)
-            if (res.ok) {
-              const json = await res.json()
-              const p = json.person || json
-              if (p) {
-                if (p.description) result.description = p.description
-                if (p.gender) result.gender = p.gender
-                if (p.age) result.age = String(p.age)
-              }
-            }
-          } catch {}
-          mediaHoverExtraCache.set(key, result)
-          return result
-        }
-
-        const pathPrefix = getMediaApiPath(data.type)
-        if (norm !== "anime" && norm !== "manga") {
-          return {}
-        }
-
-        try {
-          const detailRes = await safeBorealisFetch(`/borealis/media/${pathPrefix}/${mediaId}`)
-          if (detailRes.ok) {
-            const json = await detailRes.json()
-            if (json.media) {
-              if (Array.isArray(json.media.relations)) {
-                result.relations = json.media.relations
-              }
-              if (json.media.description) {
-                result.description = json.media.description
-              }
-            }
-          }
-        } catch {}
-
-        mediaHoverExtraCache.set(key, result)
-        return result
-      })().finally(() => {
-        inFlightMediaHoverExtra.delete(key)
-      })
-
-      inFlightMediaHoverExtra.set(key, promise)
-    }
-
-    promise.then((res) => {
-      if (isMounted) {
-        setFetchedExtra(res)
-      }
-    })
-
-    return () => {
-      isMounted = false
-    }
-  }, [isHovered, isHoverCardEditing, data.type, mediaId, data.description, data.hoverDetails?.description, rawMedia?.description])
-
-  const effectiveSimilar = useMemo(() => {
-    if (Array.isArray(data.hoverDetails?.recommendations) && data.hoverDetails.recommendations.length > 0) {
-      return data.hoverDetails.recommendations
-    }
-    if (Array.isArray(rawMedia?.recommendations) && rawMedia.recommendations.length > 0) {
-      return rawMedia.recommendations
-    }
-    if (Array.isArray(rawMedia?.similar) && rawMedia.similar.length > 0) {
-      return rawMedia.similar
-    }
-    return []
-  }, [data.hoverDetails?.recommendations, rawMedia?.recommendations, rawMedia?.similar])
-
-  const effectiveDescription = data.hoverDetails?.description || rawMedia?.description || fetchedExtra?.description
-  const effectiveGender = data.hoverDetails?.gender || fetchedExtra?.gender
-  const effectiveAge = data.hoverDetails?.age || fetchedExtra?.age
+  const effectiveDescription =
+    data.hoverDetails?.description || rawMedia?.description || data.description || null
+  const effectiveGender =
+    data.hoverDetails?.gender || (data as any)?.gender || rawMedia?.gender || null
+  const effectiveAge =
+    data.hoverDetails?.age || (data as any)?.age || rawMedia?.age || null
 
   const [mounted, setMounted] = useState(false)
   const [coords, setCoords] = useState<{
@@ -4689,61 +4343,6 @@ export function BorealisCardHoverContent({
                     {genre}
                   </span>
                 ))}
-              </div>
-            )}
-
-            {/* Similar Series / Recommendations */}
-            {effectiveSimilar.length > 0 && (
-              <div className="flex flex-col gap-2 border-t border-zinc-800/80 pt-3">
-                <div className="flex items-center gap-1.5 text-[11px] font-bold text-zinc-300 font-mono">
-                  <IconSparkles className="size-3.5 text-amber-400" />
-                  <span>Similar Series</span>
-                  <span className="rounded-full bg-zinc-800 px-1.5 py-0.2 font-mono text-[10px] text-zinc-400">
-                    {effectiveSimilar.length}
-                  </span>
-                </div>
-                <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
-                  {effectiveSimilar.slice(0, 8).map((item: any, idx: number) => {
-                    const simMedia = item.media || item.target || item
-                    const simId = simMedia.id || item.id
-                    const simTitle = simMedia.titlePrimary || simMedia.title?.romaji || simMedia.title || "Untitled"
-                    const simCover = simMedia.coverImage || simMedia.image
-                    const simScore = simMedia.averageScore
-                    const simType = (simMedia.type || data.type || "anime").toLowerCase()
-
-                    return (
-                      <a
-                        key={item.id ?? `${simId}-${idx}`}
-                        href={`/borealis/${simType === "movies" ? "movie" : simType}/${simId}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="group/sim flex w-20 shrink-0 flex-col gap-1 rounded-lg transition-all"
-                      >
-                        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg border border-frost bg-zinc-900 ring-1 ring-white/5">
-                          {simCover ? (
-                            <img
-                              src={simCover}
-                              alt=""
-                              className="size-full object-cover transition-transform duration-200 group-hover/sim:scale-105"
-                            />
-                          ) : (
-                            <div className="flex size-full items-center justify-center text-[10px] text-zinc-500">
-                              N/A
-                            </div>
-                          )}
-                          {simScore && (
-                            <div className="absolute bottom-1 start-1 flex items-center gap-0.5 rounded bg-black/80 px-1 py-0.2 font-mono text-[9px] font-bold text-amber-300 backdrop-blur-md">
-                              <IconStar className="size-2.5 fill-amber-300" />
-                              <span>{Number(simScore).toFixed(1)}</span>
-                            </div>
-                          )}
-                        </div>
-                        <span className="line-clamp-2 text-[11px] font-medium leading-tight text-zinc-300 group-hover/sim:text-primary transition-colors">
-                          {simTitle}
-                        </span>
-                      </a>
-                    )
-                  })}
-                </div>
               </div>
             )}
           </div>

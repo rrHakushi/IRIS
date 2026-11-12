@@ -86,8 +86,12 @@ export function PeopleTab({ mediaCategory, mediaId }: PeopleTabProps): React.JSX
         queryParams.set("status", selectedStatus)
       }
 
+      const rawCat = mediaCategory.toLowerCase()
+      const targetCat =
+        rawCat === "movie" ? "movies" : rawCat === "game" ? "games" : rawCat === "book" ? "books" : rawCat
+
       requestPromise = fetch(
-        `${API_URL}/borealis/media/${encodeURIComponent(mediaCategory)}/${encodeURIComponent(mediaId)}/people?${queryParams.toString()}`,
+        `${API_URL}/borealis/${encodeURIComponent(targetCat)}/${encodeURIComponent(mediaId)}/people?${queryParams.toString()}`,
         { credentials: "include" }
       )
         .then(async (res) => {
@@ -95,9 +99,6 @@ export function PeopleTab({ mediaCategory, mediaId }: PeopleTabProps): React.JSX
             throw new Error(`Failed to load community members: ${res.statusText}`)
           }
           return await res.json()
-        })
-        .finally(() => {
-          inFlightPeopleRequests.delete(key)
         })
 
       inFlightPeopleRequests.set(key, requestPromise)
@@ -190,35 +191,38 @@ export function PeopleTab({ mediaCategory, mediaId }: PeopleTabProps): React.JSX
   }
 
   const renderProgress = (p: PersonMediaEntry) => {
+    const primary = (p as any).primaryProgress ?? p.progress
+    const secondary = (p as any).secondaryProgress ?? p.volumesProgress
+
     if (isReading) {
-      if (p.progress === null && p.volumesProgress === null) return null
+      if (primary === null && secondary === null) return null
       return (
         <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-bold">
-          {p.volumesProgress ? `V${p.volumesProgress} ` : ""}
-          {p.progress !== null ? `CH ${p.progress}` : ""}
+          {secondary ? `V${secondary} ` : ""}
+          {primary !== null ? `CH ${primary}` : ""}
         </Badge>
       )
     }
     if (isPlaying) {
-      if (p.progress === null) return null
+      if (primary === null) return null
       return (
         <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-bold">
-          {p.progress} Hrs
+          {primary} Hrs
         </Badge>
       )
     }
     if (isListening) {
-      if (p.progress === null) return null
+      if (primary === null) return null
       return (
         <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-bold">
-          {p.progress} Plays
+          {primary} Plays
         </Badge>
       )
     }
-    if (p.progress !== null && p.progress !== undefined) {
+    if (primary !== null && primary !== undefined) {
       return (
         <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-bold">
-          Ep {p.progress}
+          Unit {primary}
         </Badge>
       )
     }

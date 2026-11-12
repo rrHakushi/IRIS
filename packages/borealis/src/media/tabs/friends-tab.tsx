@@ -76,14 +76,25 @@ export function FriendsMediaTab({
 
     let requestPromise = inFlightRequests.get(key)
     if (!requestPromise) {
-      requestPromise = elysia.carina.friends
-        .media({ mediaType: mediaCategory })({ id: Number(mediaId) })
-        .get()
-        .finally(() => {
-          inFlightRequests.delete(key)
-        })
-      inFlightRequests.set(key, requestPromise)
+      const rawCat = mediaCategory.toLowerCase()
+      const targetCat =
+        rawCat === "movie" ? "movies" : rawCat === "game" ? "games" : rawCat === "book" ? "books" : rawCat
+      const idKey =
+        targetCat === "movies"
+          ? "movieId"
+          : targetCat === "games"
+            ? "gameId"
+            : targetCat === "books"
+              ? "bookId"
+              : `${targetCat}Id`
+
+      const p: Promise<any> = (elysia.borealis as any)[targetCat]({ [idKey]: Number(mediaId) })
+        .friends.get()
+      inFlightRequests.set(key, p)
+      requestPromise = p
     }
+
+    if (!requestPromise) return
 
     requestPromise
       .then((res: any) => {
@@ -324,14 +335,24 @@ export function FriendsMediaTab({
                 <div className="flex items-center gap-1.5">
                   {getStatusBadge(f.status)}
 
-                  {f.progress !== null && f.progress !== undefined && (
+                  {((f as any).primaryProgress !== null && (f as any).primaryProgress !== undefined) ? (
+                    <Badge
+                      variant="secondary"
+                      className="h-5 px-1.5 text-[10px] font-bold"
+                    >
+                      Progress {(f as any).primaryProgress}
+                      {((f as any).secondaryProgress !== null && (f as any).secondaryProgress !== undefined)
+                        ? ` / Vol ${(f as any).secondaryProgress}`
+                        : ""}
+                    </Badge>
+                  ) : f.progress !== null && f.progress !== undefined ? (
                     <Badge
                       variant="secondary"
                       className="h-5 px-1.5 text-[10px] font-bold"
                     >
                       Unit {f.progress}
                     </Badge>
-                  )}
+                  ) : null}
                 </div>
 
                 <div className="flex items-center gap-2">

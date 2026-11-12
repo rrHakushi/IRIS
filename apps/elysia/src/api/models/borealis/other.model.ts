@@ -7,8 +7,75 @@ export const ProgressFieldSchema = t.Object({
   max: t.Optional(t.Nullable(t.Number({ minimum: 1, description: 'Optional maximum value for completion' }))),
 })
 
-
 export const BorealisOtherModel = {
+  catalogQuery: t.Optional(
+    t.Object({
+      cursor: t.Optional(t.Numeric({ description: 'Cursor ID for pagination' })),
+      page: t.Optional(t.Numeric({ default: 1, minimum: 1, description: 'Page number' })),
+      limit: t.Optional(t.Numeric({ default: 50, minimum: 1, maximum: 100, description: 'Items per page (default 50)' })),
+      search: t.Optional(t.String({ description: 'Filter by search keyword in titles' })),
+      formats: t.Optional(t.String({ description: 'Comma-separated formats' })),
+      statuses: t.Optional(t.String({ description: 'Comma-separated statuses' })),
+      years: t.Optional(t.String({ description: 'Comma-separated years' })),
+      sortBy: t.Optional(
+        t.Union(
+          [
+            t.Literal('popularity'),
+            t.Literal('score'),
+            t.Literal('title'),
+            t.Literal('releaseDate'),
+            t.Literal('trending'),
+            t.Literal('favorites'),
+            t.Literal('updatedAt'),
+          ],
+          { default: 'popularity' }
+        )
+      ),
+      sortOrder: t.Optional(t.Union([t.Literal('asc'), t.Literal('desc')], { default: 'desc' })),
+    })
+  ),
+
+  catalogResponse: t.Object({
+    success: t.Boolean(),
+    items: t.Array(
+      t.Object({
+        id: t.Number(),
+        titlePrimary: t.String(),
+        titleSecondary: t.Nullable(t.String()),
+        titleNative: t.Nullable(t.String()),
+        coverImage: t.Nullable(t.String()),
+        bannerImage: t.Nullable(t.String()),
+        averageScore: t.Nullable(t.Number()),
+        format: t.Nullable(t.String()),
+        status: t.Nullable(t.String()),
+        startDateYear: t.Nullable(t.Number()),
+        description: t.Nullable(t.String()),
+        genres: t.Array(t.Any()),
+        tags: t.Array(t.Any()),
+      })
+    ),
+    nextCursor: t.Nullable(t.Number()),
+    hasMore: t.Boolean(),
+    total: t.Number(),
+    pagination: t.Optional(
+      t.Object({
+        page: t.Number(),
+        limit: t.Number(),
+        total: t.Number(),
+        totalPages: t.Number(),
+        hasMore: t.Boolean(),
+      })
+    ),
+  }),
+
+  filtersResponse: t.Object({
+    success: t.Boolean(),
+    statuses: t.Array(t.Object({ value: t.String(), count: t.Number() })),
+    formats: t.Array(t.Object({ value: t.String(), count: t.Number() })),
+    genres: t.Array(t.Object({ value: t.String(), count: t.Number() })),
+    years: t.Array(t.Object({ value: t.Number(), count: t.Number() })),
+  }),
+
   otherParam: t.Object({
     otherId: t.Numeric({ minimum: 1, description: 'Other item unique ID' }),
   }),
@@ -88,6 +155,82 @@ export const BorealisOtherModel = {
     message: t.String(),
   }),
 
+  statsResponse: t.Object({
+    success: t.Boolean(),
+    stats: t.Any(),
+  }),
+
+  peopleQuery: t.Optional(
+    t.Object({
+      page: t.Optional(t.Numeric({ default: 1, minimum: 1, description: 'Page number' })),
+      limit: t.Optional(t.Numeric({ default: 40, minimum: 1, maximum: 100, description: 'Items per page' })),
+      status: t.Optional(t.String({ description: 'Filter by list status' })),
+    })
+  ),
+
+  friendsResponse: t.Object({
+    success: t.Boolean(),
+    friends: t.Array(
+      t.Object({
+        id: t.Union([t.Number(), t.String()]),
+        userId: t.String(),
+        status: t.String(),
+        score: t.Nullable(t.Number()),
+        primaryProgress: t.Nullable(t.Number()),
+        secondaryProgress: t.Optional(t.Nullable(t.Number())),
+        progress: t.Optional(t.Nullable(t.Number())),
+        volumesProgress: t.Optional(t.Nullable(t.Number())),
+        updatedAt: t.String(),
+        user: t.Object({
+          id: t.String(),
+          username: t.String(),
+          displayName: t.Nullable(t.String()),
+          avatarUrl: t.Nullable(t.String()),
+          avatarFrame: t.Nullable(t.String()),
+          displayNameStyle: t.Optional(t.Any()),
+          customization: t.Optional(t.Any()),
+        }),
+      })
+    ),
+  }),
+
+  peopleResponse: t.Object({
+    success: t.Boolean(),
+    mediaType: t.String(),
+    mediaId: t.Number(),
+    total: t.Number(),
+    page: t.Number(),
+    limit: t.Number(),
+    totalPages: t.Number(),
+    people: t.Array(
+      t.Object({
+        id: t.Union([t.Number(), t.String()]),
+        userId: t.String(),
+        status: t.String(),
+        score: t.Nullable(t.Number()),
+        primaryProgress: t.Nullable(t.Number()),
+        secondaryProgress: t.Optional(t.Nullable(t.Number())),
+        progress: t.Optional(t.Nullable(t.Number())),
+        volumesProgress: t.Optional(t.Nullable(t.Number())),
+        updatedAt: t.String(),
+        user: t.Object({
+          id: t.String(),
+          username: t.String(),
+          displayName: t.Nullable(t.String()),
+          avatarUrl: t.Nullable(t.String()),
+          avatarFrame: t.Nullable(t.String()),
+          displayNameStyle: t.Optional(t.Any()),
+          customization: t.Optional(t.Any()),
+        }),
+      })
+    ),
+  }),
+
+  recommendationsResponse: t.Object({
+    success: t.Boolean(),
+    recommendations: t.Array(t.Any()),
+  }),
+
   // RFC 9457 Problem Details
   unauthorizedError: t.Object({
     type: t.String(),
@@ -129,15 +272,9 @@ export const BorealisOtherModel = {
     code: t.String(),
     errors: t.Optional(t.Array(t.Any())),
   }),
-
-  filtersResponse: t.Object({
-    success: t.Boolean(),
-    statuses: t.Array(t.Object({ value: t.String(), count: t.Number() })),
-    formats: t.Array(t.Object({ value: t.String(), count: t.Number() })),
-    genres: t.Array(t.Object({ value: t.String(), count: t.Number() })),
-    years: t.Array(t.Object({ value: t.Number(), count: t.Number() })),
-  }),
 }
 
 export type CreateOtherBody = UnwrapSchema<typeof BorealisOtherModel.createOtherBody>
 export type UpdateOtherBody = UnwrapSchema<typeof BorealisOtherModel.updateOtherBody>
+export type OtherCatalogQuery = UnwrapSchema<typeof BorealisOtherModel.catalogQuery>
+export type OtherPeopleQuery = UnwrapSchema<typeof BorealisOtherModel.peopleQuery>
