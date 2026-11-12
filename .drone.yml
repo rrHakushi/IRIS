@@ -111,10 +111,10 @@ steps:
     commands:
       - |
         ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
-        bun -e "const r = await fetch('https://github.com/Infisical/cli/releases/download/v0.45.6/cli_0.45.6_linux_${ARCH}.tar.gz'); if (!r.ok) throw new Error('Failed to download infisical CLI: ' + r.statusText); await Bun.write('/tmp/infisical.tar.gz', r);"
+        bun -e "const r = await fetch('https://github.com/Infisical/cli/releases/download/v0.45.6/cli_0.45.6_linux_' + process.argv[1] + '.tar.gz'); if (!r.ok) throw new Error('Failed to download infisical CLI: ' + r.statusText); await Bun.write('/tmp/infisical.tar.gz', r);" "$ARCH"
         tar -xzf /tmp/infisical.tar.gz -C /usr/local/bin infisical
         rm -f /tmp/infisical.tar.gz
-        infisical export --token="$INFISICAL_TOKEN" --projectId="$INFISICAL_PROJECT_ID" --env="prod" --domain="${INFISICAL_SITE_URL%/}/api" --format=dotenv >> .env
+        infisical export --token="$INFISICAL_TOKEN" --projectId="$INFISICAL_PROJECT_ID" --env="prod" --domain="$(printf '%s' "$INFISICAL_SITE_URL" | sed 's|/$||')/api" --format=dotenv >> .env
       - chmod 600 .env
       - bun install --frozen-lockfile
       - cp /usr/local/bin/infisical node_modules/.bin/infisical
@@ -160,7 +160,7 @@ steps:
         from_secret: INFISICAL_SITE_URL
       INFISICAL_ENV: prod
     commands:
-      - INFISICAL_API_URL="${INFISICAL_SITE_URL%/}/api" bun run --filter=@Iris/db contract:emit
+      - INFISICAL_API_URL="$(printf '%s' "$INFISICAL_SITE_URL" | sed 's|/$||')/api" bun run --filter=@Iris/db contract:emit
     depends_on:
       - searxng
 
@@ -173,7 +173,7 @@ steps:
         from_secret: INFISICAL_SITE_URL
       INFISICAL_ENV: prod
     commands:
-      - INFISICAL_API_URL="${INFISICAL_SITE_URL%/}/api" POSTGRE_HOST=180.0.0.2 POSTGRE_PORT=5432 bun run --filter=@Iris/db db:update
+      - INFISICAL_API_URL="$(printf '%s' "$INFISICAL_SITE_URL" | sed 's|/$||')/api" POSTGRE_HOST=180.0.0.2 POSTGRE_PORT=5432 bun run --filter=@Iris/db db:update
     depends_on:
       - Prisma Contract
 
@@ -186,7 +186,7 @@ steps:
         from_secret: INFISICAL_SITE_URL
       INFISICAL_ENV: prod
     commands:
-      - INFISICAL_API_URL="${INFISICAL_SITE_URL%/}/api" bun x turbo run build --filter="./packages/*"
+      - INFISICAL_API_URL="$(printf '%s' "$INFISICAL_SITE_URL" | sed 's|/$||')/api" bun x turbo run build --filter="./packages/*"
     depends_on:
       - Prisma Update
 
