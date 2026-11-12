@@ -208,30 +208,9 @@ steps:
       - export DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1
       - |
         PKG_VERSION=$(sed -n 's/.*"version":[[:space:]]*"\([^"]*\)".*/\1/p' apps/elysia/package.json | head -n 1)
-        IS_RUNNING=$(docker inspect -f '{{.State.Running}}' NamelessLiberty-Elysia 2>/dev/null || echo "false")
-        CONTAINER_VERSION=$(docker inspect -f '{{ index .Config.Labels "org.opencontainers.image.version" }}' NamelessLiberty-Elysia 2>/dev/null || echo "")
-        if [ -z "$CONTAINER_VERSION" ] && [ "$IS_RUNNING" = "true" ]; then
-          CONTAINER_VERSION=$(docker cp NamelessLiberty-Elysia:/app/package.json - 2>/dev/null | sed -n 's/.*"version":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1 || echo "")
-        fi
-        echo "NamelessLiberty-Elysia package.json version: $PKG_VERSION | container version: $CONTAINER_VERSION (running: $IS_RUNNING)"
-        SHOULD_BUILD=1
-        if [ "$IS_RUNNING" = "true" ] && [ -n "$CONTAINER_VERSION" ]; then
-          if [ "$CONTAINER_VERSION" = "$PKG_VERSION" ]; then
-            SHOULD_BUILD=0
-          else
-            OLDER=$(printf '%s\n%s\n' "$CONTAINER_VERSION" "$PKG_VERSION" | sort -V | head -n 1)
-            if [ "$OLDER" = "$PKG_VERSION" ]; then
-              SHOULD_BUILD=0
-            fi
-          fi
-        fi
-        if [ "$SHOULD_BUILD" = "0" ]; then
-          echo "NamelessLiberty-Elysia is already up to date (v$CONTAINER_VERSION). Skipping build."
-        else
-          echo "Building NamelessLiberty-Elysia v$PKG_VERSION..."
-          APP_VERSION="$PKG_VERSION" docker compose build --build-arg APP_VERSION="$PKG_VERSION" elysia
-          APP_VERSION="$PKG_VERSION" docker compose up -d --no-deps elysia
-        fi
+        echo "Building NamelessLiberty-Elysia v$PKG_VERSION..."
+        APP_VERSION="$PKG_VERSION" docker compose build --build-arg APP_VERSION="$PKG_VERSION" elysia
+        APP_VERSION="$PKG_VERSION" docker compose up -d --no-deps elysia
     depends_on:
       - Packages
 
@@ -249,30 +228,9 @@ steps:
       - export DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1
       - |
         PKG_VERSION=$(sed -n 's/.*"version":[[:space:]]*"\([^"]*\)".*/\1/p' apps/web/package.json | head -n 1)
-        IS_RUNNING=$(docker inspect -f '{{.State.Running}}' NamelessLiberty-Next 2>/dev/null || echo "false")
-        CONTAINER_VERSION=$(docker inspect -f '{{ index .Config.Labels "org.opencontainers.image.version" }}' NamelessLiberty-Next 2>/dev/null || echo "")
-        if [ -z "$CONTAINER_VERSION" ] && [ "$IS_RUNNING" = "true" ]; then
-          CONTAINER_VERSION=$(docker cp NamelessLiberty-Next:/app/package.json - 2>/dev/null | sed -n 's/.*"version":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1 || echo "")
-        fi
-        echo "NamelessLiberty-Next package.json version: $PKG_VERSION | container version: $CONTAINER_VERSION (running: $IS_RUNNING)"
-        SHOULD_BUILD=1
-        if [ "$IS_RUNNING" = "true" ] && [ -n "$CONTAINER_VERSION" ]; then
-          if [ "$CONTAINER_VERSION" = "$PKG_VERSION" ]; then
-            SHOULD_BUILD=0
-          else
-            OLDER=$(printf '%s\n%s\n' "$CONTAINER_VERSION" "$PKG_VERSION" | sort -V | head -n 1)
-            if [ "$OLDER" = "$PKG_VERSION" ]; then
-              SHOULD_BUILD=0
-            fi
-          fi
-        fi
-        if [ "$SHOULD_BUILD" = "0" ]; then
-          echo "NamelessLiberty-Next is already up to date (v$CONTAINER_VERSION). Skipping build."
-        else
-          echo "Building NamelessLiberty-Next v$PKG_VERSION..."
-          APP_VERSION="$PKG_VERSION" docker compose build --build-arg APP_VERSION="$PKG_VERSION" next
-          APP_VERSION="$PKG_VERSION" docker compose up -d --no-deps next
-        fi
+        echo "Building NamelessLiberty-Next v$PKG_VERSION..."
+        APP_VERSION="$PKG_VERSION" docker compose build --build-arg APP_VERSION="$PKG_VERSION" next
+        APP_VERSION="$PKG_VERSION" docker compose up -d --no-deps next
     depends_on:
       - Elysia
 
