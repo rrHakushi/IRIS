@@ -13,10 +13,10 @@
   },
   "scripts": {
     "dev": "infisical run --env=dev -- bun --watch src/index.ts",
-    "build": "tsc --noEmit",
+    "build": "bun run codegen",
     "typecheck": "tsc --noEmit",
-    "codegen": "infisical run --env=dev -- bun src/plugins/controllers.ts",
-    "build:binary": "infisical run --env=dev -- bun src/plugins/controllers.ts && infisical run --env=dev -- bun build --compile --minify-whitespace --minify-syntax --target bun-linux-x64 --outfile server src/index.ts",
+    "codegen": "infisical run --env=${INFISICAL_ENV:-dev} -- bun src/plugins/controllers.ts",
+    "build:binary": "bun run codegen && infisical run --env=${INFISICAL_ENV:-dev} -- bun build --compile --minify-whitespace --minify-syntax --target bun-linux-x64 --outfile server src/index.ts",
     "start": "./server",
     "test": "bun test"
   },

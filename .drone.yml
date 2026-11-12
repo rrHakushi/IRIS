@@ -195,6 +195,11 @@ steps:
 
   - name: Elysia
     image: docker:latest
+    environment:
+      INFISICAL_TOKEN:
+        from_secret: INFISICAL_TOKEN
+      INFISICAL_SITE_URL:
+        from_secret: INFISICAL_SITE_URL
     volumes:
       - name: docker_sock
         path: /var/run/docker.sock

@@ -140,8 +140,10 @@ services:
       dockerfile: apps/elysia/Dockerfile
       args:
         APP_VERSION: ${APP_VERSION}
+        INFISICAL_SITE_URL: ${INFISICAL_SITE_URL}
       secrets:
         - app_env
+        - infisical_token
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
