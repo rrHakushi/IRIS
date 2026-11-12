@@ -82,8 +82,9 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
-    env_file:
-      - .env
+    environment:
+      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY}
+      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY}
     volumes:
       - /mnt/wdext/rustfs/data:/data
       - rustfs_logs:/app/logs
@@ -100,8 +101,6 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
-    env_file:
-      - .env
     volumes:
       - /mnt/wdext/media/music:/downloads
       - deemix_config:/config
@@ -123,8 +122,6 @@ services:
       - CHOWN
       - SETGID
       - SETUID
-    env_file:
-      - .env
     volumes:
       - ./core-config/:/etc/searxng/:Z
       - core-data:/var/cache/searxng/

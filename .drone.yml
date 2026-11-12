@@ -171,9 +171,8 @@ steps:
         from_secret: INFISICAL_TOKEN
       INFISICAL_SITE_URL:
         from_secret: INFISICAL_SITE_URL
-      INFISICAL_ENV: prod
     commands:
-      - INFISICAL_API_URL="$(printf '%s' "$INFISICAL_SITE_URL" | sed 's|/$||')/api" POSTGRE_HOST=180.0.0.2 POSTGRE_PORT=5432 bun run --filter=@Iris/db db:update
+      - PATH="$PWD/node_modules/.bin:$PATH" INFISICAL_API_URL="$(printf '%s' "$INFISICAL_SITE_URL" | sed 's|/$||')/api" infisical run --env=prod -- sh -c 'cd packages/database && POSTGRE_HOST=180.0.0.2 POSTGRE_PORT=5432 bunx prisma db update'
     depends_on:
       - Prisma Contract
 
