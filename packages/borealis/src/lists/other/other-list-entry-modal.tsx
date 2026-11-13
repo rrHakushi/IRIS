@@ -35,8 +35,6 @@ import { Badge } from "@workspace/ui/components/badge"
 import { Spinner } from "@workspace/ui/components/spinner"
 import { elysia } from "@/lib/elysia"
 import { useUser } from "@/context/user-context"
-import { useEncryption } from "@/context/encryption-context"
-import { deriveVaultKey, safeDecryptText, safeEncryptText } from "@/lib/client-encryption"
 import type { ListEntryData } from "../types"
 import type { MediaListStatus } from "../../media/list/types"
 import { CreateOtherItemDialog, type OtherCatalogItem } from "./create-other-item-dialog"
@@ -67,11 +65,6 @@ export function OtherListEntryModal({
   onItemDeleted,
 }: OtherListEntryModalProps): React.JSX.Element | null {
   const { user } = useUser()
-  const { secretKey, isActive: isVaultActive } = useEncryption()
-  const vaultKey = useMemo(
-    () => (isVaultActive && secretKey ? deriveVaultKey(secretKey) : null),
-    [isVaultActive, secretKey]
-  )
 
   const media = item?.media as any
   const entry = item?.entry as any
@@ -139,14 +132,7 @@ export function OtherListEntryModal({
         initialProgMap[incKey] = Number(entry.progress ?? 0)
       }
       setProgressValues(initialProgMap)
-
-      // Decrypt notes if encrypted
-      const rawNotes = entry.notes || ""
-      if (rawNotes.startsWith("enc:") && vaultKey) {
-        setNotes(safeDecryptText(rawNotes, vaultKey))
-      } else {
-        setNotes(rawNotes)
-      }
+      setNotes(entry.notes || "")
     } else {
       setStatus("IN_PROGRESS")
       setProgressValues({})
@@ -156,7 +142,7 @@ export function OtherListEntryModal({
       setNotes("")
       setIsPrivate(false)
     }
-  }, [entry, media, vaultKey, isOpen])
+  }, [entry, media, isOpen])
 
   // Progress field definitions from catalog item
   const progressFields: Array<{
@@ -209,10 +195,7 @@ export function OtherListEntryModal({
     setIsSaving(true)
 
     try {
-      let notesToSave = notes.trim() || null
-      if (notesToSave && vaultKey) {
-        notesToSave = safeEncryptText(notesToSave, vaultKey)
-      }
+      const notesToSave = notes.trim() || null
 
       const incKey = media?.incrementFieldKey || "progress"
       const incProg = progressValues[incKey] ?? 0
@@ -633,12 +616,6 @@ export function OtherListEntryModal({
                 <Label htmlFor="entryNotes" className="text-xs font-medium">
                   Notes
                 </Label>
-                {isVaultActive && (
-                  <Badge variant="outline" className="text-[10px] py-0 gap-1 border-primary/30 text-primary">
-                    <IconLock className="size-2.5" />
-                    <span>Encrypted with Vault</span>
-                  </Badge>
-                )}
               </div>
               <Textarea
                 id="entryNotes"

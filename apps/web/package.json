@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun run --env-file=../../.env next dev",
+    "dev": "infisical run --env=dev -- next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

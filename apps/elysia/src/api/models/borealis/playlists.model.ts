@@ -1,4 +1,5 @@
 import { t, type UnwrapSchema } from 'elysia'
+import { ActivityLogItemSchema } from '../carina/activity.model'
 
 /**
  * Reusable pagination metadata schema
@@ -307,23 +308,15 @@ export const BorealisPlaylistsModel = {
   }),
 
   // --- Activity Schemas ---
+  activityQuery: t.Object({
+    page: t.Optional(t.Numeric({ minimum: 1 })),
+    limit: t.Optional(t.Numeric({ minimum: 1, maximum: 50 })),
+  }),
+
   activityResponse: t.Object({
     success: t.Boolean(),
-    activity: t.Array(
-      t.Object({
-        id: t.String(),
-        type: t.String(),
-        user: t.Object({
-          id: t.String(),
-          username: t.String(),
-          displayName: t.Nullable(t.String()),
-          avatarUrl: t.Nullable(t.String()),
-        }),
-        content: t.Nullable(t.String()),
-        metadata: t.Nullable(t.Any()),
-        createdAt: t.String(),
-      })
-    ),
+    activity: t.Array(ActivityLogItemSchema),
+    pagination: t.Optional(PaginationMetaSchema),
   }),
 
   // --- POST /borealis/playlists/:playlistId/entries (Add entry to playlist) ---

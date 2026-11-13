@@ -174,7 +174,9 @@ export function MediaDetailView({
     const cat = media.category
     const isMusic = cat === "music"
 
-    tabs.push({ key: "relations", label: "Relations" })
+    if (cat === "anime" || cat === "manga") {
+      tabs.push({ key: "relations", label: "Relations" })
+    }
 
     if (isMusic && media.tracks && media.tracks.length > 0) {
       tabs.push({ key: "tracks", label: "Tracks" })
@@ -320,7 +322,7 @@ export function MediaDetailView({
       />
 
       {/* Main Tab Content Pane */}
-      <main className="w-full flex-1 px-4 py-8 sm:px-6 lg:px-8">
+      <main className="w-full flex-1 px-4 pt-4 pb-8 sm:px-6 lg:px-8">
         {validActiveTab === "overview" && (
           <OverviewTab
             media={fullMedia}

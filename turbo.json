@@ -1,6 +1,14 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "stream-with-experimental-timestamps",
+  "globalPassThroughEnv": [
+    "INFISICAL_TOKEN",
+    "INFISICAL_API_URL",
+    "INFISICAL_ENV",
+    "INFISICAL_PROJECT_ID",
+    "ELYSIA_URL",
+    "NEXT_PUBLIC_*"
+  ],
   "tasks": {
     "build": {
       "dependsOn": [

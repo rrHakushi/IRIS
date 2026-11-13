@@ -546,6 +546,7 @@ export class BorealisMusicServ {
 
     return {
       success: true,
+      mediaType: 'music',
       mediaId: id,
       total,
       page,

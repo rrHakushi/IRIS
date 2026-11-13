@@ -87,7 +87,7 @@ steps:
         INFISICAL_AUTH_SECRET=$INFISICAL_AUTH_SECRET
         INFISICAL_SITE_URL=$INFISICAL_SITE_URL
         EOF
-      - docker compose up -d infisical
+      - docker compose up -d --no-deps infisical
       - |
         for i in $(seq 1 30); do
           if [ "$(docker inspect -f '{{.State.Running}}' NamelessLiberty-Infisical 2>/dev/null)" = "true" ]; then
@@ -106,10 +106,18 @@ steps:
         from_secret: INFISICAL_TOKEN
       INFISICAL_PROJECT_ID:
         from_secret: INFISICAL_PROJECT_ID
+      INFISICAL_SITE_URL:
+        from_secret: INFISICAL_SITE_URL
     commands:
-      - bunx @infisical/cli export --token="$INFISICAL_TOKEN" --projectId="$INFISICAL_PROJECT_ID" --env="prod" --domain="http://180.0.0.7:8080/api" --format=dotenv >> .env
+      - |
+        ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
+        bun -e "const r = await fetch('https://github.com/Infisical/cli/releases/download/v0.45.6/cli_0.45.6_linux_' + process.argv[1] + '.tar.gz'); if (!r.ok) throw new Error('Failed to download infisical CLI: ' + r.statusText); await Bun.write('/tmp/infisical.tar.gz', r);" "$ARCH"
+        tar -xzf /tmp/infisical.tar.gz -C /usr/local/bin infisical
+        rm -f /tmp/infisical.tar.gz
+        infisical export --token="$INFISICAL_TOKEN" --projectId="$INFISICAL_PROJECT_ID" --env="prod" --domain="$(printf '%s' "$INFISICAL_SITE_URL" | sed 's|/$||')/api" --format=dotenv >> .env
       - chmod 600 .env
       - bun install --frozen-lockfile
+      - cp /usr/local/bin/infisical node_modules/.bin/infisical
     depends_on:
       - infisical
 
@@ -139,33 +147,61 @@ steps:
       - name: docker_sock
         path: /var/run/docker.sock
     commands:
+      - docker compose create searxng
+      - docker cp core-config/settings.yml NamelessLiberty-SearXNG:/etc/searxng/settings.yml
+      - docker cp core-config/limiter.toml NamelessLiberty-SearXNG:/etc/searxng/limiter.toml
       - docker compose up -d searxng
+      - docker compose restart searxng
     depends_on:
       - deemix
 
   - name: Prisma Contract
     image: oven/bun:latest
+    environment:
+      INFISICAL_TOKEN:
+        from_secret: INFISICAL_TOKEN
+      INFISICAL_SITE_URL:
+        from_secret: INFISICAL_SITE_URL
+      INFISICAL_ENV: prod
     commands:
-      - bun run --filter=@Iris/db contract:emit
+      - INFISICAL_API_URL="$(printf '%s' "$INFISICAL_SITE_URL" | sed 's|/$||')/api" bun run --filter=@Iris/db contract:emit
     depends_on:
       - searxng
 
   - name: Prisma Update
     image: oven/bun:latest
+    environment:
+      INFISICAL_TOKEN:
+        from_secret: INFISICAL_TOKEN
+      INFISICAL_SITE_URL:
+        from_secret: INFISICAL_SITE_URL
     commands:
-      - POSTGRE_HOST=180.0.0.2 POSTGRE_PORT=5432 bun run --filter=@Iris/db db:update
+      - |
+        HOST_IP=$(bun -e "const gw = (await Bun.file('/proc/net/route').text()).split(String.fromCharCode(10)).map(l => l.trim().split(String.fromCharCode(9))).find(c => c[1] === '00000000')?.[2]; console.log(gw ? gw.match(/../g).reverse().map(h => parseInt(h, 16)).join('.') : '172.17.0.1');")
+        PATH="$PWD/node_modules/.bin:$PATH" INFISICAL_API_URL="$(printf '%s' "$INFISICAL_SITE_URL" | sed 's|/$||')/api" infisical run --env=prod -- sh -c "cd packages/database && POSTGRE_HOST=$HOST_IP POSTGRE_PORT=10001 bunx prisma db update"
     depends_on:
       - Prisma Contract
 
   - name: Packages
     image: oven/bun:latest
+    environment:
+      INFISICAL_TOKEN:
+        from_secret: INFISICAL_TOKEN
+      INFISICAL_SITE_URL:
+        from_secret: INFISICAL_SITE_URL
+      INFISICAL_ENV: prod
     commands:
-      - bun x turbo run build --filter="./packages/*"
+      - INFISICAL_API_URL="$(printf '%s' "$INFISICAL_SITE_URL" | sed 's|/$||')/api" bun run build:packages
     depends_on:
       - Prisma Update
 
   - name: Elysia
     image: docker:latest
+    environment:
+      INFISICAL_TOKEN:
+        from_secret: INFISICAL_TOKEN
+      INFISICAL_SITE_URL:
+        from_secret: INFISICAL_SITE_URL
     volumes:
       - name: docker_sock
         path: /var/run/docker.sock
@@ -173,35 +209,19 @@ steps:
       - export DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1
       - |
         PKG_VERSION=$(sed -n 's/.*"version":[[:space:]]*"\([^"]*\)".*/\1/p' apps/elysia/package.json | head -n 1)
-        IS_RUNNING=$(docker inspect -f '{{.State.Running}}' NamelessLiberty-Elysia 2>/dev/null || echo "false")
-        CONTAINER_VERSION=$(docker inspect -f '{{ index .Config.Labels "org.opencontainers.image.version" }}' NamelessLiberty-Elysia 2>/dev/null || echo "")
-        if [ -z "$CONTAINER_VERSION" ] && [ "$IS_RUNNING" = "true" ]; then
-          CONTAINER_VERSION=$(docker cp NamelessLiberty-Elysia:/app/package.json - 2>/dev/null | sed -n 's/.*"version":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1 || echo "")
-        fi
-        echo "NamelessLiberty-Elysia package.json version: $PKG_VERSION | container version: $CONTAINER_VERSION (running: $IS_RUNNING)"
-        SHOULD_BUILD=1
-        if [ "$IS_RUNNING" = "true" ] && [ -n "$CONTAINER_VERSION" ]; then
-          if [ "$CONTAINER_VERSION" = "$PKG_VERSION" ]; then
-            SHOULD_BUILD=0
-          else
-            OLDER=$(printf '%s\n%s\n' "$CONTAINER_VERSION" "$PKG_VERSION" | sort -V | head -n 1)
-            if [ "$OLDER" = "$PKG_VERSION" ]; then
-              SHOULD_BUILD=0
-            fi
-          fi
-        fi
-        if [ "$SHOULD_BUILD" = "0" ]; then
-          echo "NamelessLiberty-Elysia is already up to date (v$CONTAINER_VERSION). Skipping build."
-        else
-          echo "Building NamelessLiberty-Elysia v$PKG_VERSION..."
-          APP_VERSION="$PKG_VERSION" docker compose build --build-arg APP_VERSION="$PKG_VERSION" elysia
-          APP_VERSION="$PKG_VERSION" docker compose up -d --no-deps elysia
-        fi
+        echo "Building NamelessLiberty-Elysia v$PKG_VERSION..."
+        APP_VERSION="$PKG_VERSION" docker compose build --build-arg APP_VERSION="$PKG_VERSION" elysia
+        APP_VERSION="$PKG_VERSION" docker compose up -d --no-deps elysia
     depends_on:
       - Packages
 
   - name: Next
     image: docker:latest
+    environment:
+      INFISICAL_TOKEN:
+        from_secret: INFISICAL_TOKEN
+      INFISICAL_SITE_URL:
+        from_secret: INFISICAL_SITE_URL
     volumes:
       - name: docker_sock
         path: /var/run/docker.sock
@@ -209,35 +229,17 @@ steps:
       - export DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1
       - |
         PKG_VERSION=$(sed -n 's/.*"version":[[:space:]]*"\([^"]*\)".*/\1/p' apps/web/package.json | head -n 1)
-        IS_RUNNING=$(docker inspect -f '{{.State.Running}}' NamelessLiberty-Next 2>/dev/null || echo "false")
-        CONTAINER_VERSION=$(docker inspect -f '{{ index .Config.Labels "org.opencontainers.image.version" }}' NamelessLiberty-Next 2>/dev/null || echo "")
-        if [ -z "$CONTAINER_VERSION" ] && [ "$IS_RUNNING" = "true" ]; then
-          CONTAINER_VERSION=$(docker cp NamelessLiberty-Next:/app/package.json - 2>/dev/null | sed -n 's/.*"version":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1 || echo "")
-        fi
-        echo "NamelessLiberty-Next package.json version: $PKG_VERSION | container version: $CONTAINER_VERSION (running: $IS_RUNNING)"
-        SHOULD_BUILD=1
-        if [ "$IS_RUNNING" = "true" ] && [ -n "$CONTAINER_VERSION" ]; then
-          if [ "$CONTAINER_VERSION" = "$PKG_VERSION" ]; then
-            SHOULD_BUILD=0
-          else
-            OLDER=$(printf '%s\n%s\n' "$CONTAINER_VERSION" "$PKG_VERSION" | sort -V | head -n 1)
-            if [ "$OLDER" = "$PKG_VERSION" ]; then
-              SHOULD_BUILD=0
-            fi
-          fi
-        fi
-        if [ "$SHOULD_BUILD" = "0" ]; then
-          echo "NamelessLiberty-Next is already up to date (v$CONTAINER_VERSION). Skipping build."
-        else
-          echo "Building NamelessLiberty-Next v$PKG_VERSION..."
-          APP_VERSION="$PKG_VERSION" docker compose build --build-arg APP_VERSION="$PKG_VERSION" next
-          APP_VERSION="$PKG_VERSION" docker compose up -d --no-deps next
-        fi
+        echo "Building NamelessLiberty-Next v$PKG_VERSION..."
+        APP_VERSION="$PKG_VERSION" docker compose build --build-arg APP_VERSION="$PKG_VERSION" next
+        APP_VERSION="$PKG_VERSION" docker compose up -d --no-deps next
     depends_on:
       - Elysia
 
   - name: Jellyborealis - Build
     image: mcr.microsoft.com/dotnet/sdk:10.0
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
     commands:
       - apt-get update && apt-get install -y python3
       - python3 plugins/JellyBorealis/package.py
@@ -257,6 +259,9 @@ steps:
 
   - name: BorealisExtra - Build
     image: mcr.microsoft.com/dotnet/sdk:10.0
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
     commands:
       - apt-get update && apt-get install -y python3 file fuse libfuse2
       - python3 plugins/BorealisExtra/package.py

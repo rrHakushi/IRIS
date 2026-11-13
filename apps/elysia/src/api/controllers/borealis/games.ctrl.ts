@@ -107,26 +107,6 @@ const coreRoutes = new Elysia()
     }
   )
 
-  .get(
-    '/:gameId/relations',
-    {
-      params: BorealisGamesModel.param,
-      response: {
-        200: BorealisGamesModel.relationsResponse,
-        404: BorealisGamesModel.notFoundError,
-        422: BorealisGamesModel.validationError,
-      },
-      detail: {
-        summary: 'Get game relations',
-        description: 'Retrieves cross-media relations and franchise connections.',
-        tags: ['Borealis - Games'],
-      },
-    },
-    async ({ params: { gameId } }) => {
-      return await BorealisGamesServ.getRelations(gameId)
-    }
-  )
-
 const metaRoutes = new Elysia()
   .use(session())
 

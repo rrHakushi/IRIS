@@ -1,0 +1,2 @@
+# Rate limiting is disabled via `server.limiter: false` in settings.yml.
+

@@ -232,8 +232,8 @@ export class BorealisTvServ {
       throw new NotFound(`TV show with ID ${id} not found`)
     }
 
-    if (tv.imdbUpdatedAt == null && tv.imdbId) {
-      await MediaEntitySyncer.syncTv(id, tv.imdbId).catch(() => {})
+    if (tv.tvdbUpdatedAt == null && tv.tvDBId) {
+      await MediaEntitySyncer.syncTv(id, tv.tvDBId).catch(() => {})
       tv = (await load()) ?? tv
     }
 
@@ -272,7 +272,7 @@ export class BorealisTvServ {
     }
   }
   public static async refresh(id: number) {
-    const tv = await prisma.orm.public.Tv.where({ id }).select('id', 'imdbId', 'titlePrimary').first()
+    const tv = await prisma.orm.public.Tv.where({ id }).select('id', 'tvDBId', 'titlePrimary').first()
     if (!tv) {
       throw new NotFound(`TV show with ID ${id} not found`)
     }
@@ -280,7 +280,7 @@ export class BorealisTvServ {
     await prisma.orm.public.Tv.where({ id }).update({ updatedAt: new Date() })
 
     await MediaQueueManager.enqueueMediaUpdate('TV', id, {
-      externalId: tv.imdbId,
+      externalId: tv.tvDBId,
       priority: 1,
       depth: 0,
       maxDepth: 0,

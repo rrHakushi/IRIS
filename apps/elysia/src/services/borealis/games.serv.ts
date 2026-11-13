@@ -223,7 +223,7 @@ export class BorealisGamesServ {
       throw new NotFound(`Game with ID ${id} not found`)
     }
 
-    if (game.igdbId) {
+    if (game.igdbUpdatedAt == null && game.igdbId) {
       await MediaEntitySyncer.syncGame(id, game.igdbId).catch(() => {})
       game = (await load()) ?? game
     }

@@ -44,8 +44,6 @@ import {
   type BorealisCardSavePayload,
 } from "@Runa/borealis"
 import { saveListEntry } from "@/lib/save-list-entry"
-import { useEncryption } from "@/context/encryption-context"
-import { deriveVaultKey, safeDecryptText, safeEncryptText } from "@/lib/client-encryption"
 import {
   toNormalizedMedia,
   toMediaListEntry,
@@ -304,29 +302,6 @@ function WatchingCategorySection({
 }: WatchingCategorySectionProps) {
   const SectionIcon = meta.icon
 
-  // Client-side zero-knowledge decryption
-  const { secretKey, isActive: isVaultActive } = useEncryption()
-  const vaultKey = useMemo(
-    () => (isVaultActive && secretKey ? deriveVaultKey(secretKey) : null),
-    [isVaultActive, secretKey]
-  )
-
-  const prepareCardItem = useCallback(
-    (item: ListEntryData): ListEntryData => {
-      if (!item?.entry?.notes) return item
-      const decrypted = safeDecryptText(item.entry.notes, vaultKey)
-      if (decrypted === item.entry.notes) return item
-      return {
-        ...item,
-        entry: {
-          ...item.entry,
-          notes: decrypted,
-        },
-      }
-    },
-    [vaultKey]
-  )
-
   // Not loaded yet: render skeleton while loading
   if (!data.isLoaded) {
     return (
@@ -382,7 +357,7 @@ function WatchingCategorySection({
             <BorealisCard
               key={`${item.entry.id}-${item.media.id}`}
               type={type}
-              data={prepareCardItem(item)}
+              data={item}
               titlePreference={mediaTitlePreference}
               showSubtitle={false}
               showHoverSubtitle={false}
@@ -591,12 +566,6 @@ export function WatchingDashboard(): React.JSX.Element {
 
   const mediaTitlePreference =
     getMediaPreferences(currentUser?.customization).title || "primary"
-
-  const { secretKey, isActive: isVaultActive } = useEncryption()
-  const vaultKey = useMemo(
-    () => (isVaultActive && secretKey ? deriveVaultKey(secretKey) : null),
-    [isVaultActive, secretKey]
-  )
 
   // ---------------------------------------------------------------------------
   // Category Order & Customization State
@@ -1160,8 +1129,29 @@ export function WatchingDashboard(): React.JSX.Element {
           (item.entry as any)?.bookId
       )
 
+      const m: any = item.media ?? {}
+      const epMax =
+        newStatus === "COMPLETED" && typeof m.episodeCount === "number" && m.episodeCount > 0
+          ? m.episodeCount
+          : undefined
+      const chMax =
+        newStatus === "COMPLETED" && typeof m.chapterCount === "number" && m.chapterCount > 0
+          ? m.chapterCount
+          : newStatus === "COMPLETED" && typeof m.pageCount === "number" && m.pageCount > 0
+            ? m.pageCount
+            : undefined
+      const volMax =
+        newStatus === "COMPLETED" && typeof m.volumeCount === "number" && m.volumeCount > 0
+          ? m.volumeCount
+          : undefined
+
       // Optimistically update local dashboard state
-      handleEntryUpdated(entryId, { status: newStatus })
+      handleEntryUpdated(entryId, {
+        status: newStatus,
+        ...(epMax !== undefined ? { progress: epMax } : {}),
+        ...(chMax !== undefined ? { chaptersProgress: chMax, progressChapters: chMax, progress: chMax } : {}),
+        ...(volMax !== undefined ? { volumesProgress: volMax, progressVolumes: volMax } : {}),
+      } as any)
 
       try {
         let res: { error?: any }
@@ -1169,12 +1159,16 @@ export function WatchingDashboard(): React.JSX.Element {
           case "anime":
             res = await elysia.borealis.lists
               .anime({ animeId: numMediaId })
-              .post({ status: newStatus })
+              .post({ status: newStatus, ...(epMax !== undefined ? { progress: epMax } : {}) })
             break
           case "manga":
             res = await elysia.borealis.lists
               .manga({ mangaId: numMediaId })
-              .post({ status: newStatus })
+              .post({
+                status: newStatus,
+                ...(chMax !== undefined ? { chaptersProgress: chMax } : {}),
+                ...(volMax !== undefined ? { volumesProgress: volMax } : {}),
+              })
             break
           case "movie":
             res = await elysia.borealis.lists
@@ -1184,7 +1178,7 @@ export function WatchingDashboard(): React.JSX.Element {
           case "tv":
             res = await elysia.borealis.lists
               .tv({ tvId: numMediaId })
-              .post({ status: newStatus })
+              .post({ status: newStatus, ...(epMax !== undefined ? { progress: epMax } : {}) })
             break
           case "game":
             res = await elysia.borealis.lists
@@ -1194,7 +1188,11 @@ export function WatchingDashboard(): React.JSX.Element {
           case "book":
             res = await elysia.borealis.lists
               .books({ bookId: numMediaId })
-              .post({ status: newStatus })
+              .post({
+                status: newStatus,
+                ...(chMax !== undefined ? { progressChapters: chMax } : {}),
+                ...(volMax !== undefined ? { progressVolumes: volMax } : {}),
+              })
             break
           case "other":
             res = await elysia.borealis.lists
@@ -1362,18 +1360,12 @@ export function WatchingDashboard(): React.JSX.Element {
           (item.entry as any)?.musicId ||
           (item.entry as any)?.otherId
       )
-      const encryptedPayload = {
-        ...payload,
-        notes: payload.notes
-          ? safeEncryptText(payload.notes, vaultKey)
-          : payload.notes,
-      }
-      await saveListEntry(mediaType, mediaId, encryptedPayload)
+      await saveListEntry(mediaType, mediaId, payload)
       invalidateWatchingCache(userId)
       handleEntryUpdated(item.entry.id, payload)
       toast.success("List entry updated")
     },
-    [handleEntryUpdated, vaultKey, userId]
+    [handleEntryUpdated, userId]
   )
 
   // ---------------------------------------------------------------------------

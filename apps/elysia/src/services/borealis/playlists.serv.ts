@@ -2,6 +2,8 @@ import { prisma, countOf, toDate, or, type MediaType } from '@Iris/db'
 import { NotFound, BadRequest, Forbidden } from '../../lib/errors'
 import { getProfileCustomization } from '@IRIS/shared'
 import { IRISBitField, IRISFlags } from '@IRIS/permissions'
+import { ActivityServ } from '../carina/activity.serv'
+import { CarinaUsersServ } from '../carina/users.serv'
 
 export interface ListPlaylistsQuery {
   page?: number
@@ -258,17 +260,21 @@ export class BorealisPlaylistsServ {
       order: body.order ?? 0,
     })
 
-    // Log activity
+    // Log activity respecting list privacy
     prisma.orm.public.ActivityLog.create({
       userId,
       type: 'CUSTOM_LIST_CREATED',
       title: name,
+      isPrivate: Boolean(created.isPrivate),
       metadata: {
         customListId: created.id,
         listName: name,
+        coverImage: created.coverImage ?? null,
         action: 'LIST_CREATED',
       },
     }).catch(() => {})
+
+    CarinaUsersServ.evaluateBadgesNonBlocking(userId)
 
     return {
       success: true,
@@ -319,6 +325,34 @@ export class BorealisPlaylistsServ {
     const updated = await prisma.orm.public.CustomList
       .where({ id: playlistId })
       .update(updateData)
+
+    // Keep existing playlist activity entries aligned if playlist privacy changes
+    if (body.isPrivate !== undefined) {
+      const nextPrivate = Boolean(body.isPrivate)
+      const collabs = await prisma.orm.public.CustomListCollaborator
+        .where({ listId: playlistId })
+        .select('userId')
+        .all()
+      const memberIds = Array.from(
+        new Set([access.playlist.userId, ...collabs.map((c: any) => c.userId)])
+      )
+      setImmediate(async () => {
+        try {
+          const logs = await prisma.orm.public.ActivityLog
+            .where((a: any) => a.userId.in(memberIds))
+            .select('id', 'metadata')
+            .all()
+          const matchingIds = logs
+            .filter((l: any) => (l.metadata as any)?.customListId === playlistId)
+            .map((l: any) => l.id)
+          if (matchingIds.length > 0) {
+            await prisma.orm.public.ActivityLog
+              .where((a: any) => a.id.in(matchingIds))
+              .update({ isPrivate: nextPrivate })
+          }
+        } catch {}
+      })
+    }
 
     const count = await prisma.orm.public.CustomListEntry
       .where({ listId: playlistId })
@@ -594,18 +628,29 @@ export class BorealisPlaylistsServ {
       })
     }
 
-    // Record activity
-    prisma.orm.public.ActivityLog.create({
-      userId,
-      type: 'LIST_ITEM_ADDED',
-      mediaType,
-      mediaId,
-      metadata: {
-        customListId: playlistId,
-        listName: access.playlist.name,
-        action: 'ENTRY_ADDED',
-      },
-    }).catch(() => {})
+    // Record activity (non-blocking media summary lookup + list privacy propagation)
+    const playlistIsPrivate = Boolean(access.playlist.isPrivate)
+    const listName = access.playlist.name
+    setImmediate(async () => {
+      try {
+        const mediaSummary = await ActivityServ.resolveEntitySummary(mediaType, mediaId)
+        await prisma.orm.public.ActivityLog.create({
+          userId,
+          type: 'LIST_ITEM_ADDED',
+          mediaType,
+          mediaId,
+          title: mediaSummary.title || `${mediaType} #${mediaId}`,
+          isPrivate: playlistIsPrivate,
+          metadata: {
+            customListId: playlistId,
+            listName,
+            coverImage: mediaSummary.coverImage,
+            itemTitle: mediaSummary.title,
+            action: 'ENTRY_ADDED',
+          },
+        })
+      } catch {}
+    })
 
     return {
       success: true,
@@ -728,18 +773,32 @@ export class BorealisPlaylistsServ {
 
     await prisma.orm.public.CustomListEntry.where({ id: entry.id }).delete()
 
-    // Record activity
-    prisma.orm.public.ActivityLog.create({
-      userId,
-      type: 'LIST_ITEM_REMOVED',
-      mediaType: entry.mediaType,
-      mediaId: entry.mediaId,
-      metadata: {
-        customListId: playlistId,
-        listName: access.playlist.name,
-        action: 'ENTRY_REMOVED',
-      },
-    }).catch(() => {})
+    // Record activity with media title/cover and list privacy
+    const playlistIsPrivate = Boolean(access.playlist.isPrivate)
+    const listName = access.playlist.name
+    setImmediate(async () => {
+      try {
+        const mediaSummary = await ActivityServ.resolveEntitySummary(
+          entry.mediaType,
+          entry.mediaId
+        )
+        await prisma.orm.public.ActivityLog.create({
+          userId,
+          type: 'LIST_ITEM_REMOVED',
+          mediaType: entry.mediaType,
+          mediaId: entry.mediaId,
+          title: mediaSummary.title || `${entry.mediaType} #${entry.mediaId}`,
+          isPrivate: playlistIsPrivate,
+          metadata: {
+            customListId: playlistId,
+            listName,
+            coverImage: mediaSummary.coverImage,
+            itemTitle: mediaSummary.title,
+            action: 'ENTRY_REMOVED',
+          },
+        })
+      } catch {}
+    })
 
     return {
       success: true,
@@ -764,17 +823,6 @@ export class BorealisPlaylistsServ {
         .where({ id: entryIds[i], listId: playlistId })
         .update({ order: i })
     }
-
-    prisma.orm.public.ActivityLog.create({
-      userId,
-      type: 'LIST_ITEM_ADDED',
-      metadata: {
-        customListId: playlistId,
-        listName: access.playlist.name,
-        action: 'REORDERED_ENTRIES',
-        count: entryIds.length,
-      },
-    }).catch(() => {})
 
     return {
       success: true,
@@ -864,9 +912,12 @@ export class BorealisPlaylistsServ {
     prisma.orm.public.ActivityLog.create({
       userId,
       type: 'CUSTOM_LIST_CREATED',
+      title: access.playlist.name,
+      isPrivate: Boolean(access.playlist.isPrivate),
       metadata: {
         customListId: playlistId,
         listName: access.playlist.name,
+        coverImage: access.playlist.coverImage ?? null,
         action: 'COLLABORATOR_ADDED',
         targetUsername: target.username,
         role,
@@ -1129,7 +1180,12 @@ export class BorealisPlaylistsServ {
   /**
    * Get chronological activity log for a custom playlist.
    */
-  public static async listActivity(userId: string, playlistId: string) {
+  public static async listActivity(
+    userId: string,
+    playlistId: string,
+    query?: { page?: number; limit?: number },
+    permissions: number[] = []
+  ) {
     const access = await this.getPlaylistAccess(playlistId, userId)
     if (!access.playlist) {
       throw new NotFound(`Playlist with ID ${playlistId} not found`)
@@ -1138,48 +1194,78 @@ export class BorealisPlaylistsServ {
       throw new Forbidden('Access denied')
     }
 
-    const recentLogs = await prisma.orm.public.ActivityLog
+    const page = Math.max(1, query?.page ?? 1)
+    const limit = Math.max(1, Math.min(50, query?.limit ?? 15))
+    const skip = (page - 1) * limit
+
+    const collaboratorIds = ((access.playlist.collaborators as any[]) || []).map((c: any) => c.userId)
+    const memberIds = Array.from(new Set([access.playlist.userId, ...collaboratorIds]))
+
+    const rawMemberLogs = await prisma.orm.public.ActivityLog
+      .where((a) => a.userId.in(memberIds))
       .orderBy((a) => a.createdAt.desc())
-      .limit(200)
-      .include('user', (u) => u.select('id', 'username', 'customization'))
+      .include('user')
       .all()
 
-    const listLogs = recentLogs
-      .filter((l: any) => l.metadata && (l.metadata as any).customListId === playlistId)
-      .map((l: any) => ({
-        id: l.id,
-        type: l.type,
-        user: formatUser(l.user) || {
-          id: l.userId,
-          username: 'Unknown',
-          displayName: null,
-          avatarUrl: null,
-        },
-        content: l.content ?? null,
-        metadata: l.metadata ?? null,
-        createdAt: toDate(l.createdAt).toISOString(),
-      }))
+    const matchingLogs = rawMemberLogs.filter(
+      (l: any) => l.metadata && (l.metadata as any).customListId === playlistId
+    )
 
-    // If no explicit logs yet, show playlist creation event as initial activity
-    if (listLogs.length === 0) {
-      listLogs.push({
-        id: `created-${access.playlist.id}`,
-        type: 'CUSTOM_LIST_CREATED',
-        user: formatUser(access.playlist.user) || {
-          id: access.playlist.userId,
-          username: 'Owner',
-          displayName: null,
-          avatarUrl: null,
-        },
-        content: `Created playlist "${access.playlist.name}"`,
-        metadata: { action: 'LIST_CREATED', listName: access.playlist.name },
-        createdAt: toDate(access.playlist.createdAt).toISOString(),
-      })
+    const isAdmin = new IRISBitField(permissions).has(IRISFlags.ADMINISTRATOR)
+    const total = matchingLogs.length
+    const totalPages = Math.max(1, Math.ceil(total / limit))
+    const hasMore = page < totalPages
+    const pageSlice = matchingLogs.slice(skip, skip + limit)
+
+    let listLogs = await ActivityServ.formatActivityEntries(pageSlice, {
+      viewerUserId: userId,
+      isAdmin,
+    })
+
+    // If no explicit logs exist and viewer is on page 1, surface playlist creation event
+    if (total === 0 && page === 1) {
+      listLogs = await ActivityServ.formatActivityEntries(
+        [
+          {
+            id: `created-${access.playlist.id}`,
+            userId: access.playlist.userId,
+            type: 'CUSTOM_LIST_CREATED',
+            mediaType: null,
+            mediaId: null,
+            status: null,
+            progress: null,
+            progressVolumes: null,
+            score: null,
+            title: access.playlist.name,
+            content: `Created playlist "${access.playlist.name}"`,
+            metadata: {
+              customListId: access.playlist.id,
+              listName: access.playlist.name,
+              coverImage: access.playlist.coverImage ?? null,
+              action: 'LIST_CREATED',
+            },
+            isPrivate: Boolean(access.playlist.isPrivate),
+            isSpoiler: false,
+            likeCount: 0,
+            replyCount: 0,
+            createdAt: access.playlist.createdAt,
+            user: access.playlist.user,
+          },
+        ],
+        { viewerUserId: null, isOwner: false, isAdmin: false }
+      )
     }
 
     return {
       success: true,
       activity: listLogs,
+      pagination: {
+        page,
+        limit,
+        total: total === 0 ? 1 : total,
+        totalPages,
+        hasMore,
+      },
     }
   }
 }

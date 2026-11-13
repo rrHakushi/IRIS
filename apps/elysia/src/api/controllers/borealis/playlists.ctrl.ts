@@ -400,6 +400,7 @@ const routes3 = new Elysia()
     '/:playlistId/activity',
     {
       params: BorealisPlaylistsModel.playlistParam,
+      query: BorealisPlaylistsModel.activityQuery,
       detail: {
         summary: 'Get playlist activity trail',
         description: 'Chronological activity stream of changes and interactions in this playlist.',
@@ -413,9 +414,9 @@ const routes3 = new Elysia()
         422: BorealisPlaylistsModel.validationError,
       },
     },
-    async ({ params: { playlistId }, session: userSession }) => {
+    async ({ params: { playlistId }, query, session: userSession }) => {
       const user = userSession.requireUser()
-      return await BorealisPlaylistsServ.listActivity(user.id, playlistId)
+      return await BorealisPlaylistsServ.listActivity(user.id, playlistId, query, user.permissions)
     }
   )
 

@@ -9,6 +9,7 @@ import {
   IconChevronDown,
   IconBookmark,
   IconListDetails,
+  IconLink,
   IconBook,
   IconRotateClockwise,
   IconStar,
@@ -61,6 +62,7 @@ export interface UserListFilterState {
   privacy: "all" | "public" | "private"
   notes: "all" | "withNotes" | "withoutNotes"
   connections: string[]
+  excludeConnections?: string[]
 
   // Series filters
   formats: string[]
@@ -79,7 +81,6 @@ export interface UserListFilterState {
   countries: string[]
   staff?: string[]
   licensed?: "all" | "yes" | "no"
-  hasAnime?: "all" | "yes" | "no"
 }
 
 export const DEFAULT_USER_LIST_FILTER_STATE: UserListFilterState = {
@@ -100,6 +101,7 @@ export const DEFAULT_USER_LIST_FILTER_STATE: UserListFilterState = {
   privacy: "all",
   notes: "all",
   connections: [],
+  excludeConnections: [],
 
   formats: [],
   mediaStatuses: [],
@@ -117,7 +119,6 @@ export const DEFAULT_USER_LIST_FILTER_STATE: UserListFilterState = {
   countries: [],
   staff: [],
   licensed: "all",
-  hasAnime: "all",
 }
 
 export interface UserListFilterFacets {
@@ -163,6 +164,9 @@ export function countActiveFilters(filters: UserListFilterState): number {
   if (filters.privacy !== "all") count++
   if (filters.notes !== "all") count++
   if (filters.connections.length > 0) count += filters.connections.length
+  if (filters.excludeConnections && filters.excludeConnections.length > 0) {
+    count += filters.excludeConnections.length
+  }
 
   if (filters.formats.length > 0) count += filters.formats.length
   if (filters.mediaStatuses.length > 0) count += filters.mediaStatuses.length
@@ -189,7 +193,6 @@ export function countActiveFilters(filters: UserListFilterState): number {
   )
     count++
   if (filters.licensed && filters.licensed !== "all") count++
-  if (filters.hasAnime && filters.hasAnime !== "all") count++
   if (filters.staff && filters.staff.length > 0) count += filters.staff.length
   if (filters.adult !== "all") count++
   if (filters.years.length > 0) count += filters.years.length
@@ -277,9 +280,7 @@ export function UserListFilterSheet({
   const [localFilters, setLocalFilters] = useState<UserListFilterState>(filters)
 
   // Track which dropdown accordion rows are expanded
-  const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({
-    status: true,
-  })
+  const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({})
 
   // Search states for genres & companies
   const [genreSearch, setGenreSearch] = useState("")
@@ -554,56 +555,110 @@ export function UserListFilterSheet({
           </div>
         </FilterAccordionRow>
 
-        {/* 2. Lists Dropdown */}
+        {/* 2. Connections Dropdown */}
         <FilterAccordionRow
           id="connections"
-          label="Lists"
-          icon={IconListDetails}
-          activeCount={localFilters.connections.length}
+          label="Connections"
+          icon={IconLink}
+          activeCount={
+            (localFilters.connections?.length || 0) +
+            (localFilters.excludeConnections?.length || 0)
+          }
           isOpen={Boolean(openDropdowns.connections)}
           onToggle={() => toggleDropdown("connections")}
         >
-          <div className="flex flex-wrap gap-1.5">
-            {(facets.connections && facets.connections.length > 0
-              ? facets.connections
-              : [
-                  { value: "AniList", count: 0 },
-                  { value: "MyAnimeList", count: 0 },
-                  { value: "SIMKL", count: 0 },
-                  { value: "Bangumi", count: 0 },
-                  { value: "MangaUpdates", count: 0 },
+            <div className="flex flex-wrap gap-1.5">
+              {(() => {
+                const defaultProviders = [
+                  "AniList",
+                  "MyAnimeList",
+                  "SIMKL",
+                  "Bangumi",
+                  "Hikka",
+                  "MangaUpdates",
+                  "TMDB",
+                  "TVDB",
+                  "IGDB",
+                  "OpenLibrary",
+                  "MusicBrainz",
                 ]
-            ).map((conn) => {
-              const isSelected = localFilters.connections.includes(conn.value)
-              return (
-                <button
-                  key={conn.value}
-                  type="button"
-                  onClick={() => toggleArrayFilter("connections", conn.value)}
-                  className={cn(
-                    "flex items-center gap-1.5 rounded-xl border px-3 py-1 text-xs font-semibold transition-all cursor-pointer select-none",
-                    isSelected
-                      ? "border-primary bg-primary text-primary-foreground shadow-xs"
-                      : "border-frost bg-frost/50 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-800/60"
-                  )}
-                >
-                  <span>{conn.value}</span>
-                  {conn.count > 0 && (
-                    <span
-                      className={cn(
-                        "rounded-full px-1.5 py-0.2 font-mono text-[10px]",
-                        isSelected
-                          ? "bg-black/25 text-white"
-                          : "bg-zinc-800/80 text-zinc-400"
-                      )}
-                    >
-                      {conn.count}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
+                const facetMap = new Map<string, { value: string; count: number }>()
+                for (const p of defaultProviders) {
+                  facetMap.set(p.toLowerCase(), { value: p, count: 0 })
+                }
+                for (const c of facets.connections ?? []) {
+                  const existing = facetMap.get(c.value.toLowerCase())
+                  facetMap.set(c.value.toLowerCase(), {
+                    value: existing?.value ?? c.value,
+                    count: c.count,
+                  })
+                }
+                return Array.from(facetMap.values())
+              })().map((conn) => {
+                const isIncluded = localFilters.connections.includes(conn.value)
+                const isExcluded = (localFilters.excludeConnections ?? []).includes(conn.value)
+                const handleCycle = () => {
+                  setLocalFilters((prev) => {
+                    const inc = prev.connections ?? []
+                    const exc = prev.excludeConnections ?? []
+                    if (!isIncluded && !isExcluded) {
+                      return { ...prev, connections: [...inc, conn.value] }
+                    }
+                    if (isIncluded) {
+                      return {
+                        ...prev,
+                        connections: inc.filter((v) => v !== conn.value),
+                        excludeConnections: [...exc, conn.value],
+                      }
+                    }
+                    return {
+                      ...prev,
+                      excludeConnections: exc.filter((v) => v !== conn.value),
+                    }
+                  })
+                }
+                return (
+                  <button
+                    key={conn.value}
+                    type="button"
+                    onClick={handleCycle}
+                    title={
+                      isIncluded
+                        ? `Has ${conn.value} (click to switch to Doesn't have)`
+                        : isExcluded
+                          ? `Doesn't have ${conn.value} (click to clear)`
+                          : `Click to filter by Has ${conn.value}`
+                    }
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-xl border px-3 py-1 text-xs font-semibold transition-all cursor-pointer select-none",
+                      isIncluded
+                        ? "border-primary bg-primary text-primary-foreground shadow-xs"
+                        : isExcluded
+                          ? "border-destructive/60 bg-destructive/15 text-destructive shadow-xs"
+                          : "border-border/60 bg-muted/40 text-muted-foreground hover:border-border hover:text-foreground"
+                    )}
+                  >
+                    {isIncluded && <IconCheck className="size-3 shrink-0" />}
+                    {isExcluded && <IconX className="size-3 shrink-0" />}
+                    <span>{conn.value}</span>
+                    {conn.count > 0 && (
+                      <span
+                        className={cn(
+                          "rounded-full px-1.5 py-0.2 font-mono text-[10px]",
+                          isIncluded
+                            ? "bg-black/25 text-primary-foreground"
+                            : isExcluded
+                              ? "bg-destructive/20 text-destructive"
+                              : "bg-muted text-muted-foreground"
+                        )}
+                      >
+                        {conn.count}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
         </FilterAccordionRow>
 
         {/* 3. Progress Dropdown */}
@@ -1610,53 +1665,6 @@ export function UserListFilterSheet({
                 </div>
               </div>
             )}
-          </div>
-        </FilterAccordionRow>
-
-        {/* 10. Anime? Dropdown */}
-        <FilterAccordionRow
-          id="hasAnime"
-          label="Anime?"
-          icon={IconDeviceTv}
-          activeCount={localFilters.hasAnime && localFilters.hasAnime !== "all" ? 1 : 0}
-          isOpen={Boolean(openDropdowns.hasAnime)}
-          onToggle={() => toggleDropdown("hasAnime")}
-        >
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() =>
-                setLocalFilters((prev) => ({
-                  ...prev,
-                  hasAnime: prev.hasAnime === "yes" ? "all" : "yes",
-                }))
-              }
-              className={cn(
-                "rounded-xl border py-2 text-xs font-semibold transition-all select-none cursor-pointer",
-                localFilters.hasAnime === "yes"
-                  ? "border-primary bg-primary text-primary-foreground shadow-xs"
-                  : "border-frost bg-frost/50 text-zinc-400 hover:text-zinc-200"
-              )}
-            >
-              Has Anime
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                setLocalFilters((prev) => ({
-                  ...prev,
-                  hasAnime: prev.hasAnime === "no" ? "all" : "no",
-                }))
-              }
-              className={cn(
-                "rounded-xl border py-2 text-xs font-semibold transition-all select-none cursor-pointer",
-                localFilters.hasAnime === "no"
-                  ? "border-primary bg-primary text-primary-foreground shadow-xs"
-                  : "border-frost bg-frost/50 text-zinc-400 hover:text-zinc-200"
-              )}
-            >
-              No Anime
-            </button>
           </div>
         </FilterAccordionRow>
 

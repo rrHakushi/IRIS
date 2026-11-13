@@ -14,13 +14,13 @@
     }
   },
   "scripts": {
-    "build": "bun run contract:emit && tsc && cp src/contract.d.ts dist/contract.d.ts",
-    "contract:emit": "bun --bun --env-file=../../.env  prisma contract emit",
-    "db:update": "bun --bun --env-file=../../.env prisma db update",
-    "db:verify": "bun --bun --env-file=../../.env prisma db verify",
-    "db:migrate": "bun --bun --env-file=../../.env prisma db migrate",
-    "db:prepare-prisma8": "bun --bun --env-file=../../.env run scripts/prepare-prisma8.ts",
-    "db:unify-status": "bun --bun --env-file=../../.env run scripts/unify-status.ts"
+    "build": "bun run contract:emit && tsc && cp src/contract.d.ts src/contract.json dist/",
+    "contract:emit": "bun -e \"process.exit(Bun.spawnSync(['infisical', 'run', '--env=' + (process.env.INFISICAL_ENV || 'dev'), '--', 'prisma', 'contract', 'emit'], { stdio: ['inherit', 'inherit', 'inherit'] }).exitCode ?? 1)\"",
+    "db:update": "bun -e \"process.exit(Bun.spawnSync(['infisical', 'run', '--env=' + (process.env.INFISICAL_ENV || 'dev'), '--', 'prisma', 'db', 'update'], { stdio: ['inherit', 'inherit', 'inherit'] }).exitCode ?? 1)\"",
+    "db:verify": "bun -e \"process.exit(Bun.spawnSync(['infisical', 'run', '--env=' + (process.env.INFISICAL_ENV || 'dev'), '--', 'prisma', 'db', 'verify'], { stdio: ['inherit', 'inherit', 'inherit'] }).exitCode ?? 1)\"",
+    "db:migrate": "bun -e \"process.exit(Bun.spawnSync(['infisical', 'run', '--env=' + (process.env.INFISICAL_ENV || 'dev'), '--', 'prisma', 'db', 'migrate'], { stdio: ['inherit', 'inherit', 'inherit'] }).exitCode ?? 1)\"",
+    "db:prepare-prisma8": "bun -e \"process.exit(Bun.spawnSync(['infisical', 'run', '--env=' + (process.env.INFISICAL_ENV || 'dev'), '--', 'bun', 'run', 'scripts/prepare-prisma8.ts'], { stdio: ['inherit', 'inherit', 'inherit'] }).exitCode ?? 1)\"",
+    "db:unify-status": "bun -e \"process.exit(Bun.spawnSync(['infisical', 'run', '--env=' + (process.env.INFISICAL_ENV || 'dev'), '--', 'bun', 'run', 'scripts/unify-status.ts'], { stdio: ['inherit', 'inherit', 'inherit'] }).exitCode ?? 1)\""
   },
   "dependencies": {
     "@prisma/orm-postgres": "8.0.0-rc.21"

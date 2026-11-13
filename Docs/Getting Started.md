@@ -215,19 +215,64 @@ TRAKT_CLIENT_SECRET=
 
 ---
 
-## 6. Using `dev-1` / `dev-2` Environments Locally
+## 6. Local Development with Infisical Secrets
 
-To pull secrets from your `dev-1` or `dev-2` environment in Infisical for local development:
+All `dev`, `codegen`, and `db:*` scripts have been updated to automatically use `infisical run --env=dev -- ...`.
+
+### Step 1: Install Infisical CLI on Windows
+
+Run this in your PowerShell terminal to install the native CLI:
+
+```powershell
+winget install infisical
+```
+
+*(Restart your PowerShell window after running `winget install` so `infisical` is in your `PATH`)*.
+
+Verify installation:
+```powershell
+infisical --version
+```
+
+### Step 2: Login and Link to your Self-Hosted Instance (One-Time)
+
+1. Log in pointing to your container's port (`10003`):
+   ```bash
+   infisical login --domain="http://<server-ip>:10003/api"
+   ```
+2. Link the repository to your Infisical project:
+   ```bash
+   infisical init
+   ```
+   Select your **NamelessLiberty** project when prompted.
+
+### Step 3: Run Scripts Directly
+
+Now you can run standard scripts, and secrets are dynamically pulled from the `dev` environment:
 
 ```bash
-# Export dev-1 secrets to local .env
-bunx @infisical/cli export \
-  --token="<your-dev-1-service-token>" \
-  --projectId="<INFISICAL_PROJECT_ID>" \
-  --env="dev-1" \
-  --domain="http://<server-ip>:10003/api" \
-  --format=dotenv > .env
+# Run entire monorepo in dev mode with Infisical secrets:
+bun run dev
+
+# Database tasks (automatically injected with dev secrets):
+bun run db:update
+bun run db:contract:emit
+
+# Individual app dev:
+bun run elysia:dev
 ```
+
+If you ever want to run against a different environment slug (such as `dev-2` or `prod`), pass `--env=<slug>`:
+```bash
+infisical run --env=dev-2 -- turbo run dev
+```
+
+> **Note for Local DB / Services:**
+> In your `dev-1` and `dev-2` environment in Infisical:
+> - Set `POSTGRE_HOST=localhost` and `POSTGRE_PORT=10001` (to hit the Postgres container from your host).
+> - Set `REDIS_HOST=localhost` and `REDIS_PORT=10002`.
+> - Set `RUSTFS_URL=http://localhost:10004`.
+> - Set `SEARXNG_URL=http://localhost:10007`.
 
 ---
 

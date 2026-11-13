@@ -1,4 +1,8 @@
 import { t, type UnwrapSchema } from 'elysia'
+import {
+  ActivityAuthorPreviewSchema,
+  ActivityLogItemSchema,
+} from './activity.model'
 
 /**
  * Reusable pagination metadata schema
@@ -267,79 +271,13 @@ export const CarinaUsersModel = {
     ),
   }),
 
-  activityAuthorPreview: t.Object({
-    id: t.String(),
-    username: t.String(),
-    displayName: t.Nullable(t.String()),
-    avatarUrl: t.Nullable(t.String()),
-    avatarFrame: t.Nullable(t.String()),
-    bannerUrl: t.Optional(t.Nullable(t.String())),
-    nameplateUrl: t.Optional(t.Nullable(t.String())),
-    bio: t.Optional(t.Nullable(t.String())),
-    statusText: t.Optional(t.Nullable(t.String())),
-    pronouns: t.Optional(t.Nullable(t.String())),
-    displayNameStyle: t.Optional(t.Nullable(t.Any())),
-  }),
+  activityAuthorPreview: ActivityAuthorPreviewSchema,
 
-  activityLogItem: t.Object({
-    id: t.String(),
-    userId: t.String(),
-    type: t.String(),
-    mediaType: t.Nullable(t.String()),
-    mediaId: t.Nullable(t.Number()),
-    status: t.Nullable(t.String()),
-    progress: t.Nullable(t.Number()),
-    progressVolumes: t.Nullable(t.Number()),
-    score: t.Nullable(t.Number()),
-    title: t.Nullable(t.String()),
-    content: t.Nullable(t.String()),
-    metadata: t.Optional(t.Nullable(t.Any())),
-    isPrivate: t.Boolean(),
-    isSpoiler: t.Boolean(),
-    likeCount: t.Number(),
-    replyCount: t.Number(),
-    createdAt: t.String(),
-    user: t.Object({
-      id: t.String(),
-      username: t.String(),
-      displayName: t.Nullable(t.String()),
-      avatarUrl: t.Nullable(t.String()),
-      avatarFrame: t.Nullable(t.String()),
-    }),
-    canDelete: t.Boolean(),
-  }),
+  activityLogItem: ActivityLogItemSchema,
 
   activityResponse: t.Object({
     success: t.Boolean(),
-    activities: t.Array(
-      t.Object({
-        id: t.String(),
-        userId: t.String(),
-        type: t.String(),
-        mediaType: t.Nullable(t.String()),
-        mediaId: t.Nullable(t.Number()),
-        status: t.Nullable(t.String()),
-        progress: t.Nullable(t.Number()),
-        progressVolumes: t.Nullable(t.Number()),
-        score: t.Nullable(t.Number()),
-        title: t.Nullable(t.String()),
-        content: t.Nullable(t.String()),
-        metadata: t.Optional(t.Nullable(t.Any())),
-        isPrivate: t.Boolean(),
-        isSpoiler: t.Boolean(),
-        likeCount: t.Number(),
-        replyCount: t.Number(),
-        createdAt: t.String(),
-        user: t.Object({
-          id: t.String(),
-          username: t.String(),
-          displayName: t.Nullable(t.String()),
-          avatarUrl: t.Nullable(t.String()),
-          avatarFrame: t.Nullable(t.String()),
-        }),
-        canDelete: t.Boolean(),
-      })
-    ),
+    activities: t.Array(ActivityLogItemSchema),
     pagination: PaginationMetaSchema,
   }),
 

@@ -110,26 +110,6 @@ const routes2 = new Elysia()
   )
 
   .get(
-    '/:movieId/relations',
-    {
-      params: BorealisMoviesModel.param,
-      response: {
-        200: BorealisMoviesModel.relationsResponse,
-        404: BorealisMoviesModel.notFoundError,
-        422: BorealisMoviesModel.validationError,
-      },
-      detail: {
-        summary: 'Get movie relations',
-        description: 'Retrieves cross-media relations and franchise connections.',
-        tags: ['Borealis - Movies'],
-      },
-    },
-    async ({ params: { movieId } }) => {
-      return await BorealisMoviesServ.getRelations(movieId)
-    }
-  )
-
-  .get(
     '/:movieId/characters',
     {
       params: BorealisMoviesModel.param,

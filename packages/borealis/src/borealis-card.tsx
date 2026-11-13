@@ -31,7 +31,6 @@ import {
   IconLink,
   IconLoader2,
   IconLock,
-  IconMenu2,
   IconMicrophone,
   IconMovie,
   IconPencil,
@@ -69,6 +68,7 @@ import {
   MediaListStatusBadge,
   getMediaListStatusIcon,
 } from "./media-list-status-badge"
+import { FavoriteButton, type FavoriteType } from "./media/favorite-button"
 import {
   getMediaListStatusColor,
   getMediaListStatusDotBg,
@@ -331,7 +331,7 @@ export function BorealisCardImage({
           alt={data.title}
           loading="lazy"
           onError={() => setImageError(true)}
-          className="size-full rounded-xl object-cover transition-transform duration-300 group-hover/bcard:scale-105"
+          className="size-full rounded-xl object-cover"
         />
       ) : (
         <div className="flex size-full flex-col items-center justify-center gap-1.5 p-3 text-muted-foreground/60">
@@ -344,33 +344,6 @@ export function BorealisCardImage({
 
       {/* Bottom gradient shadow for badge legibility */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/90 via-black/45 to-transparent" />
-
-      {/* Top-Start: Edit Hamburger button when onEdit is provided */}
-      {config.onEdit && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            config.onEdit?.()
-          }}
-          aria-label="Edit list entry"
-          className="absolute start-1.5 top-1.5 z-20 flex size-6 cursor-pointer items-center justify-center rounded-md bg-black/70 text-white/90 opacity-0 backdrop-blur-md transition-opacity group-hover/bcard:opacity-100 hover:bg-black/90 hover:text-white focus-visible:opacity-100"
-        >
-          <IconMenu2 className="size-3.5" aria-hidden="true" />
-        </button>
-      )}
-
-      {/* Top-End: Connected Services Link badge */}
-      {data.connectedCount !== undefined && data.connectedCount > 0 && (
-        <div
-          className="pointer-events-none absolute end-1.5 top-1.5 z-20 flex items-center gap-1 rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 tabular-nums shadow-xs backdrop-blur-md"
-          title={`${data.connectedCount} connected service${data.connectedCount === 1 ? "" : "s"}`}
-        >
-          <IconLink className="size-2.5 shrink-0 text-primary" aria-hidden="true" />
-          <span>{data.connectedCount}</span>
-        </div>
-      )}
 
       {/* Bottom Overlaid Badges: Format / Role Badges + Score Badge right next to each other */}
       {shouldShowBadges && (data.badges.length > 0 || !isEntity) && (
@@ -451,7 +424,7 @@ export function BorealisCardImage({
                       />
                       <span>{displayScore}</span>
                     </Button>
-                    <DropdownMenu placement="bottom start" className="max-h-[108px] overflow-y-auto overscroll-contain [scrollbar-width:thin] w-auto min-w-[115px] text-[10px] border border-frost bg-frost text-zinc-100 shadow-2xl backdrop-blur-2xl z-[100]">
+                    <DropdownMenu placement="bottom start" className="max-h-[108px] overflow-y-auto overscroll-contain [scrollbar-width:thin] w-auto min-w-[115px] text-[10px] border border-frost bg-frost text-foreground shadow-2xl backdrop-blur-2xl z-[100]">
                       {SCORE_OPTIONS.map((scoreVal) => {
                         const isSelected = currentScoreNum !== null && (currentScoreNum === scoreVal || currentScoreNum / 10 === scoreVal || currentScoreNum === scoreVal * 10)
                         return (
@@ -461,7 +434,7 @@ export function BorealisCardImage({
                             className="flex items-center gap-1.5 cursor-pointer font-medium text-[10px] py-1 px-2 min-h-6"
                           >
                             <IconStar className="size-3 fill-amber-400 text-amber-400 shrink-0" />
-                            <span className={cn(isSelected && "font-bold text-white")}>
+                            <span className={cn(isSelected && "font-bold text-foreground")}>
                               {scoreVal} / 10
                             </span>
                             {isSelected && (
@@ -472,9 +445,9 @@ export function BorealisCardImage({
                       })}
                       <DropdownMenuItem
                         onAction={() => handleScoreSelect(null)}
-                        className="flex items-center gap-1.5 cursor-pointer font-medium text-[9px] text-zinc-400 hover:text-white py-1 px-2 min-h-6"
+                        className="flex items-center gap-1.5 cursor-pointer font-medium text-[9px] text-muted-foreground hover:text-foreground py-1 px-2 min-h-6"
                       >
-                        <IconX className="size-3 text-zinc-400 shrink-0" />
+                        <IconX className="size-3 text-muted-foreground shrink-0" />
                         <span>Clear Rating (N/A)</span>
                         {!hasScore && (
                           <IconCheck className="size-3 ms-auto text-primary shrink-0" />
@@ -704,7 +677,7 @@ export function BorealisCardExtras({
   onStatusChange,
   onIncrementVolume,
 }: BorealisCardExtrasProps) {
-  const { data, config } = useBorealisCard()
+  const { data, config, setLocalStatus, setLocalProgress } = useBorealisCard()
 
   if (config.showExtras === false) {
     return null
@@ -806,7 +779,7 @@ export function BorealisCardExtras({
                     >
                       <StatusIcon className="size-3.5 stroke-[2]" aria-hidden="true" />
                     </Button>
-                    <DropdownMenu placement="bottom start" className="w-auto min-w-[150px] whitespace-nowrap text-[10px] border border-frost bg-frost shadow-2xl backdrop-blur-2xl z-[100]">
+                    <DropdownMenu placement="bottom start" className="w-auto min-w-[150px] whitespace-nowrap text-[10px] border border-frost bg-frost text-foreground shadow-2xl backdrop-blur-2xl z-[100]">
                       {STATUS_DROPDOWN_OPTIONS.map((opt) => {
                         const OptIcon = getMediaListStatusIcon(opt)
                         const optColor = getMediaListStatusColor(opt)
@@ -815,11 +788,17 @@ export function BorealisCardExtras({
                         return (
                           <DropdownMenuItem
                             key={opt}
-                            onAction={() => effectiveOnStatusChange(opt)}
+                            onAction={() => {
+                              setLocalStatus?.(opt)
+                              if (opt === "COMPLETED" && typeof data.progress?.max === "number" && data.progress.max > 0) {
+                                setLocalProgress?.(data.progress.max)
+                              }
+                              effectiveOnStatusChange(opt)
+                            }}
                             className="flex items-center gap-1.5 cursor-pointer font-medium text-[10px] py-1 px-2 min-h-6 whitespace-nowrap"
                           >
                             <OptIcon className={cn("size-3 shrink-0", optColor)} />
-                            <span className={cn(isSelected && "font-bold text-white")}>
+                            <span className={cn(isSelected && "font-bold text-foreground")}>
                               {optLabel}
                             </span>
                             {isSelected && (
@@ -2003,19 +1982,44 @@ const EMPTY_ARRAY: any[] = []
  * Fetches /borealis/anime/:animeId/episodes (cached + deduped) and reports the
  * result through `onData`. Returns a cancel function.
  */
+function synthesizeWatchedEpisodes(seasonsList: any[], progressCount: number): any[] {
+  const regularSeasons = seasonsList.filter((s: any) => s.seasonNumber > 0)
+  const list = regularSeasons.length > 0 ? regularSeasons : seasonsList
+  if (list.length === 0 || progressCount <= 0) return []
+
+  const synthesized: any[] = []
+  let rem = progressCount
+  const now = new Date().toISOString()
+  for (const s of list) {
+    if (rem <= 0) break
+    const count = s.episodes?.length || s.episodeCount || 0
+    const take = count > 0 ? Math.min(rem, count) : rem
+    for (let ep = 1; ep <= take; ep++) {
+      synthesized.push({
+        seasonNumber: s.seasonNumber,
+        episodeNumber: ep,
+        watchedAt: now,
+      })
+    }
+    rem -= take
+  }
+  return synthesized
+}
+
 function loadHoverEpisodes(
-  animeId: number,
+  mediaId: number,
+  backendMediaType: string,
   cacheKey: string,
-  onData: (episodes: any[]) => void
+  onData: (result: { episodes: any[]; seasons: any[] }) => void
 ): () => void {
   let cancelled = false
-  const emit = (eps: any[]) => {
-    if (!cancelled) onData(eps)
+  const emit = (result: { episodes: any[]; seasons: any[] }) => {
+    if (!cancelled) onData(result)
   }
 
   const cached = HOVER_EPISODES_CACHE.get(cacheKey)
   if (cached && Date.now() - cached.timestamp < HOVER_EPISODES_CACHE_TTL) {
-    emit(cached.episodes)
+    emit({ episodes: cached.episodes, seasons: cached.seasons })
     return () => {
       cancelled = true
     }
@@ -2024,8 +2028,19 @@ function loadHoverEpisodes(
   let promise = HOVER_EPISODES_INFLIGHT.get(cacheKey)
   if (!promise) {
     promise = (async () => {
+      if (backendMediaType === "TV") {
+        const [seasonsRes, epsRes] = await Promise.all([
+          (elysia as any).borealis.tv({ tvId: mediaId }).seasons.get(),
+          (elysia as any).borealis.tv({ tvId: mediaId }).episodes.get(),
+        ])
+        if (seasonsRes?.error && epsRes?.error) throw seasonsRes.error
+        const seasons = ((seasonsRes?.data as any)?.seasons ?? []) as any[]
+        const episodes = ((epsRes?.data as any)?.episodes ?? []) as any[]
+        return { episodes, seasons }
+      }
+
       const { data: res, error } = await (elysia as any).borealis
-        .anime({ animeId })
+        .anime({ animeId: mediaId })
         .episodes.get()
       if (error) throw error
       return { episodes: ((res as any)?.episodes ?? []) as any[], seasons: [] as any[] }
@@ -2038,7 +2053,7 @@ function loadHoverEpisodes(
   promise
     .then((result) => {
       HOVER_EPISODES_CACHE.set(cacheKey, { ...result, timestamp: Date.now() })
-      emit(result.episodes)
+      emit(result)
     })
     .catch(() => { })
 
@@ -2083,22 +2098,33 @@ function BorealisCardHoverEpisodesTab({
     return EMPTY_ARRAY
   }, [rawMedia?.episodes, data.hoverDetails?.episodes])
 
-  const [fetchedEpisodes, setFetchedEpisodes] = useState<any[] | null>(
-    () => HOVER_EPISODES_CACHE.get(cacheKey)?.episodes ?? null
-  )
+  const [fetchedData, setFetchedData] = useState<{ episodes: any[]; seasons: any[] } | null>(() => {
+    const cached = HOVER_EPISODES_CACHE.get(cacheKey)
+    return cached ? { episodes: cached.episodes, seasons: cached.seasons } : null
+  })
 
   useEffect(() => {
-    if (backendMediaType !== "ANIME" || !mediaId) return
-    return loadHoverEpisodes(mediaId, cacheKey, setFetchedEpisodes)
+    if ((backendMediaType !== "ANIME" && backendMediaType !== "TV") || !mediaId) return
+    return loadHoverEpisodes(mediaId, backendMediaType, cacheKey, setFetchedData)
   }, [cacheKey, mediaId, backendMediaType])
 
-  const seasons: any[] = initialSeasons
+  const seasons: any[] =
+    initialSeasons.length > 0
+      ? initialSeasons
+      : fetchedData?.seasons && fetchedData.seasons.length > 0
+        ? fetchedData.seasons
+        : EMPTY_ARRAY
   const episodes: any[] =
-    fetchedEpisodes && fetchedEpisodes.length > 0 ? fetchedEpisodes : initialEpisodes
+    fetchedData?.episodes && fetchedData.episodes.length > 0
+      ? fetchedData.episodes
+      : initialEpisodes
 
   const regularSeasons = seasons.filter((s) => s.seasonNumber > 0)
   const candidateSeasons = regularSeasons.length > 0 ? regularSeasons : seasons
-  const hasMultipleSeasons = candidateSeasons.length > 1
+  const hasMultipleSeasons =
+    backendMediaType === "TV"
+      ? candidateSeasons.length > 0
+      : candidateSeasons.length > 1
 
   const isEpisodeWatched = (seasonNum: number, epNum: number) => {
     return draftWatchedEpisodes.some(
@@ -2128,6 +2154,48 @@ function BorealisCardHoverEpisodesTab({
     }
     return candidateSeasons[0]?.seasonNumber ?? 1
   })
+
+  const hasAutoExpandedRef = useRef(candidateSeasons.length > 0)
+
+  useEffect(() => {
+    if (candidateSeasons.length === 0) return
+
+    const effectiveWatched =
+      draftWatchedEpisodes.length > 0
+        ? draftWatchedEpisodes
+        : draftProgress > 0
+          ? synthesizeWatchedEpisodes(candidateSeasons, draftProgress)
+          : EMPTY_ARRAY
+
+    if (draftWatchedEpisodes.length === 0 && effectiveWatched.length > 0) {
+      setDraftWatchedEpisodes(effectiveWatched)
+    }
+
+    if (hasAutoExpandedRef.current) return
+    hasAutoExpandedRef.current = true
+
+    if (data.progress?.seasonNumber) {
+      const match = candidateSeasons.find((s) => s.seasonNumber === data.progress.seasonNumber)
+      if (match) {
+        setExpandedSeasonNum(match.seasonNumber)
+        return
+      }
+    }
+    for (const s of candidateSeasons) {
+      const sNum = s.seasonNumber
+      const count = Math.max(s.episodeCount || 0, s.episodes?.length || 0, 0)
+      const watched = effectiveWatched.filter((w) => (w.seasonNumber ?? 1) === sNum).length
+      if (count > 0 && watched < count) {
+        setExpandedSeasonNum(sNum)
+        return
+      }
+    }
+    if (effectiveWatched.length > 0) {
+      setExpandedSeasonNum(candidateSeasons[candidateSeasons.length - 1].seasonNumber)
+      return
+    }
+    setExpandedSeasonNum(candidateSeasons[0]?.seasonNumber ?? 1)
+  }, [candidateSeasons, data.progress?.seasonNumber, draftWatchedEpisodes, draftProgress, setDraftWatchedEpisodes])
 
   const toggleSeasonExpanded = (sNum: number) => {
     // Only 1 season modal/accordion can be open at a time
@@ -2219,27 +2287,27 @@ function BorealisCardHoverEpisodesTab({
             return (
               <div
                 key={seasonNum}
-                className="shrink-0 min-h-[42px] overflow-hidden rounded-xl border border-frost bg-zinc-900/60 transition-all"
+                className="shrink-0 min-h-[42px] overflow-hidden rounded-xl border border-border/60 bg-muted/40 dark:border-frost dark:bg-zinc-900/60 transition-all"
               >
                 {/* Season Header Accordion Trigger */}
                 <div
                   onClick={() => toggleSeasonExpanded(seasonNum)}
-                  className="flex cursor-pointer items-center justify-between gap-2 p-2.5 transition-colors hover:bg-zinc-800/60 select-none"
+                  className="flex cursor-pointer items-center justify-between gap-2 p-2.5 transition-colors hover:bg-muted/70 dark:hover:bg-zinc-800/60 select-none"
                 >
                   <div className="flex min-w-0 items-center gap-2">
-                    <span className="text-zinc-400">
+                    <span className="text-muted-foreground">
                       {isExpanded ? (
                         <IconChevronDown className="size-4 shrink-0" />
                       ) : (
                         <IconChevronRight className="size-4 shrink-0" />
                       )}
                     </span>
-                    <span className="truncate text-xs font-semibold text-white">
+                    <span className="truncate text-xs font-semibold text-foreground">
                       Season {seasonNum}
                       {seasonTitle ? ` • ${seasonTitle}` : ""}
                     </span>
                   </div>
-                  <span className="rounded-full bg-zinc-800 px-2 py-0.5 font-mono text-[10px] font-bold text-zinc-300 tabular-nums shrink-0">
+                  <span className="rounded-full bg-muted px-2 py-0.5 font-mono text-[10px] font-bold text-foreground/80 dark:bg-zinc-800 dark:text-zinc-300 tabular-nums shrink-0">
                     {watchedInSeason} / {count}
                   </span>
                 </div>
@@ -2247,7 +2315,7 @@ function BorealisCardHoverEpisodesTab({
                 {/* Episodes inside expanded season - Scrollable list */}
                 {isExpanded && (
                   count > 0 ? (
-                    <div className="max-h-64 overflow-y-auto flex flex-col gap-1.5 border-t border-frost bg-zinc-950/40 p-2 pe-1 [scrollbar-width:thin]">
+                    <div className="max-h-64 overflow-y-auto flex flex-col gap-1.5 border-t border-border/60 bg-background/40 dark:border-frost dark:bg-zinc-950/40 p-2 pe-1 [scrollbar-width:thin]">
                       {Array.from({ length: count }, (_, idx) => {
                         const epNum = idx + 1
                         const ep =
@@ -2271,7 +2339,7 @@ function BorealisCardHoverEpisodesTab({
                               config.canEdit ? "cursor-pointer" : "cursor-default",
                               watched
                                 ? "border-primary/40 bg-primary/10"
-                                : "border-zinc-800/80 bg-zinc-900/50 hover:border-zinc-700 hover:bg-zinc-800/40"
+                                : "border-border/60 bg-background/60 hover:border-border hover:bg-muted/70 dark:border-zinc-800/80 dark:bg-zinc-900/50 dark:hover:border-zinc-700 dark:hover:bg-zinc-800/40"
                             )}
                           >
                             <div className="flex min-w-0 items-center gap-2">
@@ -2290,7 +2358,7 @@ function BorealisCardHoverEpisodesTab({
                                 "flex size-4.5 shrink-0 items-center justify-center rounded-md border transition-colors",
                                 watched
                                   ? "border-primary bg-primary text-primary-foreground"
-                                  : "border-zinc-700 bg-zinc-950 text-transparent hover:border-zinc-500"
+                                  : "border-border bg-background text-transparent hover:border-foreground/40 dark:border-zinc-700 dark:bg-zinc-950 dark:hover:border-zinc-500"
                               )}
                             >
                               {watched && <IconCheck className="size-3 stroke-[2.5]" />}
@@ -2300,7 +2368,7 @@ function BorealisCardHoverEpisodesTab({
                       })}
                     </div>
                   ) : (
-                    <div className="p-3 text-center text-xs text-zinc-500">
+                    <div className="p-3 text-center text-xs text-muted-foreground">
                       No episodes listed
                     </div>
                   )
@@ -2327,7 +2395,7 @@ function BorealisCardHoverEpisodesTab({
                   config.canEdit ? "cursor-pointer" : "cursor-default",
                   watched
                     ? "border-primary/40 bg-primary/10"
-                    : "border-zinc-800/80 bg-zinc-900/50 hover:border-zinc-700 hover:bg-zinc-800/40"
+                    : "border-border/60 bg-background/60 hover:border-border hover:bg-muted/70 dark:border-zinc-800/80 dark:bg-zinc-900/50 dark:hover:border-zinc-700 dark:hover:bg-zinc-800/40"
                 )}
               >
                 <div className="flex min-w-0 items-center gap-2">
@@ -2346,7 +2414,7 @@ function BorealisCardHoverEpisodesTab({
                     "flex size-4.5 shrink-0 items-center justify-center rounded-md border transition-colors",
                     watched
                       ? "border-primary bg-primary text-primary-foreground"
-                      : "border-zinc-700 bg-zinc-950 text-transparent hover:border-zinc-500"
+                      : "border-border bg-background text-transparent hover:border-foreground/40 dark:border-zinc-700 dark:bg-zinc-950 dark:hover:border-zinc-500"
                   )}
                 >
                   {watched && <IconCheck className="size-3 stroke-[2.5]" />}
@@ -2356,8 +2424,8 @@ function BorealisCardHoverEpisodesTab({
           })}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-8 text-center text-zinc-500">
-          <IconDeviceTv className="size-6 text-zinc-600 mb-1" />
+        <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+          <IconDeviceTv className="size-6 text-muted-foreground/70 mb-1" />
           <span className="text-xs">No episode list available</span>
         </div>
       )}
@@ -2808,6 +2876,18 @@ function BorealisCardHoverConnectionsTab({
         let raw: any[] = []
         if ((config as any).onSearchConnections) {
           raw = await (config as any).onSearchConnections(provider.key, q, searchCategoryType)
+        } else {
+          const res = await elysia.carina.connections.search.get({
+            query: {
+              provider: provider.key.toUpperCase(),
+              q,
+              id: explicitId,
+              type: searchCategoryType,
+            },
+          })
+          if (res.data?.success && Array.isArray(res.data?.results)) {
+            raw = res.data.results
+          }
         }
 
         const mapped = raw
@@ -3160,11 +3240,6 @@ function BorealisCardHoverConnectionsTab({
                     <span className={cn("inline-flex items-center rounded-md border px-2 py-0.5 font-mono text-[10px] font-bold uppercase shrink-0", prov.badgeColor)}>
                       {prov.name}
                     </span>
-                    {prov.detectedId && (
-                      <span className="truncate font-mono text-[11px] text-zinc-300 font-medium">
-                        Detected: {prov.detectedId}
-                      </span>
-                    )}
                   </div>
 
                   <button
@@ -3567,29 +3642,8 @@ export function BorealisCardHoverContent({
       : Array.isArray(data.hoverDetails?.seasons)
         ? data.hoverDetails.seasons
         : []
-    const regularSeasons = seasonsList.filter((s: any) => s.seasonNumber > 0)
-    const list = regularSeasons.length > 0 ? regularSeasons : seasonsList
     const curProg = Number(data.progress?.current ?? rawEntry?.progress ?? 0)
-    if (list.length > 0 && curProg > 0) {
-      const synthesized: any[] = []
-      let rem = curProg
-      const now = new Date().toISOString()
-      for (const s of list) {
-        if (rem <= 0) break
-        const count = s.episodes?.length || s.episodeCount || 0
-        const take = count > 0 ? Math.min(rem, count) : rem
-        for (let ep = 1; ep <= take; ep++) {
-          synthesized.push({
-            seasonNumber: s.seasonNumber,
-            episodeNumber: ep,
-            watchedAt: now,
-          })
-        }
-        rem -= take
-      }
-      return synthesized
-    }
-    return []
+    return synthesizeWatchedEpisodes(seasonsList, curProg)
   })
 
   const [draftConnections, setDraftConnections] = useState<Record<string, any>>(() => {
@@ -3859,14 +3913,7 @@ export function BorealisCardHoverContent({
   // Remove subtitle from hoverCard by default as requested
   const shouldShowSubtitle = config.showHoverSubtitle === true
 
-  const showEpisodesTab =
-    data.type === "tv" ||
-    data.type === "anime" ||
-    Boolean(
-      data.hoverDetails?.episodeCount ||
-      rawMedia?.episodes ||
-      rawMedia?.seasons
-    )
+  const showEpisodesTab = data.type === "tv" || data.type === "anime"
   const showRepeatsTab = data.type !== "music"
   const showConnectionsTab = data.type !== "other"
   const repeatLabel = getRepeatLabel(data.type)
@@ -3944,7 +3991,7 @@ export function BorealisCardHoverContent({
         zIndex: 9999,
       }}
       className={cn(
-        "flex w-80 max-w-[calc(100vw-24px)] sm:w-96 h-auto min-h-0 flex-col overflow-y-auto overscroll-contain rounded-2xl border border-frost bg-frost text-zinc-100 shadow-2xl backdrop-blur-2xl animate-in fade-in-0 zoom-in-95 duration-150 select-text cursor-auto pointer-events-auto [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.25)_transparent]",
+        "flex w-80 max-w-[calc(100vw-24px)] sm:w-96 h-auto min-h-0 flex-col overflow-y-auto overscroll-contain rounded-2xl border border-frost bg-frost text-foreground shadow-2xl backdrop-blur-2xl animate-in fade-in-0 zoom-in-95 duration-150 select-text cursor-auto pointer-events-auto [scrollbar-width:thin] [scrollbar-color:rgba(128,128,128,0.35)_transparent]",
         className
       )}
     >
@@ -3986,7 +4033,7 @@ export function BorealisCardHoverContent({
                 !heroBanner && "scale-125 blur-md brightness-60"
               )}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/45 to-transparent dark:from-zinc-950 dark:via-zinc-950/50" />
           </div>
         )
       })()}
@@ -4003,8 +4050,8 @@ export function BorealisCardHoverContent({
               className={cn(
                 "relative z-20 flex h-7 items-center gap-1.5 rounded-lg text-xs font-semibold transition-all duration-150 shrink-0 cursor-pointer border select-none backdrop-blur-md",
                 activeTab === "general"
-                  ? "border-zinc-700/80 bg-zinc-800/80 text-zinc-100 shadow-xs px-2.5"
-                  : "border-transparent text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100 px-2"
+                  ? "border-border bg-background/90 text-foreground shadow-xs px-2.5 dark:border-zinc-700/80 dark:bg-zinc-800/80 dark:text-zinc-100"
+                  : "border-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground px-2 dark:text-zinc-300 dark:hover:bg-zinc-800/60 dark:hover:text-white"
               )}
             >
               <IconLayoutGrid className="size-4 shrink-0" />
@@ -4019,8 +4066,8 @@ export function BorealisCardHoverContent({
                 className={cn(
                   "relative z-20 flex h-7 items-center gap-1.5 rounded-lg text-xs font-semibold transition-all duration-150 shrink-0 cursor-pointer border select-none backdrop-blur-md",
                   activeTab === "episodes"
-                    ? "border-zinc-700/80 bg-zinc-800/80 text-zinc-100 shadow-xs px-2.5"
-                    : "border-transparent text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100 px-2"
+                    ? "border-border bg-background/90 text-foreground shadow-xs px-2.5 dark:border-zinc-700/80 dark:bg-zinc-800/80 dark:text-zinc-100"
+                    : "border-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground px-2 dark:text-zinc-300 dark:hover:bg-zinc-800/60 dark:hover:text-white"
                 )}
               >
                 <IconDeviceTv className="size-4 shrink-0" />
@@ -4036,8 +4083,8 @@ export function BorealisCardHoverContent({
                 className={cn(
                   "relative z-20 flex h-7 items-center gap-1.5 rounded-lg text-xs font-semibold transition-all duration-150 shrink-0 cursor-pointer border select-none backdrop-blur-md",
                   activeTab === "repeats"
-                    ? "border-zinc-700/80 bg-zinc-800/80 text-zinc-100 shadow-xs px-2.5"
-                    : "border-transparent text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100 px-2"
+                    ? "border-border bg-background/90 text-foreground shadow-xs px-2.5 dark:border-zinc-700/80 dark:bg-zinc-800/80 dark:text-zinc-100"
+                    : "border-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground px-2 dark:text-zinc-300 dark:hover:bg-zinc-800/60 dark:hover:text-white"
                 )}
               >
                 <IconRotate2 className="size-4 shrink-0" />
@@ -4053,8 +4100,8 @@ export function BorealisCardHoverContent({
                 className={cn(
                   "relative z-20 flex h-7 items-center gap-1.5 rounded-lg text-xs font-semibold transition-all duration-150 shrink-0 cursor-pointer border select-none backdrop-blur-md",
                   activeTab === "connections"
-                    ? "border-zinc-700/80 bg-zinc-800/80 text-zinc-100 shadow-xs px-2.5"
-                    : "border-transparent text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100 px-2"
+                    ? "border-border bg-background/90 text-foreground shadow-xs px-2.5 dark:border-zinc-700/80 dark:bg-zinc-800/80 dark:text-zinc-100"
+                    : "border-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground px-2 dark:text-zinc-300 dark:hover:bg-zinc-800/60 dark:hover:text-white"
                 )}
               >
                 <IconLink className="size-4 shrink-0" />
@@ -4069,8 +4116,8 @@ export function BorealisCardHoverContent({
               className={cn(
                 "relative z-20 flex h-7 items-center gap-1.5 rounded-lg text-xs font-semibold transition-all duration-150 shrink-0 cursor-pointer border select-none backdrop-blur-md",
                 activeTab === "watchlists"
-                  ? "border-zinc-700/80 bg-zinc-800/80 text-zinc-100 shadow-xs px-2.5"
-                  : "border-transparent text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100 px-2"
+                  ? "border-border bg-background/90 text-foreground shadow-xs px-2.5 dark:border-zinc-700/80 dark:bg-zinc-800/80 dark:text-zinc-100"
+                  : "border-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground px-2 dark:text-zinc-300 dark:hover:bg-zinc-800/60 dark:hover:text-white"
               )}
             >
               <IconFolder className="size-4 shrink-0" />
@@ -4087,7 +4134,7 @@ export function BorealisCardHoverContent({
                 e.stopPropagation()
                 setIsHoverCardEditing?.(true)
               }}
-              className="relative z-20 ms-auto flex size-7 items-center justify-center rounded-lg border border-frost bg-frost/80 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer shrink-0 backdrop-blur-md"
+              className="relative z-20 ms-auto flex size-7 items-center justify-center rounded-lg border border-frost bg-frost/80 text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground dark:text-zinc-300 dark:hover:border-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-white transition-colors cursor-pointer shrink-0 backdrop-blur-md"
               aria-label="Edit list entry"
               title="Edit list entry"
             >
@@ -4134,57 +4181,82 @@ export function BorealisCardHoverContent({
             {/* Title Header */}
             <div className="flex flex-col gap-0.5">
               <div className="flex items-start justify-between gap-2">
-                <h4 className="line-clamp-2 text-sm sm:text-base font-extrabold text-white font-mono">
+                <h4 className="line-clamp-2 text-sm sm:text-base font-extrabold text-foreground font-mono">
                   {data.title}
                 </h4>
-                {config.canEdit && !config.showTabNav && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      setIsHoverCardEditing?.(true)
-                    }}
-                    className="flex size-7 items-center justify-center rounded-lg border border-frost bg-frost/80 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer shrink-0 backdrop-blur-md"
-                    aria-label="Edit list entry"
-                    title="Edit list entry"
-                  >
-                    <IconPencil className="size-3.5" />
-                  </button>
-                )}
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {(() => {
+                    const isEpisodeType = data.type === "episode" || data.type === "episodes"
+                    const favId = getBackendMediaId(data)
+                    if (isEpisodeType || !favId) return null
+                    const favType: FavoriteType =
+                      data.type === "character" || data.type === "characters"
+                        ? "CHARACTER"
+                        : data.type === "staff" || data.type === "people"
+                          ? "PERSON"
+                          : data.type === "studio" || data.type === "studios"
+                            ? "STUDIO"
+                            : (toBackendMediaType(data.type) as FavoriteType)
+                    return (
+                      <FavoriteButton
+                        targetId={favId}
+                        type={favType}
+                        title={data.title}
+                        size="icon-sm"
+                        variant="secondary"
+                        className="size-7 rounded-lg border border-frost backdrop-blur-md"
+                      />
+                    )
+                  })()}
+                  {config.canEdit && !config.showTabNav && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        setIsHoverCardEditing?.(true)
+                      }}
+                      className="flex size-7 items-center justify-center rounded-lg border border-frost bg-frost/80 text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground dark:text-zinc-300 dark:hover:border-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-white transition-colors cursor-pointer shrink-0 backdrop-blur-md"
+                      aria-label="Edit list entry"
+                      title="Edit list entry"
+                    >
+                      <IconPencil className="size-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
 
               {shouldShowSubtitle && (data.titleNative || data.titleSecondary) && (
-                <span className="font-mono text-xs text-zinc-400 font-medium">
+                <span className="font-mono text-xs text-muted-foreground font-medium">
                   {data.titleNative ?? data.titleSecondary}
                 </span>
               )}
 
               {Boolean((rawMedia as any)?.episodeTitle || (data.raw as any)?.episodeTitle) && (
-                <p className="text-xs text-zinc-300 italic line-clamp-2 mt-0.5 text-start">
+                <p className="text-xs text-muted-foreground italic line-clamp-2 mt-0.5 text-start">
                   &ldquo;{(rawMedia as any)?.episodeTitle || (data.raw as any)?.episodeTitle}&rdquo;
                 </p>
               )}
             </div>
 
             {/* Quick Meta Stats Row */}
-            <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-300 font-medium">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground font-medium">
               {details?.format && (
-                <span className="inline-flex items-center rounded-md border border-frost bg-frost px-1.5 py-0.5 font-mono text-[10px] font-bold text-zinc-100 uppercase">
+                <span className="inline-flex items-center rounded-md border border-frost bg-frost px-1.5 py-0.5 font-mono text-[10px] font-bold text-foreground uppercase">
                   {details.format}
                 </span>
               )}
 
               {details?.isQueued && (
-                <span className="inline-flex items-center rounded-md border border-amber-500/40 bg-amber-500/20 px-1.5 py-0.5 font-mono text-[10px] font-bold text-amber-300 uppercase shadow-xs">
+                <span className="inline-flex items-center rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 font-mono text-[10px] font-bold text-amber-600 dark:text-amber-300 uppercase shadow-xs">
                   Queued
                 </span>
               )}
 
               {/* Score next to format badge */}
               {details?.scoreFormatted && (
-                <div className="inline-flex items-center gap-1 rounded-md border border-amber-500/40 bg-frost px-1.5 py-0.5 font-mono text-[10px] font-bold text-amber-300 shadow-xs">
-                  <IconStar className="size-3 fill-amber-300" />
+                <div className="inline-flex items-center gap-1 rounded-md border border-amber-500/40 bg-frost px-1.5 py-0.5 font-mono text-[10px] font-bold text-amber-600 dark:text-amber-300 shadow-xs">
+                  <IconStar className="size-3 fill-amber-500 text-amber-500 dark:fill-amber-300 dark:text-amber-300" />
                   <span>{details.scoreFormatted}</span>
                 </div>
               )}
@@ -4208,30 +4280,30 @@ export function BorealisCardHoverContent({
 
               {/* Air Date / Year or Release Period */}
               {(details?.airDate || details?.year) && (
-                <div className="inline-flex items-center gap-1 font-mono text-[11px] text-zinc-400">
-                  <IconCalendar className="size-3 text-zinc-500" />
+                <div className="inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground">
+                  <IconCalendar className="size-3 text-muted-foreground" />
                   <span>{details.airDate ?? details.year}</span>
                 </div>
               )}
 
               {/* Duration */}
               {details?.duration && (
-                <div className="inline-flex items-center gap-1 font-mono text-[11px] text-zinc-400">
-                  <IconClock className="size-3 text-zinc-500" />
+                <div className="inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground">
+                  <IconClock className="size-3 text-muted-foreground" />
                   <span>{typeof details.duration === "number" ? `${details.duration}m` : details.duration}</span>
                 </div>
               )}
 
               {/* Gender badge for characters/people */}
               {effectiveGender && (
-                <span className="inline-flex items-center rounded-md border border-frost bg-frost px-1.5 py-0.5 font-mono text-[10px] font-bold text-zinc-100 uppercase">
+                <span className="inline-flex items-center rounded-md border border-frost bg-frost px-1.5 py-0.5 font-mono text-[10px] font-bold text-foreground uppercase">
                   {effectiveGender}
                 </span>
               )}
 
               {/* Age badge for characters/people */}
               {effectiveAge && (
-                <span className="inline-flex items-center rounded-md border border-frost bg-frost px-1.5 py-0.5 font-mono text-[10px] font-bold text-zinc-300">
+                <span className="inline-flex items-center rounded-md border border-frost bg-frost px-1.5 py-0.5 font-mono text-[10px] font-bold text-foreground/80">
                   {effectiveAge.toLowerCase().includes("age") ? effectiveAge : `Age: ${effectiveAge}`}
                 </span>
               )}
@@ -4242,8 +4314,8 @@ export function BorealisCardHoverContent({
               <div className="flex flex-col gap-2 rounded-xl border border-frost bg-frost/70 p-2.5 text-xs backdrop-blur-md">
                 <div className="flex items-center justify-between gap-2">
                   {(draftStartedAt || draftCompletedAt) ? (
-                    <div className="flex items-center gap-1.5 font-mono text-[11px] text-zinc-300">
-                      <IconCalendar className="size-3.5 text-zinc-400 shrink-0" />
+                    <div className="flex items-center gap-1.5 font-mono text-[11px] text-foreground/80">
+                      <IconCalendar className="size-3.5 text-muted-foreground shrink-0" />
                       <span>
                         {draftStartedAt || "—"} {draftCompletedAt ? `→ ${draftCompletedAt}` : ""}
                       </span>
@@ -4255,9 +4327,9 @@ export function BorealisCardHoverContent({
                       <span
                         className={cn(
                           "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-semibold backdrop-blur-md",
-                          draftPriority === "ULTRA" && "border-purple-500/50 bg-purple-500/20 text-purple-300",
-                          draftPriority === "HIGH" && "border-rose-500/50 bg-rose-500/20 text-rose-300",
-                          draftPriority === "MEDIUM" && "border-amber-500/50 bg-amber-500/20 text-amber-300"
+                          draftPriority === "ULTRA" && "border-purple-500/50 bg-purple-500/15 text-purple-600 dark:text-purple-300",
+                          draftPriority === "HIGH" && "border-rose-500/50 bg-rose-500/15 text-rose-600 dark:text-rose-300",
+                          draftPriority === "MEDIUM" && "border-amber-500/50 bg-amber-500/15 text-amber-600 dark:text-amber-300"
                         )}
                       >
                         <IconFlag className="size-3" />
@@ -4266,8 +4338,8 @@ export function BorealisCardHoverContent({
                     )}
 
                     {draftIsPrivate && (
-                      <span className="inline-flex items-center gap-1 rounded-md border border-frost bg-frost/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-zinc-300 backdrop-blur-md">
-                        <IconLock className="size-3 text-zinc-400" />
+                      <span className="inline-flex items-center gap-1 rounded-md border border-frost bg-frost/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-foreground/80 backdrop-blur-md">
+                        <IconLock className="size-3 text-muted-foreground" />
                         Private
                       </span>
                     )}
@@ -4275,12 +4347,12 @@ export function BorealisCardHoverContent({
                 </div>
 
                 {draftNotes && (
-                  <div className="flex flex-col gap-0.5 border-t border-frost/60 pt-1.5">
-                    <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                  <div className="flex flex-col gap-0.5 border-t border-border/60 pt-1.5">
+                    <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                       <IconFileText className="size-3" />
                       Notes
                     </span>
-                    <p className="whitespace-pre-wrap font-sans text-xs text-zinc-300 line-clamp-3 select-text">
+                    <p className="whitespace-pre-wrap font-sans text-xs text-foreground/85 line-clamp-3 select-text">
                       {draftNotes}
                     </p>
                   </div>
@@ -4292,13 +4364,13 @@ export function BorealisCardHoverContent({
             {!config.canEdit && effectiveDescription ? (
               <BorealisFormattedText
                 text={effectiveDescription}
-                className="select-text font-mono text-xs text-zinc-300 leading-relaxed"
+                className="select-text font-mono text-xs text-foreground/85 leading-relaxed"
               />
             ) : null}
 
             {/* Voice Actor Spotlight for Characters */}
             {details?.actor && (
-              <div className="flex items-center gap-2.5 rounded-xl border border-zinc-800 bg-zinc-900/90 p-2.5 select-text">
+              <div className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-muted/60 p-2.5 select-text">
                 {details.actor.image ? (
                   <img
                     src={details.actor.image}
@@ -4311,7 +4383,7 @@ export function BorealisCardHoverContent({
                   </div>
                 )}
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
                     Voice Actor ({details.actor.language ?? "VA"})
                   </span>
                   <a
@@ -4319,12 +4391,12 @@ export function BorealisCardHoverContent({
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="truncate text-xs font-bold text-cyan-400 hover:text-cyan-300 hover:underline cursor-pointer"
+                    className="truncate text-xs font-bold text-cyan-600 hover:text-cyan-500 dark:text-cyan-400 dark:hover:text-cyan-300 hover:underline cursor-pointer"
                   >
                     {details.actor.namePrimary}
                   </a>
                   {details.actor.nameNative && (
-                    <span className="font-mono truncate text-[10px] text-zinc-400">
+                    <span className="font-mono truncate text-[10px] text-muted-foreground">
                       {details.actor.nameNative}
                     </span>
                   )}
@@ -4334,11 +4406,11 @@ export function BorealisCardHoverContent({
 
             {/* Genres Pill List */}
             {details?.genres && details.genres.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 border-t border-zinc-800/80 pt-2.5">
+              <div className="flex flex-wrap gap-1.5 border-t border-border/60 pt-2.5">
                 {details.genres.map((genre, idx) => (
                   <span
                     key={idx}
-                    className="rounded-md border border-zinc-700/60 bg-zinc-900/90 px-2 py-0.5 font-mono text-[10px] font-semibold text-zinc-200 shadow-xs"
+                    className="rounded-md border border-border/60 bg-muted/70 px-2 py-0.5 font-mono text-[10px] font-semibold text-foreground shadow-xs"
                   >
                     {genre}
                   </span>
@@ -4463,7 +4535,7 @@ export function BorealisCardExpandedContent({
               alt={data.title}
               loading={priority ? "eager" : "lazy"}
               onError={() => setImageError(true)}
-              className="size-full rounded-xl object-cover transition-transform duration-300 group-hover/bcard:scale-105"
+              className="size-full rounded-xl object-cover"
             />
           ) : (
             <div className="flex size-full flex-col items-center justify-center gap-1 p-2 text-muted-foreground/60">

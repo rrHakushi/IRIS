@@ -111,27 +111,6 @@ const routes2 = new Elysia()
     }
   )
 
-  // GET /borealis/books/:bookId/relations (Media relations)
-  .get(
-    '/:bookId/relations',
-    {
-      params: BorealisBooksModel.param,
-      detail: {
-        summary: 'Get book relations',
-        description: 'Returns related media entries across IRIS catalog.',
-        tags: ['Borealis - Books'],
-      },
-      response: {
-        200: BorealisBooksModel.relationsResponse,
-        404: BorealisBooksModel.notFoundError,
-        422: BorealisBooksModel.validationError,
-      },
-    },
-    async ({ params: { bookId } }) => {
-      return await BorealisBooksServ.getRelations(bookId)
-    }
-  )
-
   // GET /borealis/books/:bookId/characters (Characters)
   .get(
     '/:bookId/characters',

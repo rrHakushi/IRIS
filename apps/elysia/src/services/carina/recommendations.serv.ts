@@ -2,6 +2,7 @@ import { prisma, and, or, countOf, toDate, type MediaType } from '@Iris/db'
 import { getProfileCustomization } from '@IRIS/shared'
 import { IRISBitField, IRISFlags } from '@IRIS/permissions'
 import { NotFound, BadRequest, Forbidden } from '../../lib/errors'
+import { ActivityServ } from './activity.serv'
 
 export const VALID_RECOMMENDATION_MEDIA_TYPES = [
   'ANIME',
@@ -136,6 +137,8 @@ export class CarinaRecommendationsServ {
       targetId: body.targetId,
     }).first()
 
+    const isNewRecommendation = !rec
+
     if (rec) {
       rec = await prisma.orm.public.MediaRecommendation.where({ id: rec.id })
         .update({ body: trimmedBody })
@@ -152,6 +155,17 @@ export class CarinaRecommendationsServ {
 
     if (!rec) {
       throw new BadRequest('Failed to save recommendation')
+    }
+
+    if (isNewRecommendation) {
+      ActivityServ.recordRecommendationActivity({
+        userId,
+        mediaType: normSourceType,
+        mediaId: body.sourceId,
+        targetMediaType: normTargetType,
+        targetMediaId: body.targetId,
+        content: trimmedBody,
+      })
     }
 
     const recWithUser = await prisma.orm.public.MediaRecommendation.where({ id: rec.id })

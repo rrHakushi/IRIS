@@ -1,8 +1,8 @@
 @source "../../../packages/borealis/src/**/*.{ts,tsx}";
 
 :root {
-  --frost: rgba(9, 9, 11, 0.85);
-  --frost-border: rgba(63, 63, 70, 0.75);
+  --frost: rgba(255, 255, 255, 0.85);
+  --frost-border: rgba(228, 228, 231, 0.85);
 }
 
 .dark {
