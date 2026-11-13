@@ -50,12 +50,14 @@ export function IrisAppMenu({ className }: IrisAppMenuProps = {}): React.JSX.Ele
             "w-fit max-w-full truncate text-xs leading-tight font-bold",
             activeApp?.gradient
               ? "bg-clip-text text-transparent"
-              : activeApp?.colorClass || "text-indigo-500"
+              : !activeApp?.color && "text-indigo-500"
           )}
           style={
             activeApp?.gradient
               ? { backgroundImage: activeApp.gradient }
-              : undefined
+              : activeApp?.color
+                ? { color: activeApp.color }
+                : undefined
           }
         >
           {activeApp?.name || "IRIS"}
