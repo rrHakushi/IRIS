@@ -332,7 +332,7 @@ export function BorealisCardRoot({
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         className={cn(
-          "bcard group/bcard relative flex rounded-2xl border border-border/60 bg-card text-card-foreground transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5",
+          "bcard group/bcard relative flex rounded-2xl border border-border/60 bg-card text-primary transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5",
           entryPriority === "ULTRA" && "border-t-2 border-e-2 border-t-purple-500 border-e-purple-500",
           entryPriority === "HIGH" && "border-t-2 border-e-2 border-t-rose-500 border-e-rose-500",
           entryPriority === "MEDIUM" && "border-t-2 border-e-2 border-t-amber-500 border-e-amber-500",
@@ -594,7 +594,7 @@ export function BorealisCardTitle({
         }}
         title={data.title}
         className={cn(
-          "block truncate font-mono text-xs sm:text-sm font-bold text-foreground transition-colors group-hover/bcard:text-primary group-hover/bcard:underline",
+          "block truncate font-mono text-xs sm:text-sm font-bold text-primary transition-colors group-hover/bcard:underline",
           titleClassName
         )}
       >
@@ -1618,7 +1618,7 @@ function BorealisCardHoverEditForm({
       <div className={cn("grid grid-cols-3 gap-2", statusDropdownOpen ? "relative z-50" : "relative z-20")}>
         {/* Status Dropdown - High Z-index with frosted blur surface */}
         <div className="flex flex-col gap-1 min-w-0">
-          <label className="flex items-center gap-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider truncate">
+          <label className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase tracking-wider truncate">
             <IconActivity className="size-3 shrink-0" />
             <span className="truncate">Status</span>
           </label>
@@ -1637,12 +1637,11 @@ function BorealisCardHoverEditForm({
             {statusDropdownOpen && (
               <div
                 style={{
-                  backgroundColor: "rgba(10, 10, 14, 0.82)",
                   backdropFilter: "blur(24px)",
                   WebkitBackdropFilter: "blur(24px)",
                   zIndex: 99999,
                 }}
-                className="absolute top-full left-0 z-[99999] mt-1 w-48 rounded-2xl border border-frost bg-frost p-1.5 text-zinc-100 shadow-2xl backdrop-blur-2xl"
+                className="absolute top-full left-0 z-[99999] mt-1 w-48 rounded-2xl border border-frost bg-zinc-950/80 p-1.5 text-zinc-100 shadow-2xl backdrop-blur-2xl"
               >
                 {STATUS_DROPDOWN_OPTIONS.map((st) => {
                   const IconComp = getMediaListStatusIcon(st)
@@ -1679,8 +1678,8 @@ function BorealisCardHoverEditForm({
 
         {/* Score (0-10) with Increment/Decrement Chevrons - Neutral color matching everything else */}
         <div className="flex flex-col gap-1 min-w-0">
-          <label className="flex items-center gap-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider truncate">
-            <IconStar className="size-3 text-zinc-400 shrink-0" />
+          <label className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase tracking-wider truncate">
+            <IconStar className="size-3 text-primary shrink-0" />
             <span className="truncate">Score</span>
           </label>
           <div className="flex h-8 items-center justify-between rounded-lg border border-frost bg-frost/80 px-2 backdrop-blur-md">
@@ -1698,7 +1697,7 @@ function BorealisCardHoverEditForm({
               }}
               className="w-full bg-transparent font-mono text-xs font-semibold text-white focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
-            <span className="text-[10px] font-bold text-zinc-500 pe-1 shrink-0">/10</span>
+            <span className="text-[10px] font-bold text-primary pe-1 shrink-0">/10</span>
             <div className="flex flex-col gap-0.5 text-zinc-400 shrink-0">
               <button
                 type="button"
@@ -1730,8 +1729,8 @@ function BorealisCardHoverEditForm({
 
         {/* Rewatches / Repeats with Increment/Decrement Chevrons */}
         <div className="flex flex-col gap-1 min-w-0">
-          <label className="flex items-center gap-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider truncate" title={repeatLabel}>
-            <IconRotate2 className="size-3 text-zinc-400 shrink-0" />
+          <label className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase tracking-wider truncate" title={repeatLabel}>
+            <IconRotate2 className="size-3 text-primary shrink-0" />
             <span className="truncate">{repeatLabel}</span>
           </label>
           <div className="flex h-8 items-center justify-between rounded-lg border border-frost bg-frost/80 px-2 backdrop-blur-md">
@@ -1769,7 +1768,7 @@ function BorealisCardHoverEditForm({
         <div className="grid grid-cols-2 gap-2 relative z-10">
           {/* Primary: Chapters */}
           <div className="flex flex-col gap-1 min-w-0">
-            <label className="flex items-center gap-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider truncate">
+            <label className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase tracking-wider truncate">
               <IconBook className="size-3 shrink-0" />
               <span className="truncate">Chapters</span>
             </label>
@@ -1790,7 +1789,7 @@ function BorealisCardHoverEditForm({
                 className="w-full bg-transparent font-mono text-xs font-semibold text-white focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               {maxChapters ? (
-                <span className="text-[10px] font-bold text-zinc-500 pe-1 shrink-0">/ {maxChapters}</span>
+                <span className="text-[10px] font-bold text-primary pe-1 shrink-0">/ {maxChapters}</span>
               ) : null}
               <div className="flex flex-col gap-0.5 text-zinc-400 shrink-0">
                 <button
@@ -1822,7 +1821,7 @@ function BorealisCardHoverEditForm({
 
           {/* Secondary: Volumes */}
           <div className="flex flex-col gap-1 min-w-0">
-            <label className="flex items-center gap-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider truncate">
+            <label className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase tracking-wider truncate">
               <IconBook2 className="size-3 shrink-0" />
               <span className="truncate">Volumes</span>
             </label>
@@ -1839,7 +1838,7 @@ function BorealisCardHoverEditForm({
                 className="w-full bg-transparent font-mono text-xs font-semibold text-white focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               {maxVolumes ? (
-                <span className="text-[10px] font-bold text-zinc-500 pe-1 shrink-0">/ {maxVolumes}</span>
+                <span className="text-[10px] font-bold text-primary pe-1 shrink-0">/ {maxVolumes}</span>
               ) : null}
               <div className="flex flex-col gap-0.5 text-zinc-400 shrink-0">
                 <button
@@ -1867,7 +1866,7 @@ function BorealisCardHoverEditForm({
         </div>
       ) : isGame ? (
         <div className="flex flex-col gap-1 w-full relative z-10">
-          <label className="flex items-center gap-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+          <label className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase tracking-wider">
             <IconClock className="size-3" />
             <span>Playtime (Hours)</span>
           </label>
@@ -1880,7 +1879,7 @@ function BorealisCardHoverEditForm({
               onChange={(e) => setDraftProgress(Math.max(0, Number(e.target.value) || 0))}
               className="w-full bg-transparent font-mono text-xs font-semibold text-white focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
-            <span className="text-[10px] font-bold text-zinc-500 pe-1 shrink-0">hrs</span>
+            <span className="text-[10px] font-bold text-primary pe-1 shrink-0">hrs</span>
             <div className="flex flex-col gap-0.5 text-zinc-400 shrink-0">
               <button
                 type="button"
@@ -1903,7 +1902,7 @@ function BorealisCardHoverEditForm({
         </div>
       ) : (
         <div className="flex flex-col gap-1 w-full relative z-10">
-          <label className="flex items-center gap-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+          <label className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase tracking-wider">
             <IconDeviceTv className="size-3" />
             <span>{isTvOrAnime ? "Episodes" : "Progress"}</span>
           </label>
@@ -1925,7 +1924,7 @@ function BorealisCardHoverEditForm({
               className="w-full bg-transparent font-mono text-xs font-semibold text-white focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             {maxUnits ? (
-              <span className="text-[10px] font-bold text-zinc-500 pe-1 shrink-0">/ {maxUnits}</span>
+              <span className="text-[10px] font-bold text-primary pe-1 shrink-0">/ {maxUnits}</span>
             ) : null}
             <div className="flex flex-col gap-0.5 text-zinc-400 shrink-0">
               <button
@@ -1959,7 +1958,7 @@ function BorealisCardHoverEditForm({
       {/* Row 3: StartDate | End Date with BorealisDatePicker (Calendar component with constraints) */}
       <div className="grid grid-cols-2 gap-2 relative z-0">
         <div className="flex flex-col gap-1 min-w-0">
-          <label className="flex items-center gap-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+          <label className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase tracking-wider">
             <IconCalendar className="size-3 shrink-0" />
             <span>Start Date</span>
           </label>
@@ -1971,7 +1970,7 @@ function BorealisCardHoverEditForm({
           />
         </div>
         <div className="flex flex-col gap-1 min-w-0">
-          <label className="flex items-center gap-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+          <label className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase tracking-wider">
             <IconCalendar className="size-3 shrink-0" />
             <span>End Date</span>
           </label>
@@ -1987,8 +1986,8 @@ function BorealisCardHoverEditForm({
       {/* Row 4: Privacy Toggle */}
       <div className="flex items-center justify-between rounded-lg border border-frost bg-frost/80 px-2.5 py-1.5 relative z-0 backdrop-blur-md">
         <div className="flex items-center gap-1.5">
-          <IconLock className="size-3.5 text-zinc-400" />
-          <span className="text-[11px] font-semibold text-zinc-200">Private Entry</span>
+          <IconLock className="size-3.5 text-primary" />
+          <span className="text-[11px] font-semibold text-primary">Private Entry</span>
         </div>
         <input
           type="checkbox"
@@ -2000,7 +1999,7 @@ function BorealisCardHoverEditForm({
 
       {/* Row 4b: Priority Segmented Control */}
       <div className="flex flex-col gap-1 relative z-0">
-        <label className="flex items-center gap-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+        <label className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase tracking-wider">
           <IconFlag className="size-3" />
           <span>Priority</span>
         </label>
@@ -2035,7 +2034,7 @@ function BorealisCardHoverEditForm({
 
       {/* Row 5: Notes */}
       <div className="flex flex-col gap-1 relative z-0">
-        <label className="flex items-center gap-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+        <label className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase tracking-wider">
           <IconFileText className="size-3" />
           <span>Notes</span>
         </label>
@@ -4023,7 +4022,6 @@ export function BorealisCardHoverContent({
           handleSave()
         }}
         className="flex size-7 items-center justify-center rounded-lg !bg-white !text-zinc-950 font-bold hover:!bg-zinc-200 transition-colors shadow-xs cursor-pointer disabled:opacity-50"
-        style={{ backgroundColor: "#ffffff", color: "#09090b" }}
         aria-label="Save"
         title="Save"
       >
@@ -4041,7 +4039,7 @@ export function BorealisCardHoverContent({
           e.stopPropagation()
           handleCancel()
         }}
-        className="flex size-7 items-center justify-center rounded-lg border border-frost bg-frost/80 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer disabled:opacity-50 backdrop-blur-md"
+        className="flex size-7 items-center justify-center rounded-lg border border-frost bg-frost/80 text-primary/80 hover:border-primary/50 hover:bg-zinc-800 hover:text-primary transition-colors cursor-pointer disabled:opacity-50 backdrop-blur-md"
         aria-label="Cancel"
         title="Cancel"
       >
@@ -4071,7 +4069,7 @@ export function BorealisCardHoverContent({
         zIndex: 9999,
       }}
       className={cn(
-        "flex w-80 max-w-[calc(100vw-24px)] sm:w-96 h-auto min-h-0 flex-col overflow-y-auto overscroll-contain rounded-2xl border border-frost bg-frost text-foreground shadow-2xl backdrop-blur-2xl animate-in fade-in-0 zoom-in-95 duration-150 select-text cursor-auto pointer-events-auto [scrollbar-width:thin] [scrollbar-color:rgba(128,128,128,0.35)_transparent]",
+        "flex w-80 max-w-[calc(100vw-24px)] sm:w-96 h-auto min-h-0 flex-col overflow-y-auto overscroll-contain rounded-2xl border border-frost bg-frost text-primary shadow-2xl backdrop-blur-2xl animate-in fade-in-0 zoom-in-95 duration-150 select-text cursor-auto pointer-events-auto [scrollbar-width:thin] [scrollbar-color:var(--border)_transparent]",
         className
       )}
     >
@@ -4130,8 +4128,8 @@ export function BorealisCardHoverContent({
               className={cn(
                 "relative z-20 flex h-7 items-center gap-1.5 rounded-lg text-xs font-semibold transition-all duration-150 shrink-0 cursor-pointer border select-none backdrop-blur-md",
                 activeTab === "general"
-                  ? "border-border bg-background/90 text-foreground shadow-xs px-2.5 dark:border-zinc-700/80 dark:bg-zinc-800/80 dark:text-zinc-100"
-                  : "border-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground px-2 dark:text-zinc-300 dark:hover:bg-zinc-800/60 dark:hover:text-white"
+                  ? "border-primary/40 bg-background/90 text-primary shadow-xs px-2.5 dark:border-primary/40 dark:bg-zinc-800/80 dark:text-primary"
+                  : "border-transparent text-primary/70 hover:bg-muted/70 hover:text-primary px-2 dark:text-primary/70 dark:hover:bg-zinc-800/60 dark:hover:text-primary"
               )}
             >
               <IconLayoutGrid className="size-4 shrink-0" />
@@ -4146,8 +4144,8 @@ export function BorealisCardHoverContent({
                 className={cn(
                   "relative z-20 flex h-7 items-center gap-1.5 rounded-lg text-xs font-semibold transition-all duration-150 shrink-0 cursor-pointer border select-none backdrop-blur-md",
                   activeTab === "episodes"
-                    ? "border-border bg-background/90 text-foreground shadow-xs px-2.5 dark:border-zinc-700/80 dark:bg-zinc-800/80 dark:text-zinc-100"
-                    : "border-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground px-2 dark:text-zinc-300 dark:hover:bg-zinc-800/60 dark:hover:text-white"
+                    ? "border-primary/40 bg-background/90 text-primary shadow-xs px-2.5 dark:border-primary/40 dark:bg-zinc-800/80 dark:text-primary"
+                    : "border-transparent text-primary/70 hover:bg-muted/70 hover:text-primary px-2 dark:text-primary/70 dark:hover:bg-zinc-800/60 dark:hover:text-primary"
                 )}
               >
                 <IconDeviceTv className="size-4 shrink-0" />
@@ -4163,8 +4161,8 @@ export function BorealisCardHoverContent({
                 className={cn(
                   "relative z-20 flex h-7 items-center gap-1.5 rounded-lg text-xs font-semibold transition-all duration-150 shrink-0 cursor-pointer border select-none backdrop-blur-md",
                   activeTab === "repeats"
-                    ? "border-border bg-background/90 text-foreground shadow-xs px-2.5 dark:border-zinc-700/80 dark:bg-zinc-800/80 dark:text-zinc-100"
-                    : "border-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground px-2 dark:text-zinc-300 dark:hover:bg-zinc-800/60 dark:hover:text-white"
+                    ? "border-primary/40 bg-background/90 text-primary shadow-xs px-2.5 dark:border-primary/40 dark:bg-zinc-800/80 dark:text-primary"
+                    : "border-transparent text-primary/70 hover:bg-muted/70 hover:text-primary px-2 dark:text-primary/70 dark:hover:bg-zinc-800/60 dark:hover:text-primary"
                 )}
               >
                 <IconRotate2 className="size-4 shrink-0" />
@@ -4180,8 +4178,8 @@ export function BorealisCardHoverContent({
                 className={cn(
                   "relative z-20 flex h-7 items-center gap-1.5 rounded-lg text-xs font-semibold transition-all duration-150 shrink-0 cursor-pointer border select-none backdrop-blur-md",
                   activeTab === "connections"
-                    ? "border-border bg-background/90 text-foreground shadow-xs px-2.5 dark:border-zinc-700/80 dark:bg-zinc-800/80 dark:text-zinc-100"
-                    : "border-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground px-2 dark:text-zinc-300 dark:hover:bg-zinc-800/60 dark:hover:text-white"
+                    ? "border-primary/40 bg-background/90 text-primary shadow-xs px-2.5 dark:border-primary/40 dark:bg-zinc-800/80 dark:text-primary"
+                    : "border-transparent text-primary/70 hover:bg-muted/70 hover:text-primary px-2 dark:text-primary/70 dark:hover:bg-zinc-800/60 dark:hover:text-primary"
                 )}
               >
                 <IconLink className="size-4 shrink-0" />
@@ -4196,8 +4194,8 @@ export function BorealisCardHoverContent({
               className={cn(
                 "relative z-20 flex h-7 items-center gap-1.5 rounded-lg text-xs font-semibold transition-all duration-150 shrink-0 cursor-pointer border select-none backdrop-blur-md",
                 activeTab === "watchlists"
-                  ? "border-border bg-background/90 text-foreground shadow-xs px-2.5 dark:border-zinc-700/80 dark:bg-zinc-800/80 dark:text-zinc-100"
-                  : "border-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground px-2 dark:text-zinc-300 dark:hover:bg-zinc-800/60 dark:hover:text-white"
+                  ? "border-primary/40 bg-background/90 text-primary shadow-xs px-2.5 dark:border-primary/40 dark:bg-zinc-800/80 dark:text-primary"
+                  : "border-transparent text-primary/70 hover:bg-muted/70 hover:text-primary px-2 dark:text-primary/70 dark:hover:bg-zinc-800/60 dark:hover:text-primary"
               )}
             >
               <IconFolder className="size-4 shrink-0" />
@@ -4214,7 +4212,7 @@ export function BorealisCardHoverContent({
                 e.stopPropagation()
                 setIsHoverCardEditing?.(true)
               }}
-              className="relative z-20 ms-auto flex size-7 items-center justify-center rounded-lg border border-frost bg-frost/80 text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground dark:text-zinc-300 dark:hover:border-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-white transition-colors cursor-pointer shrink-0 backdrop-blur-md"
+              className="relative z-20 ms-auto flex size-7 items-center justify-center rounded-lg border border-frost bg-frost/80 text-primary/80 hover:border-primary/50 hover:bg-muted hover:text-primary dark:text-primary/80 dark:hover:border-primary/50 dark:hover:bg-zinc-800 dark:hover:text-primary transition-colors cursor-pointer shrink-0 backdrop-blur-md"
               aria-label="Edit list entry"
               title="Edit list entry"
             >
@@ -4261,11 +4259,11 @@ export function BorealisCardHoverContent({
             {/* Title Header */}
             <div className="flex flex-col gap-0.5">
               <div className="flex items-start justify-between gap-2">
-                <h4 className="line-clamp-2 text-sm sm:text-base font-extrabold text-foreground font-mono">
+                <h4 className="line-clamp-2 text-sm sm:text-base font-extrabold text-primary font-mono">
                   {data.href && data.href !== "#" ? (
                     <a
                       href={data.href}
-                      className="transition-colors hover:text-primary hover:underline"
+                      className="transition-colors hover:underline"
                     >
                       {data.title}
                     </a>
@@ -4305,7 +4303,7 @@ export function BorealisCardHoverContent({
                         e.stopPropagation()
                         setIsHoverCardEditing?.(true)
                       }}
-                      className="flex size-7 items-center justify-center rounded-lg border border-frost bg-frost/80 text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground dark:text-zinc-300 dark:hover:border-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-white transition-colors cursor-pointer shrink-0 backdrop-blur-md"
+                      className="flex size-7 items-center justify-center rounded-lg border border-frost bg-frost/80 text-primary/80 hover:border-primary/50 hover:bg-muted hover:text-primary dark:text-primary/80 dark:hover:border-primary/50 dark:hover:bg-zinc-800 dark:hover:text-primary transition-colors cursor-pointer shrink-0 backdrop-blur-md"
                       aria-label="Edit list entry"
                       title="Edit list entry"
                     >
@@ -4331,7 +4329,7 @@ export function BorealisCardHoverContent({
             {/* Quick Meta Stats Row */}
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground font-medium">
               {details?.format && (
-                <span className="inline-flex items-center rounded-md border border-frost bg-frost px-1.5 py-0.5 font-mono text-[10px] font-bold text-foreground uppercase">
+                <span className="inline-flex items-center rounded-md border border-frost bg-frost px-1.5 py-0.5 font-mono text-[10px] font-bold text-primary uppercase">
                   {details.format}
                 </span>
               )}
@@ -4369,30 +4367,30 @@ export function BorealisCardHoverContent({
 
               {/* Air Date / Year or Release Period */}
               {(details?.airDate || details?.year) && (
-                <div className="inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground">
-                  <IconCalendar className="size-3 text-muted-foreground" />
+                <div className="inline-flex items-center gap-1 font-mono text-[11px] text-primary/80">
+                  <IconCalendar className="size-3 text-primary" />
                   <span>{details.airDate ?? details.year}</span>
                 </div>
               )}
 
               {/* Duration */}
               {details?.duration && (
-                <div className="inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground">
-                  <IconClock className="size-3 text-muted-foreground" />
+                <div className="inline-flex items-center gap-1 font-mono text-[11px] text-primary/80">
+                  <IconClock className="size-3 text-primary" />
                   <span>{typeof details.duration === "number" ? `${details.duration}m` : details.duration}</span>
                 </div>
               )}
 
               {/* Gender badge for characters/people */}
               {effectiveGender && (
-                <span className="inline-flex items-center rounded-md border border-frost bg-frost px-1.5 py-0.5 font-mono text-[10px] font-bold text-foreground uppercase">
+                <span className="inline-flex items-center rounded-md border border-frost bg-frost px-1.5 py-0.5 font-mono text-[10px] font-bold text-primary uppercase">
                   {effectiveGender}
                 </span>
               )}
 
               {/* Age badge for characters/people */}
               {effectiveAge && (
-                <span className="inline-flex items-center rounded-md border border-frost bg-frost px-1.5 py-0.5 font-mono text-[10px] font-bold text-foreground/80">
+                <span className="inline-flex items-center rounded-md border border-frost bg-frost px-1.5 py-0.5 font-mono text-[10px] font-bold text-primary/80">
                   {effectiveAge.toLowerCase().includes("age") ? effectiveAge : `Age: ${effectiveAge}`}
                 </span>
               )}
@@ -4403,8 +4401,8 @@ export function BorealisCardHoverContent({
               <div className="flex flex-col gap-2 rounded-xl border border-frost bg-frost/70 p-2.5 text-xs backdrop-blur-md">
                 <div className="flex items-center justify-between gap-2">
                   {(draftStartedAt || draftCompletedAt) ? (
-                    <div className="flex items-center gap-1.5 font-mono text-[11px] text-foreground/80">
-                      <IconCalendar className="size-3.5 text-muted-foreground shrink-0" />
+                    <div className="flex items-center gap-1.5 font-mono text-[11px] text-primary/80">
+                      <IconCalendar className="size-3.5 text-primary shrink-0" />
                       <span>
                         {draftStartedAt || "—"} {draftCompletedAt ? `→ ${draftCompletedAt}` : ""}
                       </span>
@@ -4427,8 +4425,8 @@ export function BorealisCardHoverContent({
                     )}
 
                     {draftIsPrivate && (
-                      <span className="inline-flex items-center gap-1 rounded-md border border-frost bg-frost/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-foreground/80 backdrop-blur-md">
-                        <IconLock className="size-3 text-muted-foreground" />
+                      <span className="inline-flex items-center gap-1 rounded-md border border-frost bg-frost/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary/80 backdrop-blur-md">
+                        <IconLock className="size-3 text-primary" />
                         Private
                       </span>
                     )}
@@ -4437,11 +4435,11 @@ export function BorealisCardHoverContent({
 
                 {draftNotes && (
                   <div className="flex flex-col gap-0.5 border-t border-border/60 pt-1.5">
-                    <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                      <IconFileText className="size-3" />
+                    <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-primary">
+                      <IconFileText className="size-3 text-primary" />
                       Notes
                     </span>
-                    <p className="whitespace-pre-wrap font-sans text-xs text-foreground/85 line-clamp-3 select-text">
+                    <p className="whitespace-pre-wrap font-sans text-xs text-primary/85 line-clamp-3 select-text">
                       {draftNotes}
                     </p>
                   </div>
@@ -4453,7 +4451,7 @@ export function BorealisCardHoverContent({
             {!config.canEdit && effectiveDescription ? (
               <BorealisFormattedText
                 text={effectiveDescription}
-                className="select-text font-mono text-xs text-foreground/85 leading-relaxed"
+                className="select-text font-mono text-xs text-primary/85 leading-relaxed"
               />
             ) : null}
 
@@ -4467,7 +4465,7 @@ export function BorealisCardHoverContent({
                     className="size-9 shrink-0 rounded-full object-cover ring-1 ring-border/50"
                   />
                 ) : (
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-primary">
                     <IconMicrophone className="size-4" />
                   </div>
                 )}
@@ -4499,7 +4497,7 @@ export function BorealisCardHoverContent({
                 {details.genres.map((genre, idx) => (
                   <span
                     key={idx}
-                    className="rounded-md border border-border/60 bg-muted/70 px-2 py-0.5 font-mono text-[10px] font-semibold text-foreground shadow-xs"
+                    className="rounded-md border border-border/60 bg-muted/70 px-2 py-0.5 font-mono text-[10px] font-semibold text-primary shadow-xs"
                   >
                     {genre}
                   </span>
@@ -4649,7 +4647,7 @@ export function BorealisCardExpandedContent({
               }
             }}
             title={data.title}
-            className="line-clamp-2 font-mono text-sm sm:text-base font-bold tracking-tight text-foreground transition-colors group-hover/bcard:text-primary group-hover/bcard:underline"
+            className="line-clamp-2 font-mono text-sm sm:text-base font-bold tracking-tight text-primary transition-colors group-hover/bcard:underline"
           >
             {data.title}
           </a>
