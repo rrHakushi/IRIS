@@ -21,12 +21,15 @@ export function AuthFooterLink({
 }: AuthFooterLinkProps) {
   return (
     <FieldDescription
-      className={cn("pt-1 text-center text-xs sm:text-sm", className)}
+      className={cn(
+        "border-t border-border/50 pt-4 text-center text-xs text-muted-foreground sm:text-sm",
+        className
+      )}
     >
       <span className="inline-block">{promptText}</span>{" "}
       <Link
         href={href}
-        className="font-semibold whitespace-nowrap underline underline-offset-2 hover:underline"
+        className="font-semibold whitespace-nowrap text-foreground underline decoration-border underline-offset-4 transition-colors hover:decoration-foreground"
       >
         {linkText}
       </Link>

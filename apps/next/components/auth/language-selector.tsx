@@ -42,7 +42,7 @@ export function LanguageSelector({
     <div
       className={cn(
         "z-50",
-        variant === "floating" && "fixed top-5 right-5 md:top-8 md:right-8",
+        variant === "floating" && "fixed top-5 end-5 md:top-8 md:end-8",
         className
       )}
     >

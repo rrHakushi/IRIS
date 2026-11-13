@@ -4,25 +4,25 @@ import React, { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import {
+  IconArrowRight,
+  IconCheck,
   IconEye,
   IconEyeOff,
-  IconCheck,
-  IconKey,
 } from "@tabler/icons-react"
 import { isReservedKeyword } from "@NamelessLiberty/shared"
 import { elysia } from "@/lib/elysia"
 import { cn } from "@workspace/ui/lib/utils"
+import { Alert, AlertDescription } from "@workspace/ui/components/alert"
 import { Button } from "@workspace/ui/components/button"
 import {
   Field,
+  FieldError,
   FieldGroup,
   FieldLabel,
-  FieldError,
 } from "@workspace/ui/components/field"
 import { Input } from "@workspace/ui/components/input"
 import { Spinner } from "@workspace/ui/components/spinner"
 import { PasswordChecklist, type PasswordCriteria } from "./password-checklist"
-import { useAuthIllustration } from "../auth-illustration-context"
 
 interface RegisterFormProps {
   footer?: React.ReactNode
@@ -31,7 +31,6 @@ interface RegisterFormProps {
 export function RegisterForm({ footer }: RegisterFormProps) {
   const t = useTranslations("auth.register")
   const router = useRouter()
-  const { setIllustration } = useAuthIllustration()
 
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
@@ -48,7 +47,6 @@ export function RegisterForm({ footer }: RegisterFormProps) {
     password?: string
   }>({})
 
-  // Password criteria verification matrix
   const criteria: PasswordCriteria = {
     length: password.length >= 12,
     maxLength: password.length > 0 && password.length <= 64,
@@ -65,38 +63,6 @@ export function RegisterForm({ footer }: RegisterFormProps) {
     criteria.special
 
   const strengthScore = Object.values(criteria).filter(Boolean).length
-
-
-  // Reactively update companion illustration based on user focus, strength, and server validation
-  React.useEffect(() => {
-    if (successMessage) {
-      setIllustration("/images/auth/character/login-success.jpg")
-      return
-    }
-    if (fieldErrors.email) {
-      setIllustration("/images/auth/character/register-email-taken.jpg")
-      return
-    }
-    if (fieldErrors.username) {
-      setIllustration("/images/auth/character/register-username-taken.jpg")
-      return
-    }
-    if (isPasswordActive && password.length > 0) {
-      const stage = Math.min(Math.max(strengthScore, 1), 5)
-      setIllustration(
-        `/images/auth/character/register-password-stage-${stage}.jpg`
-      )
-      return
-    }
-    setIllustration("/images/auth/character/register-default.jpg")
-  }, [
-    isPasswordActive,
-    password,
-    strengthScore,
-    fieldErrors,
-    successMessage,
-    setIllustration,
-  ])
 
   const handleUsernameChange = (val: string) => {
     const sanitized = val
@@ -133,7 +99,6 @@ export function RegisterForm({ footer }: RegisterFormProps) {
     e.preventDefault()
     setSuccessMessage(null)
 
-    // Validate email format
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setFieldErrors((prev) => ({ ...prev, email: t("invalidEmailFormat") }))
       return
@@ -220,19 +185,20 @@ export function RegisterForm({ footer }: RegisterFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col justify-center">
-      <FieldGroup className="gap-4 sm:gap-5">
-        {/* Success Banner */}
+      <FieldGroup className="gap-4">
         {successMessage && (
-          <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 p-3 text-xs font-medium text-primary">
-            <IconCheck className="size-4 shrink-0" />
-            <span>{successMessage}</span>
-          </div>
+          <Alert className="rounded-xl border-emerald-500/40 bg-emerald-500/10 py-2.5 text-emerald-500">
+            <IconCheck className="size-4" />
+            <AlertDescription className="text-xs font-medium">
+              {successMessage}
+            </AlertDescription>
+          </Alert>
         )}
 
         {/* Username Field */}
         <Field data-invalid={Boolean(fieldErrors.username)}>
-          <div className="flex items-center justify-between">
-            <FieldLabel htmlFor="username" className="text-sm font-medium">
+          <div className="flex items-center justify-between gap-2">
+            <FieldLabel htmlFor="username" className="text-xs font-medium text-foreground/90 sm:text-sm">
               {t("username")}
             </FieldLabel>
             {fieldErrors.username && (
@@ -252,7 +218,7 @@ export function RegisterForm({ footer }: RegisterFormProps) {
             placeholder={t("usernamePlaceholder")}
             autoComplete="username"
             className={cn(
-              "h-10 text-sm sm:h-11 md:h-12",
+              "h-11 rounded-xl text-sm",
               fieldErrors.username &&
                 "border-destructive focus-visible:ring-destructive/30"
             )}
@@ -261,8 +227,8 @@ export function RegisterForm({ footer }: RegisterFormProps) {
 
         {/* Email Field */}
         <Field data-invalid={Boolean(fieldErrors.email)}>
-          <div className="flex items-center justify-between">
-            <FieldLabel htmlFor="email" className="text-sm font-medium">
+          <div className="flex items-center justify-between gap-2">
+            <FieldLabel htmlFor="email" className="text-xs font-medium text-foreground/90 sm:text-sm">
               {t("email")}
             </FieldLabel>
             {fieldErrors.email && (
@@ -282,7 +248,7 @@ export function RegisterForm({ footer }: RegisterFormProps) {
             placeholder={t("emailPlaceholder")}
             autoComplete="email"
             className={cn(
-              "h-10 text-sm sm:h-11 md:h-12",
+              "h-11 rounded-xl text-sm",
               fieldErrors.email &&
                 "border-destructive focus-visible:ring-destructive/30"
             )}
@@ -291,8 +257,8 @@ export function RegisterForm({ footer }: RegisterFormProps) {
 
         {/* Password Field */}
         <Field data-invalid={Boolean(fieldErrors.password)}>
-          <div className="flex items-center justify-between">
-            <FieldLabel htmlFor="password" className="text-sm font-medium">
+          <div className="flex items-center justify-between gap-2">
+            <FieldLabel htmlFor="password" className="text-xs font-medium text-foreground/90 sm:text-sm">
               {t("password")}
             </FieldLabel>
             {fieldErrors.password && (
@@ -321,7 +287,7 @@ export function RegisterForm({ footer }: RegisterFormProps) {
               placeholder={t("passwordPlaceholder")}
               autoComplete="new-password"
               className={cn(
-                "h-10 pe-10 text-sm sm:h-11 md:h-12",
+                "h-11 rounded-xl pe-10 text-sm",
                 fieldErrors.password &&
                   "border-destructive focus-visible:ring-destructive/30"
               )}
@@ -331,7 +297,7 @@ export function RegisterForm({ footer }: RegisterFormProps) {
               tabIndex={-1}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute end-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+              className="absolute end-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground"
               aria-label={showPassword ? t("hidePassword") : t("showPassword")}
             >
               {showPassword ? (
@@ -342,8 +308,7 @@ export function RegisterForm({ footer }: RegisterFormProps) {
             </button>
           </div>
 
-          {/* Password Strength Checklist - only visible when password field is active */}
-          {isPasswordActive && (
+          {(isPasswordActive || password.length > 0) && (
             <PasswordChecklist
               criteria={criteria}
               strengthScore={strengthScore}
@@ -351,25 +316,25 @@ export function RegisterForm({ footer }: RegisterFormProps) {
           )}
         </Field>
 
-
         <Button
           type="submit"
           isDisabled={
-            loading ||
-            !isPasswordValid ||
-            Boolean(fieldErrors.username)
+            loading || !isPasswordValid || Boolean(fieldErrors.username)
           }
-          className="mt-1 h-10 w-full text-sm font-semibold sm:h-11 sm:text-base md:h-12"
+          className="mt-1 h-11 w-full gap-2 rounded-xl text-sm font-semibold"
         >
           {loading ? (
-            <div className="flex items-center gap-2">
+            <>
               <Spinner className="size-4" />
               <span>{t("creatingAccount")}</span>
-            </div>
-          ) : !isPasswordValid ? (
-            t("resolveIssues")
+            </>
+          ) : !isPasswordValid && password.length > 0 ? (
+            <span>{t("resolveIssues")}</span>
           ) : (
-            t("createAccount")
+            <>
+              <span>{t("createAccount")}</span>
+              <IconArrowRight className="size-4" />
+            </>
           )}
         </Button>
 

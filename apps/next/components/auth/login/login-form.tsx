@@ -6,7 +6,6 @@ import { signIn } from "@/context/session-context"
 import { useTranslations } from "next-intl"
 import { startAuthentication } from "@simplewebauthn/browser"
 import { elysia } from "@/lib/elysia"
-import { useAuthIllustration } from "../auth-illustration-context"
 import { useEncryption } from "@/context/encryption-context"
 import { LoginCredentials } from "./login-credentials"
 import { LoginQuickConnect } from "./login-quick-connect"
@@ -15,15 +14,15 @@ import { LoginMfa, type MfaType } from "./login-mfa"
 type LoginView = "credentials" | "quickconnect" | "mfa"
 
 interface LoginFormProps {
+  header?: React.ReactNode
   footer?: React.ReactNode
 }
 
-export function LoginForm({ footer }: LoginFormProps) {
+export function LoginForm({ header, footer }: LoginFormProps) {
   const t = useTranslations("auth.login")
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl") || "/"
-  const { setIllustration } = useAuthIllustration()
   const { unlockVault } = useEncryption()
 
   // Form View State
@@ -66,7 +65,6 @@ export function LoginForm({ footer }: LoginFormProps) {
   }, [emailCooldown])
 
   // Clean, lifecycle-managed QuickConnect polling
-  // Immediately stops when leaving the "quickconnect" view or when the browser tab is hidden
   useEffect(() => {
     if (view !== "quickconnect" || !quickConnectSessionToken) {
       if (quickConnectPollingRef.current) {
@@ -79,7 +77,6 @@ export function LoginForm({ footer }: LoginFormProps) {
     let isPolling = true
 
     const poll = async () => {
-      // Do not fetch status if browser tab is backgrounded/hidden
       if (document.hidden) return
 
       try {
@@ -180,6 +177,8 @@ export function LoginForm({ footer }: LoginFormProps) {
         const types = (res.allowedMfaTypes || ["totp"]) as MfaType[]
         setAllowedMfaTypes(types)
         setActiveMfaType(types[0] || "totp")
+        setMfaError(null)
+        setMfaCode("")
         setView("mfa")
         setLoading(false)
         return
@@ -196,6 +195,8 @@ export function LoginForm({ footer }: LoginFormProps) {
             const types = (parsed.allowedMfaTypes || ["totp"]) as MfaType[]
             setAllowedMfaTypes(types)
             setActiveMfaType(types[0] || "totp")
+            setMfaError(null)
+            setMfaCode("")
             setView("mfa")
             setLoading(false)
             return
@@ -205,34 +206,22 @@ export function LoginForm({ footer }: LoginFormProps) {
         }
 
         setCredentialsError(t("invalidCredentials"))
-        const errText = res.error || ""
-        if (
-          errText.toLowerCase().includes("not found") ||
-          errText.toLowerCase().includes("not exist")
-        ) {
-          setIllustration("/images/auth/character/login-user-not-found.jpg")
-        } else {
-          setIllustration("/images/auth/character/login-invalid-password.jpg")
-        }
         setLoading(false)
         return
       }
 
       if (res?.ok) {
-        setIllustration("/images/auth/character/login-success.jpg")
-        // Automatically unlock vault if user uses account password for encryption
         if (password) {
           try {
             await unlockVault(password)
           } catch {
-            // If a separate encryption password is required, it will fail decryption and stay locked
+            // Separate encryption password required; vault remains locked
           }
         }
         handleSafeRedirect()
       }
     } catch (err: any) {
       setCredentialsError(err.message || t("invalidCredentials"))
-      setIllustration("/images/auth/character/login-invalid-password.jpg")
       setLoading(false)
     }
   }
@@ -240,9 +229,13 @@ export function LoginForm({ footer }: LoginFormProps) {
   /**
    * Submit MFA Challenge through NextAuth Credentials Provider
    */
-  const handleMfaSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!mfaTicket || !mfaCode) return
+  const handleMfaSubmit = async (
+    e?: React.FormEvent,
+    codeOverride?: string
+  ) => {
+    e?.preventDefault()
+    const codeToSubmit = (codeOverride ?? mfaCode).trim()
+    if (!mfaTicket || !codeToSubmit) return
     setMfaError(null)
     setLoading(true)
 
@@ -251,7 +244,7 @@ export function LoginForm({ footer }: LoginFormProps) {
         redirect: false,
         mfaTicket,
         mfaType: activeMfaType,
-        mfaCode: mfaCode.trim(),
+        mfaCode: codeToSubmit,
       })
 
       if (res?.error) {
@@ -397,6 +390,7 @@ export function LoginForm({ footer }: LoginFormProps) {
           onSubmit={handleCredentialsSubmit}
           onPasskeyLogin={handlePasskeyLogin}
           onGenerateQuickConnect={() => handleGenerateQuickConnect()}
+          header={header}
           footer={footer}
         />
       )}
@@ -421,6 +415,7 @@ export function LoginForm({ footer }: LoginFormProps) {
 
       {view === "mfa" && (
         <LoginMfa
+          identifier={identifier.trim() || undefined}
           allowedTypes={allowedMfaTypes}
           activeType={activeMfaType}
           setActiveType={setActiveMfaType}
@@ -477,6 +472,7 @@ export function LoginForm({ footer }: LoginFormProps) {
             setView("credentials")
             setMfaTicket(null)
             setMfaCode("")
+            setMfaError(null)
           }}
         />
       )}
