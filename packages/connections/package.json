@@ -1,5 +1,5 @@
 {
-  "name": "@IRIS/connections",
+  "name": "@NamelessLiberty/connections",
   "version": "1.0.0",
   "private": true,
   "description": "Unified 3rd-party connection adapters, encrypted credential storage, and proxy manager for IRIS",
@@ -20,8 +20,8 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@IRIS/cache": "workspace:*",
-    "@Iris/db": "workspace:*",
+    "@NamelessLiberty/cache": "workspace:*",
+    "@NamelessLiberty/db": "workspace:*",
     "@noble/ciphers": "^2.4.0",
     "@noble/hashes": "^2.4.0"
   },

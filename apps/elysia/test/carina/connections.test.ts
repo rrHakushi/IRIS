@@ -7,10 +7,10 @@ import {
   decryptConnectionData,
   getConnectionAdapter,
   createOAuthStateToken,
-} from '@IRIS/connections'
+} from '@NamelessLiberty/connections'
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt } from '../../src/utils/auth-crypto'
-import { prisma } from '@Iris/db'
+import { prisma } from '@NamelessLiberty/db'
 
 // -----------------------------------------------------------------------------
 // In-Memory Database Mock for Connections and Users

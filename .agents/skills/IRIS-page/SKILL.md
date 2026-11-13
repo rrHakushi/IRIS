@@ -5,7 +5,7 @@ description: Comprehensive architecture and schema authoring guide for the IRIS 
 
 # IRIS Page — Server-Driven Documentation Engine & Schema Guide
 
-`IrisPage` is the official Server-Driven UI (SDUI) component engine for the IRIS web application (`apps/web`). It is specialized for **documentation, API references, user guides, changelogs, and rich component showcases**, rendering structured pages directly from **declarative JSON AST schemas**.
+`IrisPage` is the official Server-Driven UI (SDUI) component engine for the IRIS web application (`apps/next`). It is specialized for **documentation, API references, user guides, changelogs, and rich component showcases**, rendering structured pages directly from **declarative JSON AST schemas**.
 
 ---
 

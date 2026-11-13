@@ -1,5 +1,5 @@
-import { prisma, countOf, type FavoriteType, type MediaType } from '@Iris/db'
-import { LogFactory, c } from '@Iris/logger'
+import { prisma, countOf, type FavoriteType, type MediaType } from '@NamelessLiberty/db'
+import { LogFactory, c } from '@NamelessLiberty/logger'
 
 const logger = new LogFactory('MediaStatsServ')
 

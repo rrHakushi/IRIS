@@ -1,5 +1,5 @@
 import { Worker, type Job } from 'bullmq'
-import { LogFactory } from '@Iris/logger'
+import { LogFactory } from '@NamelessLiberty/logger'
 import {
   EMAIL_QUEUE_NAME,
   getRedisConnectionOptions,

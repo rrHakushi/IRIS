@@ -6,7 +6,7 @@ import { cn } from "@workspace/ui/lib/utils"
 import { Button } from "@workspace/ui/components/button"
 import { Spinner } from "@workspace/ui/components/spinner"
 import { Skeleton } from "@workspace/ui/components/skeleton"
-import { BorealisCard, BorealisCardGroup, type BorealisEntityType } from "@Runa/borealis"
+import { BorealisCard, BorealisCardGroup, type BorealisEntityType } from "@NamelessLiberty/borealis"
 import type { DiscoverCategory, DiscoverItem } from "./discover-types"
 
 export interface DiscoverMediaGridProps {

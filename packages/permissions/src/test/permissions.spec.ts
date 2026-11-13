@@ -21,7 +21,7 @@ import {
   RequestWithUser,
 } from "../nestjs/permissions.guard";
 
-describe("@IRIS/permissions", () => {
+describe("@NamelessLiberty/permissions", () => {
   describe("IRISFlags", () => {
     it("should define ADMINISTRATOR as a positive BigInt bitmask", () => {
       assert.strictEqual(typeof IRISFlags.ADMINISTRATOR, "bigint");

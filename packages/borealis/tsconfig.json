@@ -4,13 +4,13 @@
     "skipLibCheck": true,
     "paths": {
       "@workspace/ui/*": ["../ui/src/*"],
-      "@Runa/borealis": ["./src/index.ts"],
-      "@Runa/borealis/*": ["./src/*"],
-      "@IRIS/shared": ["../shared/src/index.ts"],
-      "@IRIS/shared/*": ["../shared/src/*"],
-      "@IRIS/elysia": ["../../apps/elysia/src/index.ts"],
-      "@IRIS/elysia/*": ["../../apps/elysia/src/*"],
-      "@/*": ["../../apps/web/*"]
+      "@NamelessLiberty/borealis": ["./src/index.ts"],
+      "@NamelessLiberty/borealis/*": ["./src/*"],
+      "@NamelessLiberty/shared": ["../shared/src/index.ts"],
+      "@NamelessLiberty/shared/*": ["../shared/src/*"],
+      "@NamelessLiberty/elysia": ["../../apps/elysia/src/index.ts"],
+      "@NamelessLiberty/elysia/*": ["../../apps/elysia/src/*"],
+      "@/*": ["../../apps/next/*"]
     }
   },
   "include": ["src/**/*"],

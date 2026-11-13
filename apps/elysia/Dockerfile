@@ -4,7 +4,7 @@
 FROM oven/bun:latest AS pruner
 WORKDIR /app
 COPY . .
-RUN bun x turbo prune @IRIS/elysia --docker --use-gitignore=false
+RUN bun x turbo prune @NamelessLiberty/elysia --docker --use-gitignore=false
 
 # ==========================================
 # Builder Stage (bun install + bun compile)

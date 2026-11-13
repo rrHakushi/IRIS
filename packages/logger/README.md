@@ -1,4 +1,4 @@
-# @Iris/logger
+# @NamelessLiberty/logger
 
 Zero-dependency, high-performance structured logging library for IRIS.
 
@@ -21,7 +21,7 @@ Within the IRIS monorepo:
 ```json
 {
   "dependencies": {
-    "@Iris/logger": "workspace:*"
+    "@NamelessLiberty/logger": "workspace:*"
   }
 }
 ```
@@ -29,7 +29,7 @@ Within the IRIS monorepo:
 ## Basic Usage
 
 ```typescript
-import { LogFactory } from "@Iris/logger"
+import { LogFactory } from "@NamelessLiberty/logger"
 
 const logger = new LogFactory("Auth")
 

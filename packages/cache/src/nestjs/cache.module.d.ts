@@ -54,7 +54,7 @@ export interface CacheModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'>
     inject?: CacheInjectionToken[];
 }
 /**
- * NestJS dynamic module for `@IRIS/cache`.
+ * NestJS dynamic module for `@NamelessLiberty/cache`.
  * Provides `CacheService` and `CACHE_MANAGER` tokens.
  *
  * @example Synchronous registration

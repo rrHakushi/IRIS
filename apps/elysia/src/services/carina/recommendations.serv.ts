@@ -1,6 +1,6 @@
-import { prisma, and, or, countOf, toDate, type MediaType } from '@Iris/db'
-import { getProfileCustomization } from '@IRIS/shared'
-import { IRISBitField, IRISFlags } from '@IRIS/permissions'
+import { prisma, and, or, countOf, toDate, type MediaType } from '@NamelessLiberty/db'
+import { getProfileCustomization } from '@NamelessLiberty/shared'
+import { IRISBitField, IRISFlags } from '@NamelessLiberty/permissions'
 import { NotFound, BadRequest, Forbidden } from '../../lib/errors'
 import { ActivityServ } from './activity.serv'
 

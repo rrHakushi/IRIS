@@ -31,7 +31,7 @@ import {
   type ListFilterFacets,
   MEDIA_CATEGORIES,
 } from "./types"
-import { BorealisCard, BorealisCardGroup, BorealisSectionHeader, type ListStatus } from "@Runa/borealis"
+import { BorealisCard, BorealisCardGroup, BorealisSectionHeader, type ListStatus } from "@NamelessLiberty/borealis"
 import { saveListEntry } from "@/lib/save-list-entry"
 
 export function MediaListCardSkeleton({

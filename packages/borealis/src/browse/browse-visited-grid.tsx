@@ -6,7 +6,7 @@ import { IconHistory, IconMusic, IconDisc, IconX } from "@tabler/icons-react"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import { cn } from "@workspace/ui/lib/utils"
-import { BorealisCard, BorealisCardGroup, type BorealisEntityType } from "@Runa/borealis"
+import { BorealisCard, BorealisCardGroup, type BorealisEntityType } from "@NamelessLiberty/borealis"
 import type { BrowseCategory, VisitedMediaItem } from "@/lib/browse-history"
 
 interface BrowseVisitedGridProps {

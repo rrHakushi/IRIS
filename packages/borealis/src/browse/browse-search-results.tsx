@@ -6,7 +6,7 @@ import { IconSearchOff, IconMusic, IconDisc } from "@tabler/icons-react"
 import { Skeleton } from "@workspace/ui/components/skeleton"
 import { Badge } from "@workspace/ui/components/badge"
 import { cn } from "@workspace/ui/lib/utils"
-import { BorealisCard, BorealisCardGroup, type BorealisEntityType } from "@Runa/borealis"
+import { BorealisCard, BorealisCardGroup, type BorealisEntityType } from "@NamelessLiberty/borealis"
 import type { BrowseCategory, VisitedMediaItem } from "@/lib/browse-history"
 
 export interface SearchResultItem {

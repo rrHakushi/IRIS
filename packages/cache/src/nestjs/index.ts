@@ -1,8 +1,8 @@
 /**
- * NestJS Integration Module for `@IRIS/cache`.
+ * NestJS Integration Module for `@NamelessLiberty/cache`.
  * Exports `CacheModule`, `CacheService`, `InjectCache`, and injection tokens.
  *
- * @module @IRIS/cache/nestjs
+ * @module @NamelessLiberty/cache/nestjs
  */
 
 export * from './cache.constants.js';

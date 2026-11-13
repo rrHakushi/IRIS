@@ -30,10 +30,10 @@ import {
   getProfileCustomization,
   getDisplayNameStyleCss,
   getDisplayNameEffectClasses,
-} from "@IRIS/shared"
+} from "@NamelessLiberty/shared"
 import { toast } from "sonner"
 import { cn } from "@workspace/ui/lib/utils"
-import { BorealisCard, BorealisCardGroup } from "@Runa/borealis"
+import { BorealisCard, BorealisCardGroup } from "@NamelessLiberty/borealis"
 import type { NormalizedMediaData } from "../media-types"
 
 export interface RecommendationsMediaTabProps {

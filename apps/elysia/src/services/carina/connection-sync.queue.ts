@@ -1,6 +1,6 @@
 import { Queue, type JobsOptions } from 'bullmq'
-import type { ConnectionProvider, MediaType } from '@Iris/db'
-import { LogFactory, c } from '@Iris/logger'
+import type { ConnectionProvider, MediaType } from '@NamelessLiberty/db'
+import { LogFactory, c } from '@NamelessLiberty/logger'
 import { getRedisConnectionOptions } from '../email/queue'
 import {
   initConnectionWorkers,

@@ -6,10 +6,10 @@ import {
 } from "./index";
 
 /**
- * Demonstrates basic and advanced usage of `@IRIS/permissions`.
+ * Demonstrates basic and advanced usage of `@NamelessLiberty/permissions`.
  */
 function runDemo(): void {
-  console.log("=== @IRIS/permissions Demo ===\n");
+  console.log("=== @NamelessLiberty/permissions Demo ===\n");
 
   // 1. Check Default Permissions
   console.log("1. Default Permissions:");

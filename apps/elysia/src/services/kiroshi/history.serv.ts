@@ -1,5 +1,5 @@
-import { prisma, toDate } from '@Iris/db'
-import { decryptConnectionData, encryptConnectionData } from '@IRIS/connections'
+import { prisma, toDate } from '@NamelessLiberty/db'
+import { decryptConnectionData, encryptConnectionData } from '@NamelessLiberty/connections'
 import { NotFound } from '../../lib/errors'
 
 export class KiroshiHistoryServ {

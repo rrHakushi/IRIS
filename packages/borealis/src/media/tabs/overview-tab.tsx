@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useMemo, useRef } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import {
   IconArrowRight,
@@ -38,7 +38,7 @@ import {
   getMediaPreferences,
   parseMalThemeSong,
   getDeezerFallbackSearchUrl,
-} from "@IRIS/shared"
+} from "@NamelessLiberty/shared"
 import { formatMediaTitle } from "@/lib/browse-search"
 import { getMediaDetailHref } from "@/lib/media-routes"
 import type {
@@ -51,7 +51,7 @@ import type {
 import { MusicTracklist } from "../music/music-tracklist"
 import { MusicPlayerPreview } from "../music/music-player-preview"
 import { MusicLyrics } from "../music/music-lyrics"
-import { BorealisCard, BorealisCardGroup } from "@Runa/borealis"
+import { BorealisCard, BorealisCardGroup } from "@NamelessLiberty/borealis"
 
 interface OverviewTabProps {
   media: NormalizedMediaData
@@ -178,6 +178,10 @@ export function OverviewTab({
     return uniqueList.slice(0, 16)
   }, [media.characters, media.category])
 
+  const [isSynopsisExpanded, setIsSynopsisExpanded] = useState(false)
+  const [isSynopsisTruncated, setIsSynopsisTruncated] = useState(false)
+  const synopsisRef = useRef<HTMLParagraphElement>(null)
+
   // Parse description cleanly
   const cleanDescription = useMemo(() => {
     if (!media.description) return null
@@ -186,6 +190,26 @@ export function OverviewTab({
       .replace(/<[^>]*>/g, "")
       .trim()
   }, [media.description])
+
+  useEffect(() => {
+    setIsSynopsisExpanded(false)
+  }, [cleanDescription])
+
+  useEffect(() => {
+    const el = synopsisRef.current
+    if (!el || isSynopsisExpanded) return
+
+    const checkTruncation = () => {
+      setIsSynopsisTruncated(el.scrollHeight > el.clientHeight + 1)
+    }
+
+    checkTruncation()
+
+    if (typeof ResizeObserver === "undefined") return
+    const observer = new ResizeObserver(checkTruncation)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [cleanDescription, isSynopsisExpanded])
 
   // Helper to format full dates
   const formatFullDate = (
@@ -583,9 +607,26 @@ export function OverviewTab({
                 Synopsis
               </h2>
               {cleanDescription ? (
-                <p className="text-sm leading-relaxed whitespace-pre-line text-foreground/80">
-                  {cleanDescription}
-                </p>
+                <div>
+                  <p
+                    ref={synopsisRef}
+                    className={cn(
+                      "text-sm leading-relaxed whitespace-pre-line text-foreground/80",
+                      !isSynopsisExpanded && "line-clamp-4 sm:line-clamp-none"
+                    )}
+                  >
+                    {cleanDescription}
+                  </p>
+                  {(isSynopsisTruncated || isSynopsisExpanded) && (
+                    <button
+                      type="button"
+                      onClick={() => setIsSynopsisExpanded((prev) => !prev)}
+                      className="mt-2 cursor-pointer text-xs font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring sm:hidden"
+                    >
+                      {isSynopsisExpanded ? "Show less" : "Show more"}
+                    </button>
+                  )}
+                </div>
               ) : (
                 <p className="text-sm text-muted-foreground italic">
                   No synopsis available.

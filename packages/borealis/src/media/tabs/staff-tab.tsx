@@ -4,7 +4,7 @@ import React, { useMemo } from "react"
 import Link from "next/link"
 import { IconPhotoOff } from "@tabler/icons-react"
 import { Badge } from "@workspace/ui/components/badge"
-import { BorealisCard, BorealisCardGroup } from "@Runa/borealis"
+import { BorealisCard, BorealisCardGroup } from "@NamelessLiberty/borealis"
 import type { StaffMemberItem } from "../media-types"
 
 interface StaffTabProps {

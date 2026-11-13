@@ -15,9 +15,9 @@ Guidance and automation for creating and maintaining text-only, dark aesthetic O
 
 - **Storage Location**: All banner images **MUST** be placed exclusively in:
   ```text
-  apps/web/public/banners/<app-id>.png
+  apps/next/public/banners/<app-id>.png
   ```
-- **Strict Prohibition**: **NEVER** place image files (such as `opengraph-image.png` or `twitter-image.png`) inside route directories (`apps/web/app/(APPS)/*`). All routes refer to static assets via public URL `/banners/<app-id>.png`.
+- **Strict Prohibition**: **NEVER** place image files (such as `opengraph-image.png` or `twitter-image.png`) inside route directories (`apps/next/app/(APPS)/*`). All routes refer to static assets via public URL `/banners/<app-id>.png`.
 - **Dimensions**: **$1200 \times 630$** pixels ($1.91:1$ aspect ratio). This standard size eliminates letter cropping on Twitter `summary_large_image` and Facebook/LinkedIn cards, while serving as a sharp square/landscape thumbnail on Google SERP previews.
 
 ---
@@ -49,11 +49,11 @@ Use the bundled generator script located at `.agents/skills/iris-banners/scripts
 ```bash
 python3 .agents/skills/iris-banners/scripts/generate_banner.py "Akaromi" --id "akaromi"
 ```
-*Outputs to `apps/web/public/banners/akaromi.png` ($1200 \times 630$).*
+*Outputs to `apps/next/public/banners/akaromi.png` ($1200 \times 630$).*
 
 ### Custom Destination
 ```bash
-python3 .agents/skills/iris-banners/scripts/generate_banner.py "My New App" -o apps/web/public/banners/mynewapp.png
+python3 .agents/skills/iris-banners/scripts/generate_banner.py "My New App" -o apps/next/public/banners/mynewapp.png
 ```
 
 ### Regenerate All 13 Suite Apps
@@ -65,7 +65,7 @@ python3 .agents/skills/iris-banners/scripts/generate_banner.py --all
 
 ## 4. Next.js App Router Metadata Wiring
 
-In the app's root layout (`apps/web/app/(APPS)/<app-id>/layout.tsx`), configure `Metadata`:
+In the app's root layout (`apps/next/app/(APPS)/<app-id>/layout.tsx`), configure `Metadata`:
 
 ```tsx
 import type { Metadata } from "next"
@@ -99,7 +99,7 @@ export const metadata: Metadata = {
 }
 ```
 
-Ensure `metadataBase` is defined on the root layout (`apps/web/app/layout.tsx`):
+Ensure `metadataBase` is defined on the root layout (`apps/next/app/layout.tsx`):
 ```tsx
 export const metadata: Metadata = {
   metadataBase: new URL(

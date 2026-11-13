@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react"
 import { useUser } from "@/context/user-context"
-import { getMediaPreferences } from "@IRIS/shared"
+import { getMediaPreferences } from "@NamelessLiberty/shared"
 import { elysia } from "@/lib/elysia"
 import { DiscoverStatusCard } from "./discover-status-card"
 import { DiscoverMediaGrid } from "./discover-media-grid"

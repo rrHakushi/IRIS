@@ -1,5 +1,5 @@
-import { prisma } from '@Iris/db'
-import { LogFactory, c } from '@Iris/logger'
+import { prisma } from '@NamelessLiberty/db'
+import { LogFactory, c } from '@NamelessLiberty/logger'
 import { cache } from '../../utils/cache'
 import { MediaQueueManager } from './queue'
 import {

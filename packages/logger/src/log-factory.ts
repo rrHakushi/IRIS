@@ -95,7 +95,7 @@ function persistGeneratedModules(): void {
   if (Bun.env.BUN_ENV === "production") return
   try {
     const list = Array.from(registeredModules).sort()
-    const content = `// This file is auto-generated at runtime by @Iris/logger. Do not edit manually.\nexport interface KnownModules {\n${list.map((m) => `  ${JSON.stringify(m)}: true`).join("\n")}\n}\n`
+    const content = `// This file is auto-generated at runtime by @NamelessLiberty/logger. Do not edit manually.\nexport interface KnownModules {\n${list.map((m) => `  ${JSON.stringify(m)}: true`).join("\n")}\n}\n`
 
     const currentDir = path.dirname(fileURLToPath(import.meta.url))
     const targets = [

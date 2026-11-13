@@ -1,11 +1,11 @@
 /**
  * Akaromi for Firefox — User Customization & Display Name Styling Engine
- * Mirrors @IRIS/shared user customization logic for Firefox extension
+ * Mirrors @NamelessLiberty/shared user customization logic for Firefox extension
  */
 ;(function (global) {
   "use strict"
 
-  // Font presets matching @IRIS/shared
+  // Font presets matching @NamelessLiberty/shared
     // Step 1: Typography Presets & Asset Resolution
   // Step 1.1: Embedded Font Family Presets & Media URL Resolution
   const FONT_PRESETS = [

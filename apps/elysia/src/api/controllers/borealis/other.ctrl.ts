@@ -1,6 +1,6 @@
 import { Elysia } from 'elysia'
 import { session } from '../../../plugins/session'
-import { hasPermission, IRISFlags } from '@IRIS/permissions'
+import { hasPermission, IRISFlags } from '@NamelessLiberty/permissions'
 import { BorealisOtherModel } from '../../models/borealis/other.model'
 import { BorealisOtherServ } from '../../../services/borealis/other.serv'
 

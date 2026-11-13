@@ -6,7 +6,7 @@ import { IconPhotoOff, IconFilter } from "@tabler/icons-react"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import { getMediaDetailHref } from "@/lib/media-routes"
-import { BorealisCard, BorealisCardGroup, type BorealisEntityType } from "@Runa/borealis"
+import { BorealisCard, BorealisCardGroup, type BorealisEntityType } from "@NamelessLiberty/borealis"
 import type { RelationItem } from "../media-types"
 
 interface RelationsTabProps {

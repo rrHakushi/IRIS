@@ -1,4 +1,4 @@
-import { prisma, toDate } from '@Iris/db'
+import { prisma, toDate } from '@NamelessLiberty/db'
 import { cache } from '../../utils/cache'
 import { generateBackupCodes, verifyBackupCode, signUserJwt } from '../../utils/auth-crypto'
 import { BadRequest, NotFound, Unauthorized } from '../../lib/errors'

@@ -1,4 +1,4 @@
-// This file is auto-generated at runtime by @Iris/logger. Do not edit manually.
+// This file is auto-generated at runtime by @NamelessLiberty/logger. Do not edit manually.
 export interface KnownModules {
   "ActivityServ": true
   "AniList": true

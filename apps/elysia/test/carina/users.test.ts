@@ -3,8 +3,8 @@ import { Elysia } from 'elysia'
 import { carinaUsers } from '../../src/api/controllers/carina/users.ctrl'
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt } from '../../src/utils/auth-crypto'
-import { prisma } from '@Iris/db'
-import { IRISFlags } from '@IRIS/permissions'
+import { prisma } from '@NamelessLiberty/db'
+import { IRISFlags } from '@NamelessLiberty/permissions'
 
 // -----------------------------------------------------------------------------
 // In-Memory Database Mock for Users, Friends, Activity, Favorites, and Badges
@@ -904,7 +904,7 @@ describe('Comprehensive Carina Users & Profiles Test Suite', () => {
       expect(res.status).toBe(404)
     })
 
-    it('returns user badges enriched with metadata from @IRIS/shared', async () => {
+    it('returns user badges enriched with metadata from @NamelessLiberty/shared', async () => {
       const res = await app.handle(
         new Request(`http://localhost/carina/users/${ALICE_ID}/badges`)
       )

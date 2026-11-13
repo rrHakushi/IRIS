@@ -1,4 +1,4 @@
-import type { Models } from '@Iris/db'
+import type { Models } from '@NamelessLiberty/db'
 
 export interface MediaRelationItem {
   id: number

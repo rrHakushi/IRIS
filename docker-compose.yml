@@ -173,7 +173,7 @@ services:
     container_name: NamelessLiberty-Next
     build:
       context: .
-      dockerfile: apps/web/Dockerfile
+      dockerfile: apps/next/Dockerfile
       args:
         APP_VERSION: ${APP_VERSION}
         INFISICAL_SITE_URL: ${INFISICAL_SITE_URL}

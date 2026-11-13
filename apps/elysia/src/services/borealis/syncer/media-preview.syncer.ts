@@ -1,5 +1,5 @@
-import { prisma, normalizeMediaStatus } from '@Iris/db'
-import { LogFactory, c } from '@Iris/logger'
+import { prisma, normalizeMediaStatus } from '@NamelessLiberty/db'
+import { LogFactory, c } from '@NamelessLiberty/logger'
 import { normalizeTvdbImageUrl, type TvdbSearchItem } from '../providers/tvdb.provider'
 import type { AniListAnimeSearchPreview, AniListMangaSearchPreview } from '../providers/anilist.provider'
 import type { GoogleBookPayload } from '../providers/google-books.provider'

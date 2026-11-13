@@ -1,5 +1,5 @@
-import { prisma, toDate, normalizeMediaStatus } from '@Iris/db'
-import { LogFactory, c } from '@Iris/logger'
+import { prisma, toDate, normalizeMediaStatus } from '@NamelessLiberty/db'
+import { LogFactory, c } from '@NamelessLiberty/logger'
 import type { MediaType } from './queue'
 
 const logger = new LogFactory('Borealis:Freshness')

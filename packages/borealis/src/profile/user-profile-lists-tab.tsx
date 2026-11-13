@@ -14,7 +14,7 @@ import {
   IconCategory,
 } from "@tabler/icons-react"
 import { resolveUserId } from "@/lib/user-profile"
-import { BorealisCard, BorealisCardGroup, BorealisSectionHeader } from "@Runa/borealis"
+import { BorealisCard, BorealisCardGroup, BorealisSectionHeader } from "@NamelessLiberty/borealis"
 import { saveListEntry } from "@/lib/save-list-entry"
 import {
   toNormalizedMedia,

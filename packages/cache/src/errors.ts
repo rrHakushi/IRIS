@@ -1,5 +1,5 @@
 /**
- * Base error class for all `@IRIS/cache` operations.
+ * Base error class for all `@NamelessLiberty/cache` operations.
  *
  * @example
  * ```typescript

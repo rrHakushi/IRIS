@@ -1,6 +1,6 @@
 /**
  * IRIS Pass — Cryptographic Core
- * Compatible with @IRIS/web and @IRIS/elysia (@noble/hashes, @noble/ciphers)
+ * Compatible with @IRIS/web and @NamelessLiberty/elysia (@noble/hashes, @noble/ciphers)
  */
 ;(function (root) {
   const IrisCrypto = {}
@@ -55,7 +55,7 @@
   /**
    * Decrypts the user's master secret key using password with scrypt + AES-256-GCM.
    * Format of encryptedPrivateKey: saltHex:ivHex:authTagHex:cipherHex
-   * Exactly matching apps/web/lib/encryption-vault.ts: decryptPrivateKeyClient()
+   * Exactly matching apps/next/lib/encryption-vault.ts: decryptPrivateKeyClient()
    * and apps/elysia/src/utils/auth-crypto.ts: encryptPrivateKey()
    */
     // Step 2: Key Derivation Pipelines (Scrypt & HKDF)
@@ -99,7 +99,7 @@
 
   /**
    * Derives 256-bit vault key from raw secret key bytes via HKDF-SHA256
-   * Exactly matching apps/web/lib/pass-crypto.ts: deriveVaultKey()
+   * Exactly matching apps/next/lib/pass-crypto.ts: deriveVaultKey()
    */
   // Step 2.2: Vault Symmetric Key Derivation via HKDF-SHA256
   IrisCrypto.deriveVaultKey = function (unlockedSecretKey) {
@@ -116,7 +116,7 @@
   /**
    * Encrypts plaintext string using AES-256-GCM and VaultKey
    * Format: ivHex:authTagHex:cipherHex
-   * Exactly matching apps/web/lib/pass-crypto.ts: encryptVaultData()
+   * Exactly matching apps/next/lib/pass-crypto.ts: encryptVaultData()
    */
     // Step 3: Authenticated Symmetrical Encryption & Decryption (AES-256-GCM)
   // Step 3.1: Plaintext String Encryption & Tag Packing
@@ -137,7 +137,7 @@
 
   /**
    * Decrypts ivHex:authTagHex:cipherHex using AES-256-GCM and VaultKey
-   * Exactly matching apps/web/lib/pass-crypto.ts: decryptVaultData()
+   * Exactly matching apps/next/lib/pass-crypto.ts: decryptVaultData()
    */
   // Step 3.2: Ciphertext Verification & Decryption
   IrisCrypto.decryptVaultData = function (encryptedPayload, vaultKeyBytes) {

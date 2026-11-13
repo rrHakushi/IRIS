@@ -1,9 +1,6 @@
 # Borealis [Media tracker]
     - Stremio plugin for borealis
-    - In media pages (anime, manga etc) add tab People in which it will list all users who have that media in list (that is public and media is not private)
     - Link manga list entries to books since its kinda the same
-    - test phone/touch experience with new borealisCard
-
 
 
     
@@ -16,21 +13,18 @@
 # Carina [Account management]
     - Web extension for managing and using bookmarks
     - Update login/register pages
+    - Add customs apps to applications in user menu ( user enters url and title, onClick redirect to that url, use favicon as icon )
 
 
 # Lynx [Discord bot]
     - Copy from Runa and update
     - Borealis integration
 
-# Iris [Core app]
+# NamelessLiberty
     - Dev tools (floating popup like nextjs has), onclick open sidebar with tools [metadata viewer, send notification, trigger events/workers... ]
     - .md version of every single page
     - mcp server for all the apps
-    - Switch to https://github.com/Infisical/infisical for secret management
-    - update docker compose to include all needed services (postgres, redis etc) and already be preconfigured and ready to go
-
-    - migrate to namelessliberty.com
-
+    - New app icons 
 
 # Apertune [Music player]
     - 
@@ -67,14 +61,13 @@
     - scan receipts and extract place, items and its prices, date, total, tax
     - banknote counter (eur, usd, cad, jpy, rmb, czk) [use their images and values]
 
-# Elysia [Backend powering all this]
+# Elysia 
     --- Elysia 2 docs https://next.elysiajs.com/at-glance/
 
     - RE existing elysia openapi plugin and create custom version of it
 
 # Next
-    - pnpm add @elysia/eden@next if not already
-    - pnpm add -d elysia@rc  (Need Elysia to infer utility types)
+    - 
 
 
 ### Plugins
@@ -97,7 +90,10 @@
         - if a folder is linked to entry instead then all books in that folder will be linked to the same entry 
 
 # Akaromi For Firefox
-    - 
+    - in inline fill when searching fill doesnt work (works kinda but only on stuff that is domain matched and not anything like it should)
+    - Unlocking outside the main extension window throws Unauthorized sender context 
+    - Remove Akaromi Logins *Count text from inline
+    - Remove text high-security, zero-knowledge... from settings
 
 # Borealis Extra
     - Add support for other list

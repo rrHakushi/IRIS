@@ -7,12 +7,12 @@ import {
   type AnimeFormat,
   type ListStatus,
   type MediaStatus,
-} from '@Iris/db'
+} from '@NamelessLiberty/db'
 import {
   getConnectionAdapter,
   decryptConnectionData,
   type ConnectionCredentials,
-} from '@IRIS/connections'
+} from '@NamelessLiberty/connections'
 import {
   SERVARR_QUALITY_PROFILES,
   SERVARR_SYSTEM_STATUS,

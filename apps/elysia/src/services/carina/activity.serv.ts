@@ -5,10 +5,10 @@ import {
   toDate,
   type ActivityType,
   type MediaType,
-} from '@Iris/db'
-import { LogFactory, c } from '@Iris/logger'
-import { getBadgeById, getProfileCustomization } from '@IRIS/shared'
-import { IRISBitField, IRISFlags } from '@IRIS/permissions'
+} from '@NamelessLiberty/db'
+import { LogFactory, c } from '@NamelessLiberty/logger'
+import { getBadgeById, getProfileCustomization } from '@NamelessLiberty/shared'
+import { IRISBitField, IRISFlags } from '@NamelessLiberty/permissions'
 import { BadRequest, Forbidden, NotFound } from '../../lib/errors'
 
 const logger = new LogFactory('ActivityServ')

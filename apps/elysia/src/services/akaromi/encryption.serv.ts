@@ -1,4 +1,4 @@
-import { prisma } from '@Iris/db'
+import { prisma } from '@NamelessLiberty/db'
 import { NotFound } from '../../lib/errors'
 
 export class AkaromiEncryptionServ {

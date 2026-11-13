@@ -3,8 +3,8 @@ import { Elysia, ValidationError } from 'elysia'
 import { servarrController } from '../../src/api/controllers/servarr/servarr.ctrl'
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt } from '../../src/utils/auth-crypto'
-import { encryptConnectionData, getConnectionAdapter } from '@IRIS/connections'
-import { prisma } from '@Iris/db'
+import { encryptConnectionData, getConnectionAdapter } from '@NamelessLiberty/connections'
+import { prisma } from '@NamelessLiberty/db'
 
 // -----------------------------------------------------------------------------
 // Test App Setup

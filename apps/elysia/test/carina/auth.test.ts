@@ -9,8 +9,8 @@ import {
   signUserJwt,
   generateUserKeypair,
 } from '../../src/utils/auth-crypto'
-import { prisma } from '@Iris/db'
-import { IRISFlags } from '@IRIS/permissions'
+import { prisma } from '@NamelessLiberty/db'
+import { IRISFlags } from '@NamelessLiberty/permissions'
 
 // -----------------------------------------------------------------------------
 // In-Memory Database Mock for (prisma as any).user

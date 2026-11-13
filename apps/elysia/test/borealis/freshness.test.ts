@@ -7,7 +7,7 @@ import {
 } from '../../src/services/borealis/freshness'
 import { MediaQueueManager } from '../../src/services/borealis/queue'
 import { MediaPreviewSyncer } from '../../src/services/borealis/syncer/media-preview.syncer'
-import { prisma } from '@Iris/db'
+import { prisma } from '@NamelessLiberty/db'
 
 describe('Borealis: Smart Freshness Evaluation & Calendar Checks', () => {
   describe('normalizeToStartOfDay', () => {

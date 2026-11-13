@@ -1,11 +1,11 @@
 ---
 name: IRIS-permissions
-description: Guide for permission checking and RBAC in IRIS via @IRIS/permissions, IRISFlags (ADMINISTRATOR), IRISBitField, Prisma Int[], Next.js, and Elysia session authorization.
+description: Guide for permission checking and RBAC in IRIS via @NamelessLiberty/permissions, IRISFlags (ADMINISTRATOR), IRISBitField, Prisma Int[], Next.js, and Elysia session authorization.
 ---
 
-# @IRIS/permissions Guide
+# @NamelessLiberty/permissions Guide
 
-`@IRIS/permissions` is the unified permission evaluation and authorization package for the IRIS ecosystem. It combines high-performance `bigint` bitwise logic with direct database storage in PostgreSQL/Prisma as 32-bit integer arrays (`Int[]`), providing fast and type-safe permission checks across Next.js Server Components and Elysia route handlers.
+`@NamelessLiberty/permissions` is the unified permission evaluation and authorization package for the IRIS ecosystem. It combines high-performance `bigint` bitwise logic with direct database storage in PostgreSQL/Prisma as 32-bit integer arrays (`Int[]`), providing fast and type-safe permission checks across Next.js Server Components and Elysia route handlers.
 
 ---
 
@@ -46,13 +46,13 @@ model User {
 
 ---
 
-## 4. Elysia 2.0 Route Authorization (`@IRIS/elysia`)
+## 4. Elysia 2.0 Route Authorization (`@NamelessLiberty/elysia`)
 
 In Elysia route handlers, permissions are evaluated directly against the request's typed `session`:
 
 ```typescript
 import { defineRoute } from "@/router";
-import { IRISFlags } from "@IRIS/permissions";
+import { IRISFlags } from "@NamelessLiberty/permissions";
 
 export default defineRoute({
   async GET({ session }) {
@@ -82,7 +82,7 @@ export default defineRoute({
 The `hasPermission` utility evaluates permission arrays fetched from the database:
 
 ```typescript
-import { hasPermission, IRISFlags } from "@IRIS/permissions";
+import { hasPermission, IRISFlags } from "@NamelessLiberty/permissions";
 
 // In a Next.js Server Component or Server Action
 export async function AdminDashboard({ user }: { user: { permissions: number[] } | null }) {
@@ -102,7 +102,7 @@ export async function AdminDashboard({ user }: { user: { permissions: number[] }
 ### Multiple Permissions Evaluation
 
 ```typescript
-import { hasPermission, IRISFlags } from "@IRIS/permissions";
+import { hasPermission, IRISFlags } from "@NamelessLiberty/permissions";
 
 // Match ALL flags
 const hasAll = hasPermission(user.permissions, [IRISFlags.ADMINISTRATOR], "all");
@@ -118,7 +118,7 @@ const hasAny = hasPermission(user.permissions, [IRISFlags.ADMINISTRATOR], "any")
 For programmatic permission mutations, checks, and bitwise algebra:
 
 ```typescript
-import { IRISBitField, IRISFlags } from "@IRIS/permissions";
+import { IRISBitField, IRISFlags } from "@NamelessLiberty/permissions";
 
 // 1. Instantiate from DB raw array
 const userPerms = IRISBitField.fromRaw(user.permissions);

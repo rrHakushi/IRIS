@@ -14,7 +14,7 @@ import {
   BorealisCard,
   BorealisCardGroup,
   type BorealisBadge,
-} from "@Runa/borealis"
+} from "@NamelessLiberty/borealis"
 import type {
   AiringScheduleItem,
   EpisodeItem,

@@ -2,7 +2,7 @@ import { describe, it, beforeEach, afterEach, expect } from "bun:test"
 import assert from "node:assert/strict"
 import { LogFactory, type LogEntry } from "../src/index.js"
 
-describe("LogFactory (@Iris/logger)", () => {
+describe("LogFactory (@NamelessLiberty/logger)", () => {
   const originalEnv = { ...Bun.env }
 
   beforeEach(() => {

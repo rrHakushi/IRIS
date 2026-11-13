@@ -1,4 +1,4 @@
-import { prisma, or, toDate } from '@Iris/db'
+import { prisma, or, toDate } from '@NamelessLiberty/db'
 import {
   SUPPORTED_SCOPES,
   parseScopes,

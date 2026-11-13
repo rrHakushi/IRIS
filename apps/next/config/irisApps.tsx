@@ -1,0 +1,177 @@
+import React, { useMemo } from "react"
+import Image from "next/image"
+import { useTranslations } from "next-intl"
+import { type IRISBitFieldResolvable } from "@NamelessLiberty/permissions"
+import { cn } from "@workspace/ui/lib/utils"
+
+export interface IrisApp {
+  id: string
+  name: string
+  href: string
+  color: string
+  colorClass?: string
+  bgClass?: string
+  gradient?: string
+  gradientStyle?: string
+  icon?: string
+  iconLeftRing?: string
+  iconLeftNoRing?: string
+  iconRightRing?: string
+  iconRightNoRing?: string
+  description: string
+  descriptionShort: string
+  permissions?: IRISBitFieldResolvable
+}
+
+export function renderIrisAppIcon(
+  app: IrisApp | null | undefined,
+  className = "size-5",
+  style?: React.CSSProperties
+): React.JSX.Element | null {
+  if (!app) return null
+
+  const iconSrc =
+    app.icon ||
+    app.iconLeftRing || ""
+
+  return (
+    <Image
+      src={iconSrc}
+      alt={app.name}
+      width={96}
+      height={96}
+      style={style}
+      className={cn("rounded-full object-contain", className)}
+    />
+  )
+}
+
+export function getIrisApps(t: (key: string) => string): IrisApp[] {
+  return [
+    {
+      id: "carina",
+      name: t ? t("irisAccount.name") : "Carina",
+      href: "/carina",
+      color: "#f59e0b",
+      colorClass: "text-amber-500",
+      bgClass: "bg-amber-500",
+      gradient:
+        "linear-gradient(135deg, #fbbf24 0%, #f97316 25%, #fb7185 50%, #e11d48 75%, #881337 100%)",
+      gradientStyle:
+        "linear-gradient(135deg, #fbbf24 0%, #f97316 25%, #fb7185 50%, #e11d48 75%, #881337 100%)",
+      icon: "/iris-icons/iris-account-ring-left.png",
+      iconLeftRing: "/iris-icons/iris-account-ring-left.png",
+      description: t
+        ? t("irisAccount.description")
+        : "Unified identity, user profile, security, and sessions.",
+      descriptionShort: t
+        ? t("irisAccount.descriptionShort")
+        : "Identity & Personal stuff",
+    },
+    {
+      id: "borealis",
+      name: t ? t("irisList.name") : "Borealis",
+      href: "/borealis",
+      color: "#6366f1",
+      colorClass: "text-indigo-500",
+      bgClass: "bg-indigo-500",
+      gradient:
+        "linear-gradient(135deg, #06b6d4 0%, #3b82f6 32%, #4f46e5 68%, #7c3aed 100%)",
+      gradientStyle:
+        "linear-gradient(135deg, #06b6d4 0%, #3b82f6 32%, #4f46e5 68%, #7c3aed 100%)",
+      icon: "/iris-icons/iris-list-ring-left.png",
+      iconLeftRing: "/iris-icons/iris-list-ring-left.png",
+      description: t("irisList.description"),
+      descriptionShort: t("irisList.descriptionShort"),
+    },
+    {
+      id: "akaromi",
+      name: t ? t("irisPass.name") : "Akaromi",
+      href: "/akaromi",
+      color: "#d800a6",
+      colorClass: "text-[#d800a6]",
+      bgClass: "bg-[#d800a6]",
+      gradient:
+        "linear-gradient(135deg, #e11d48 0%, #c026d3 34%, #6366f1 72%, #4338ca 100%)",
+      gradientStyle:
+        "linear-gradient(135deg, #e11d48 0%, #c026d3 34%, #6366f1 72%, #4338ca 100%)",
+      icon: "/iris-icons/iris-pass-ring-left.png",
+      iconLeftRing: "/iris-icons/iris-pass-ring-left.png",
+      description: t
+        ? t("irisPass.description")
+        : "Zero-knowledge encrypted password, credential, and SSH key manager.",
+      descriptionShort: t
+        ? t("irisPass.descriptionShort")
+        : "Password management",
+    },
+    {
+      id: "kiroshi",
+      name: t ? t("irisSearch.name") : "Kiroshi",
+      href: "/kiroshi",
+      color: "#06b6d4",
+      colorClass: "text-cyan-500",
+      bgClass: "bg-cyan-500",
+      gradient:
+        "linear-gradient(135deg, #10b981 0%, #06b6d4 25%, #2563eb 50%, #7c3aed 75%, #1e1b4b 100%)",
+      gradientStyle:
+        "linear-gradient(135deg, #10b981 0%, #06b6d4 25%, #2563eb 50%, #7c3aed 75%, #1e1b4b 100%)",
+      icon: "/iris-icons/iris-search-ring-left.png",
+      iconLeftRing: "/iris-icons/iris-search-ring-left.png",
+      description: t
+        ? t("irisSearch.description")
+        : "Web and meta-search.",
+      descriptionShort: t
+        ? t("irisSearch.descriptionShort")
+        : "Web Search",
+    },
+    // {
+    //   id: "iris-cloud",
+    //   name: "IRIS Cloud",
+    //   href: "/cloud",
+    //   color: "#f59e0b",
+    //   colorClass: "text-amber-500",
+    //   bgClass: "bg-amber-500",
+    //   icon: "/iris-pass512left-ring.png",
+    //   description: "Cloud storage and tools.",
+    //   descriptionShort: "Cloud storage and tools",
+    // },
+    // {
+    //   id: "iris-mail",
+    //   name: "IRIS Mail",
+    //   href: "/mail",
+    //   color: "#06b6d4",
+    //   colorClass: "text-cyan-500",
+    //   bgClass: "bg-cyan-500",
+    //   icon: "/iris-pass512left-ring.png",
+    //   description: "Email and stuff.",
+    //   descriptionShort: "Email",
+    // },
+    // {
+    //   id: "iris-messages",
+    //   name: "IRIS Messages",
+    //   href: "/messages",
+    //   color: "#10b981",
+    //   colorClass: "text-emerald-500",
+    //   bgClass: "bg-emerald-500",
+    //   icon: "/iris-pass512left-ring.png",
+    //   description: "Messages and stuff.",
+    //   descriptionShort: "Messages",
+    // },
+    // {
+    //   id: "iris-docs",
+    //   name: "IRIS Docs",
+    //   href: "/docs",
+    //   color: "#a855f7",
+    //   colorClass: "text-purple-500",
+    //   bgClass: "bg-purple-500",
+    //   icon: "/iris-pass512left-ring.png",
+    //   description: "Knowledge base and documentation.",
+    //   descriptionShort: "Docs",
+    // },
+  ]
+}
+
+export function useIrisApps(): IrisApp[] {
+  const t = useTranslations("navigation.apps")
+  return useMemo(() => getIrisApps(t), [t])
+}

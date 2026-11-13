@@ -20,7 +20,7 @@ import {
   getDisplayNameStyleCss,
   getDisplayNameEffectClasses,
   getProfileCustomization,
-} from "@IRIS/shared"
+} from "@NamelessLiberty/shared"
 import { cn } from "@workspace/ui/lib/utils"
 import { elysia, API_URL } from "@/lib/elysia"
 

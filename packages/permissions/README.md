@@ -1,4 +1,4 @@
-# `@IRIS/permissions`
+# `@NamelessLiberty/permissions`
 
 Unified permission bitfield evaluation and authorization package for the IRIS ecosystem.
 
@@ -33,7 +33,7 @@ Stores permissions as an array of 32-bit integers (`Int[]` in PostgreSQL/Prisma)
 In Next.js Server Components, Route Handlers, or services:
 
 ```typescript
-import { hasPermission, IRISFlags } from "@IRIS/permissions";
+import { hasPermission, IRISFlags } from "@NamelessLiberty/permissions";
 
 // From database user: user.permissions = [1]
 const isAdmin = hasPermission(user.permissions, IRISFlags.ADMINISTRATOR);
@@ -47,7 +47,7 @@ const isAuth = hasPermission(null, IRISFlags.ADMINISTRATOR);
 ### Direct `IRISBitField` Class Usage
 
 ```typescript
-import { IRISBitField, IRISFlags } from "@IRIS/permissions";
+import { IRISBitField, IRISFlags } from "@NamelessLiberty/permissions";
 
 // Create from database raw integer array
 const bitfield = IRISBitField.fromRaw(user.permissions);
@@ -67,14 +67,14 @@ console.log(bitfield.raw); // []
 
 ---
 
-## 4. NestJS Integration (`@IRIS/permissions/nestjs`)
+## 4. NestJS Integration (`@NamelessLiberty/permissions/nestjs`)
 
 ### Endpoint Authorization with `@RequirePermissions()`
 
 ```typescript
 import { Controller, Get, UseGuards } from "@nestjs/common";
-import { IRISFlags } from "@IRIS/permissions";
-import { RequirePermissions, PermissionsGuard } from "@IRIS/permissions/nestjs";
+import { IRISFlags } from "@NamelessLiberty/permissions";
+import { RequirePermissions, PermissionsGuard } from "@NamelessLiberty/permissions/nestjs";
 
 @Controller("admin")
 @UseGuards(PermissionsGuard)

@@ -397,7 +397,7 @@ export const DEFAULT_PERMISSIONS: readonly number[] = Object.freeze([]);
  *
  * @example
  * ```typescript
- * import { hasPermission, IRISFlags } from '@IRIS/permissions';
+ * import { hasPermission, IRISFlags } from '@NamelessLiberty/permissions';
  *
  * const isAuthorized = hasPermission(user.permissions, IRISFlags.ADMINISTRATOR);
  * ```

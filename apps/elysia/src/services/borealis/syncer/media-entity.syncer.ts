@@ -1,5 +1,5 @@
-import { prisma, normalizeMediaStatus, type RelationType } from '@Iris/db'
-import { LogFactory, c } from '@Iris/logger'
+import { prisma, normalizeMediaStatus, type RelationType } from '@NamelessLiberty/db'
+import { LogFactory, c } from '@NamelessLiberty/logger'
 import {
   anilistProvider,
   type AniListAnimePayload,

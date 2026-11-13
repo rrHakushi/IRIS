@@ -22,7 +22,7 @@ import {
   getDisplayNameStyleCss,
   getDisplayNameEffectClasses,
   getProfileCustomization,
-} from "@IRIS/shared"
+} from "@NamelessLiberty/shared"
 import { cn } from "@workspace/ui/lib/utils"
 
 export interface FriendsMediaTabProps {

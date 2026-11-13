@@ -1,5 +1,5 @@
-import { prisma, countOf, toDate } from '@Iris/db'
-import { IRISBitField, IRISFlags } from '@IRIS/permissions'
+import { prisma, countOf, toDate } from '@NamelessLiberty/db'
+import { IRISBitField, IRISFlags } from '@NamelessLiberty/permissions'
 import { NotFound, BadRequest, Forbidden } from '../../lib/errors'
 
 export class CarinaBookmarksServ {

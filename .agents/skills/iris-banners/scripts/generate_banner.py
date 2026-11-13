@@ -151,7 +151,7 @@ def main():
         "--output",
         "-o",
         dest="output",
-        help="Destination path for the PNG file (defaults to apps/web/public/banners/<id>.png)",
+        help="Destination path for the PNG file (defaults to apps/next/public/banners/<id>.png)",
     )
     parser.add_argument(
         "--all",
@@ -179,7 +179,7 @@ def main():
 
     args = parser.parse_args()
 
-    default_dir = os.path.join(os.getcwd(), "apps/web/public/banners")
+    default_dir = os.path.join(os.getcwd(), "apps/next/public/banners")
 
     if args.all:
         print(f"Generating banners for all {len(KNOWN_APPS)} apps into {default_dir}...")

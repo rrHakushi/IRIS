@@ -1,4 +1,4 @@
-import { prisma, and, or, type MediaType } from '@Iris/db'
+import { prisma, and, or, type MediaType } from '@NamelessLiberty/db'
 
 export interface HydratedMediaTarget {
   id: number

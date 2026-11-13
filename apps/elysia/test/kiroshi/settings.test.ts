@@ -3,7 +3,7 @@ import { Elysia, ValidationError } from 'elysia'
 import { kiroshiSettings } from '../../src/api/controllers/kiroshi/settings.ctrl'
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt } from '../../src/utils/auth-crypto'
-import { prisma } from '@Iris/db'
+import { prisma } from '@NamelessLiberty/db'
 
 interface MockUser {
   id: string

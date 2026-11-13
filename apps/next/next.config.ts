@@ -1,0 +1,59 @@
+import type { NextConfig } from "next"
+import createNextIntlPlugin from "next-intl/plugin"
+
+const withNextIntl = createNextIntlPlugin("./i18n/request.ts")
+
+const rawApiUrl =
+  (typeof Bun !== "undefined" ? Bun.env.ELYSIA_URL : process.env.ELYSIA_URL) || "http://localhost:4000"
+const apiUrl = rawApiUrl.replace(/\$\{ELYSIA_PORT\}|\$ELYSIA_PORT/g, "4000")
+
+const nextConfig: NextConfig = {
+  output: "standalone",
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  transpilePackages: ["@workspace/ui", "@NamelessLiberty/borealis"],
+  images: {
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 60 * 60 * 24 * 180, // 6 months (180 days)
+    maximumDiskCacheSize: 30 * 1024 * 1024 * 1024, // 30 GB in bytes
+    remotePatterns: [
+      { protocol: "https", hostname: "**.anilist.co" },
+      { protocol: "https", hostname: "cdn.myanimelist.net" },
+      { protocol: "https", hostname: "**.simkl.in" },
+      { protocol: "https", hostname: "**.thetvdb.com" },
+      { protocol: "https", hostname: "images.igdb.com" },
+      { protocol: "https", hostname: "books.google.com" },
+      { protocol: "http", hostname: "books.google.com" },
+      { protocol: "https", hostname: "**.google.com" },
+      { protocol: "http", hostname: "**.google.com" },
+      { protocol: "https", hostname: "**.googleusercontent.com" },
+      { protocol: "http", hostname: "**.googleusercontent.com" },
+      { protocol: "https", hostname: "**.deezer.com" },
+      { protocol: "https", hostname: "**.dzcdn.net" },
+      { protocol: "https", hostname: "cdn-images.dzcdn.net" },
+      { protocol: "https", hostname: "image.tmdb.org" },
+      { protocol: "https", hostname: "lastfm.freetls.fastly.net" },
+      { protocol: "https", hostname: "**" },
+      { protocol: "http", hostname: "**" },
+    ],
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/public/:path*",
+        destination: `${apiUrl}/public/:path*`,
+      },
+      {
+        source: "/elysia",
+        destination: `${apiUrl}`,
+      },
+      {
+        source: "/elysia/:path*",
+        destination: `${apiUrl}/:path*`,
+      },
+    ]
+  },
+}
+
+export default withNextIntl(nextConfig)

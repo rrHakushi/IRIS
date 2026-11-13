@@ -1,6 +1,6 @@
-import { prisma, countOf, or, and, toDate, type MediaType } from '@Iris/db'
+import { prisma, countOf, or, and, toDate, type MediaType } from '@NamelessLiberty/db'
 import { NotFound } from '../../lib/errors'
-import { getProfileCustomization } from '@IRIS/shared'
+import { getProfileCustomization } from '@NamelessLiberty/shared'
 import { MediaQueueManager } from './queue'
 import { fetchMediaRelations } from './media-relations.helper'
 import { MediaEntitySyncer } from './syncer/media-entity.syncer'

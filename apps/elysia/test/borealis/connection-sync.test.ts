@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from 'bun:test'
-import { prisma, type ConnectionProvider } from '@Iris/db'
+import { prisma, type ConnectionProvider } from '@NamelessLiberty/db'
 import {
   ConnectionSyncQueueManager,
   isProviderSupportedForMediaType,
@@ -12,7 +12,7 @@ import {
   PROVIDER_WORKER_CONFIGS,
 } from '../../src/workers/connection-sync.wrk'
 import { CarinaNotificationsServ } from '../../src/services/carina/notifications.serv'
-import { ConnectionRateLimitError, AniListAdapter } from '@IRIS/connections'
+import { ConnectionRateLimitError, AniListAdapter } from '@NamelessLiberty/connections'
 import { BorealisListsServ } from '../../src/services/borealis/lists.serv'
 
 describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {

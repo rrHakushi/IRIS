@@ -34,7 +34,7 @@ import {
 import { toast } from "sonner"
 import { elysia } from "@/lib/elysia"
 import { useUser } from "@/context/user-context"
-import { getMediaPreferences } from "@IRIS/shared"
+import { getMediaPreferences } from "@NamelessLiberty/shared"
 import {
   BorealisCard,
   BorealisCardGroup,
@@ -42,7 +42,7 @@ import {
   getMediaListStatusText,
   type ListStatus,
   type BorealisCardSavePayload,
-} from "@Runa/borealis"
+} from "@NamelessLiberty/borealis"
 import { saveListEntry } from "@/lib/save-list-entry"
 import {
   toNormalizedMedia,

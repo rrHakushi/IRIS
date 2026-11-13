@@ -288,11 +288,11 @@ On every push to `main`, `.drone.yml` executes the following 19 steps in order:
 6. **RustFS** — Starts `NamelessLiberty-RustFS` (`10004:9000`, `10005:9001`).
 7. **deemix** — Starts `NamelessLiberty-Deemix` (`10006:6595`).
 8. **searxng** — Starts `NamelessLiberty-SearXNG` (`10007:8080`).
-9. **Prisma Contract** — Emits the Prisma 8 database contract (`@Iris/db`).
+9. **Prisma Contract** — Emits the Prisma 8 database contract (`@NamelessLiberty/db`).
 10. **Prisma Update** — Pushes schema updates to `NamelessLiberty-Postgre`.
 11. **Packages** — Builds all workspace packages (`./packages/*`).
 12. **Elysia** — Compares `NamelessLiberty-Elysia`'s running version against `apps/elysia/package.json`; builds and recreates only if not running or outdated (`10008:4000`).
-13. **Next** — Compares `NamelessLiberty-Next`'s running version against `apps/web/package.json`; builds and recreates only if not running or outdated (`10009:3000`).
+13. **Next** — Compares `NamelessLiberty-Next`'s running version against `apps/next/package.json`; builds and recreates only if not running or outdated (`10009:3000`).
 14. **Jellyborealis - Build** — Builds the Jellyfin plugin release artifact.
 15. **Jellyborealis - Release** — Publishes JellyBorealis to GitHub Releases.
 16. **BorealisExtra - Build** — Builds Linux, Windows, and macOS BorealisExtra binaries.

@@ -1,6 +1,6 @@
 import { Worker, type Job } from 'bullmq'
-import { prisma } from '@Iris/db'
-import { LogFactory, c } from '@Iris/logger'
+import { prisma } from '@NamelessLiberty/db'
+import { LogFactory, c } from '@NamelessLiberty/logger'
 import { getRedisConnectionOptions } from '../services/email/queue'
 import {
   MEDIA_QUEUE_NAME,

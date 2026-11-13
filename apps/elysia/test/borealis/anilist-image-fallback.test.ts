@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { AniListAdapter } from '@IRIS/connections'
+import { AniListAdapter } from '@NamelessLiberty/connections'
 import { anilistProvider } from '../../src/services/borealis/providers'
 
 describe('AniList Image Resolution & Fallback Policy', () => {
@@ -71,7 +71,7 @@ describe('AniList Image Resolution & Fallback Policy', () => {
     })
   })
 
-  describe('AniList Adapter (@IRIS/connections)', () => {
+  describe('AniList Adapter (@NamelessLiberty/connections)', () => {
     it('selects large avatar with fallback to medium in getProfile', async () => {
       const adapter = new AniListAdapter()
       let executedQuery = ''

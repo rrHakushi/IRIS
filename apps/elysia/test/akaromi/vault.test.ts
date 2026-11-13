@@ -3,7 +3,7 @@ import { Elysia, ValidationError } from 'elysia'
 import { akaromiVault } from '../../src/api/controllers/akaromi/vault.ctrl'
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt } from '../../src/utils/auth-crypto'
-import { prisma, type PassCipherType, type PassRepromptType } from '@Iris/db'
+import { prisma, type PassCipherType, type PassRepromptType } from '@NamelessLiberty/db'
 
 // -----------------------------------------------------------------------------
 // In-Memory Database Mock for Vault Synchronization & Backup

@@ -12,7 +12,7 @@ import {
 } from "@tabler/icons-react"
 import { Button } from "@workspace/ui/components/button"
 import { useUser } from "@/context/user-context"
-import { hasPermission, IRISFlags } from "@IRIS/permissions"
+import { hasPermission, IRISFlags } from "@NamelessLiberty/permissions"
 import { elysia } from "@/lib/elysia"
 import { toast } from "sonner"
 import type { NormalizedMediaData } from "./media-types"

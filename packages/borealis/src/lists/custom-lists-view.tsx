@@ -53,14 +53,14 @@ import {
 import { toast } from "sonner"
 import { elysia, API_URL } from "@/lib/elysia"
 import { getMediaDetailHref } from "@/lib/media-routes"
-import type { UserProfileCustomization } from "@IRIS/shared"
+import type { UserProfileCustomization } from "@NamelessLiberty/shared"
 import { cn } from "@workspace/ui/lib/utils"
 import {
   BorealisCard,
   BorealisCardGroup,
   UserListBanner,
   MultiSelectFilterPopover,
-} from "@Runa/borealis"
+} from "@NamelessLiberty/borealis"
 import { ActivityFeed, type ActivityItem } from "../activity"
 import { ScoreDistributionChart } from "./stats/score-distribution-chart"
 import { YearTimelineChart } from "./stats/year-timeline-chart"

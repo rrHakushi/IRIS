@@ -24,7 +24,7 @@
         "dist/**"
       ]
     },
-    "@IRIS/elysia#build": {
+    "@NamelessLiberty/elysia#build": {
       "dependsOn": [
         "^build"
       ],

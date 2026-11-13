@@ -3,8 +3,8 @@ import { Elysia, ValidationError } from 'elysia'
 import { kiroshiHistory } from '../../src/api/controllers/kiroshi/history.ctrl'
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt } from '../../src/utils/auth-crypto'
-import { encryptConnectionData } from '@IRIS/connections'
-import { prisma } from '@Iris/db'
+import { encryptConnectionData } from '@NamelessLiberty/connections'
+import { prisma } from '@NamelessLiberty/db'
 
 interface MockUser {
   id: string

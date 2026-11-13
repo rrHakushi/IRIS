@@ -7,7 +7,7 @@ import {
   getDisplayNameStyleCss,
   getDisplayNameEffectClasses,
   type UserProfileCustomization,
-} from "@IRIS/shared"
+} from "@NamelessLiberty/shared"
 import { GlassCard } from "./glass-card"
 
 export interface UserListBannerProps {

@@ -1,4 +1,4 @@
-import { prisma, and, type MediaType } from '@Iris/db'
+import { prisma, and, type MediaType } from '@NamelessLiberty/db'
 
 /** Top 16 characters for a media overview (MAIN first). */
 export async function fetchTopCharacters(mediaType: string, id: number, limit = 16) {

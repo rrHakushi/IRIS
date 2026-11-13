@@ -38,7 +38,7 @@ import { cn } from "@workspace/ui/lib/utils"
 import {
   getDisplayNameEffectClasses,
   getDisplayNameStyleCss,
-} from "@IRIS/shared"
+} from "@NamelessLiberty/shared"
 import { toast } from "sonner"
 import { useSession } from "@/context/session-context"
 import { API_URL, elysia } from "@/lib/elysia"

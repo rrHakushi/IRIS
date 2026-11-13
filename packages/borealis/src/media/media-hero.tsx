@@ -9,7 +9,7 @@ import { useSession } from "@/context/session-context"
 import { useUser } from "@/context/user-context"
 import { elysia } from "@/lib/elysia"
 import { saveListEntry } from "@/lib/save-list-entry"
-import { getMediaPreferences } from "@IRIS/shared"
+import { getMediaPreferences } from "@NamelessLiberty/shared"
 import { formatMediaTitle } from "@/lib/browse-search"
 import { BorealisCard } from "../borealis-card"
 import type { BorealisCardSavePayload } from "../types"
@@ -282,11 +282,11 @@ export function MediaHero({
         )}
       </div>
 
-      {/* Hero Row: BorealisCard Cover + Right Column (Title GlassCard on top, Tabs GlassCard below) */}
+      {/* Hero Row: BorealisCard Cover + Title on the right (mobile & desktop), Tabs full-width below on mobile and under Title on sm+ */}
       <div className="relative z-10 -mt-28 w-full px-4 sm:-mt-36 sm:px-6 md:-mt-40 lg:px-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end md:gap-5">
+        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-end gap-x-3 gap-y-4 sm:grid-rows-[1fr_auto] sm:gap-x-4 sm:gap-y-2.5 md:gap-x-5">
           {/* Library BorealisCard for Cover Image */}
-          <div className="shrink-0 self-start sm:self-end">
+          <div className="shrink-0 self-end sm:row-span-2">
             <BorealisCard
               key={listEntry ? "entry-loaded" : "entry-pending"}
               type={media.category}
@@ -320,13 +320,13 @@ export function MediaHero({
             </BorealisCard>
           </div>
 
-          {/* Right Column: Title GlassCard moved up (content-width), Tabs GlassCard directly underneath */}
-          <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+          {/* Title GlassCard: right of Cover on mobile, top of right column on sm+ */}
+          <div className="min-w-0 self-end">
             <GlassCard
               variant="tinted"
-              className="flex w-fit max-w-full flex-col gap-1 self-start p-4 sm:px-5 sm:py-4"
+              className="flex w-fit max-w-full flex-col gap-1 p-2.5 sm:px-5 sm:py-4"
             >
-              <h1 className="font-mono text-xl leading-tight font-bold tracking-tight text-balance text-foreground sm:text-2xl lg:text-3xl">
+              <h1 className="font-mono text-base leading-tight font-bold tracking-tight text-balance text-foreground sm:text-2xl lg:text-3xl">
                 {mainTitle}
               </h1>
 
@@ -379,9 +379,11 @@ export function MediaHero({
                 </p>
               )}
             </GlassCard>
+          </div>
 
-            {/* Separated Navigation Tabs Bar directly under Title */}
-            {tabs && activeTab && onSelectTab && (
+          {/* Separated Navigation Tabs Bar: full width below on mobile, directly under Title on sm+ */}
+          {tabs && activeTab && onSelectTab && (
+            <div className="col-span-2 min-w-0 sm:col-span-1 sm:col-start-2">
               <GlassCard variant="normal" className="px-3 py-1.5 sm:px-4">
                 <MediaTabNav
                   tabs={tabs}
@@ -390,8 +392,8 @@ export function MediaHero({
                   embedded
                 />
               </GlassCard>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

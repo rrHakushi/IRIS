@@ -1,9 +1,9 @@
-import { prisma, and, or, not, countOf, toDate } from '@Iris/db'
-import { IRISFlags } from '@IRIS/permissions'
+import { prisma, and, or, not, countOf, toDate } from '@NamelessLiberty/db'
+import { IRISFlags } from '@NamelessLiberty/permissions'
 import { BadRequest, Forbidden, NotFound, Conflict } from '../../lib/errors'
 import { uploadPublicAsset } from '../../utils/s3'
 import { CarinaNotificationsServ } from '../carina/notifications.serv'
-import { getProfileCustomization } from '@IRIS/shared'
+import { getProfileCustomization } from '@NamelessLiberty/shared'
 import type {
   CreateOtherBody,
   UpdateOtherBody,

@@ -9,7 +9,7 @@ import { borealisGames } from '../../src/api/controllers/borealis/games.ctrl'
 import { borealisMusic } from '../../src/api/controllers/borealis/music.ctrl'
 import { borealisOther } from '../../src/api/controllers/borealis/other.ctrl'
 import { isHttpError } from '../../src/lib/errors'
-import { prisma } from '@Iris/db'
+import { prisma } from '@NamelessLiberty/db'
 
 // Mock Data
 let mockAnime: any[] = []

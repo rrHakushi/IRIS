@@ -1,6 +1,6 @@
-import { prisma, and, or, countOf, toDate, type ActivityType, type FavoriteType, type MediaType } from '@Iris/db'
-import { getBadgeById, getProfileCustomization, setProfileCustomization } from '@IRIS/shared'
-import { IRISBitField, IRISFlags } from '@IRIS/permissions'
+import { prisma, and, or, countOf, toDate, type ActivityType, type FavoriteType, type MediaType } from '@NamelessLiberty/db'
+import { getBadgeById, getProfileCustomization, setProfileCustomization } from '@NamelessLiberty/shared'
+import { IRISBitField, IRISFlags } from '@NamelessLiberty/permissions'
 import { BadRequest, Forbidden, NotFound } from '../../lib/errors'
 import { uploadPublicAsset, deletePublicAsset, extractS3Key } from '../../utils/s3'
 import { ActivityServ } from './activity.serv'
@@ -495,7 +495,7 @@ export class CarinaUsersServ {
   }
 
   /**
-   * Get user badges mapped with metadata from @IRIS/shared.
+   * Get user badges mapped with metadata from @NamelessLiberty/shared.
    */
   public static async getUserBadges(targetIdentifier: string) {
     const target = await this.resolveUser(targetIdentifier)

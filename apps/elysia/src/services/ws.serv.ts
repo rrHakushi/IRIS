@@ -1,4 +1,4 @@
-import { LogFactory } from '@Iris/logger'
+import { LogFactory } from '@NamelessLiberty/logger'
 import { jwtVerify } from 'jose'
 
 const logger = new LogFactory('Elysia:WebSocket')

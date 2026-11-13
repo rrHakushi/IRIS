@@ -20,7 +20,7 @@ import {
   BorealisCardGroup,
   BorealisSectionHeader,
   type BorealisEntityType,
-} from "@Runa/borealis"
+} from "@NamelessLiberty/borealis"
 import { saveListEntry } from "@/lib/save-list-entry"
 import {
   toNormalizedMedia,

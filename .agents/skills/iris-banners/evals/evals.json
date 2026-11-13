@@ -7,11 +7,11 @@
     },
     {
       "id": "wire-app-metadata",
-      "prompt": "Set up the OpenGraph and Twitter layout metadata for Zenith in apps/web/app/(APPS)/zenith/layout.tsx using the 1200x630 banner"
+      "prompt": "Set up the OpenGraph and Twitter layout metadata for Zenith in apps/next/app/(APPS)/zenith/layout.tsx using the 1200x630 banner"
     },
     {
       "id": "batch-regenerate",
-      "prompt": "Regenerate all suite banner images in apps/web/public/banners"
+      "prompt": "Regenerate all suite banner images in apps/next/public/banners"
     }
   ]
 }

@@ -6,8 +6,8 @@ import {
   type NotificationType,
   type NotificationPriority,
   type NotificationActionStatus,
-} from '@Iris/db'
-import { LogFactory } from '@Iris/logger'
+} from '@NamelessLiberty/db'
+import { LogFactory } from '@NamelessLiberty/logger'
 import { NotFound } from '../../lib/errors'
 import { wsHub } from '../ws.serv'
 
@@ -472,7 +472,7 @@ export class CarinaNotificationsServ {
           const userRecord = await prisma.orm.public.User.where({ id: userId })
             .select('permissions')
             .first()
-          const { hasPermission, IRISFlags } = await import('@IRIS/permissions')
+          const { hasPermission, IRISFlags } = await import('@NamelessLiberty/permissions')
           const isAdmin = hasPermission(userRecord?.permissions ? [...userRecord.permissions] : null, IRISFlags.ADMINISTRATOR)
           const { BorealisOtherServ } = await import('../borealis/other.serv')
           await BorealisOtherServ.forkItem(userId, Number(otherId), isAdmin)

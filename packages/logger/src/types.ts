@@ -17,7 +17,7 @@ export type TagColor =
  * Can also be extended via TypeScript declaration merging:
  *
  * ```ts
- * declare module "@Iris/logger" {
+ * declare module "@NamelessLiberty/logger" {
  *   interface KnownModules {
  *     MyModule: true
  *   }

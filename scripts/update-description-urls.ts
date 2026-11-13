@@ -9,7 +9,7 @@
  */
 
 import '../apps/elysia/src/load-env'
-import { prisma } from '@Iris/db'
+import { prisma } from '@NamelessLiberty/db'
 
 const isDryRun = process.argv.includes('--dry-run')
 

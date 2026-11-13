@@ -16,14 +16,14 @@
  */
 
 import '../apps/elysia/src/load-env'
-import { prisma } from '@Iris/db'
+import { prisma } from '@NamelessLiberty/db'
 import { generateKeyPairSync, createCipheriv, createDecipheriv, randomBytes, scrypt as nodeScrypt } from 'node:crypto'
 import { promisify } from 'node:util'
-import { hkdf } from '../apps/web/node_modules/@noble/hashes/hkdf.js'
-import { sha256 } from '../apps/web/node_modules/@noble/hashes/sha2.js'
-import { scrypt as nobleScrypt } from '../apps/web/node_modules/@noble/hashes/scrypt.js'
-import { gcm } from '../apps/web/node_modules/@noble/ciphers/aes.js'
-import { bytesToHex, hexToBytes } from '../apps/web/node_modules/@noble/hashes/utils.js'
+import { hkdf } from '../apps/next/node_modules/@noble/hashes/hkdf.js'
+import { sha256 } from '../apps/next/node_modules/@noble/hashes/sha2.js'
+import { scrypt as nobleScrypt } from '../apps/next/node_modules/@noble/hashes/scrypt.js'
+import { gcm } from '../apps/next/node_modules/@noble/ciphers/aes.js'
+import { bytesToHex, hexToBytes } from '../apps/next/node_modules/@noble/hashes/utils.js'
 
 const scryptAsync = promisify(nodeScrypt)
 

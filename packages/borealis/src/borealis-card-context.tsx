@@ -10,6 +10,7 @@ export interface BorealisCardContextValue {
   isHovered: boolean
   popoverPlacement: "left" | "right" | "top" | "bottom"
   containerRef?: React.RefObject<HTMLDivElement | null>
+  popoverRef?: React.RefObject<HTMLDivElement | null>
   handleMouseEnter: () => void
   handleMouseLeave: () => void
   localScore?: number | null

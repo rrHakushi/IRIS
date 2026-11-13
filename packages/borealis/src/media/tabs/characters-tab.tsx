@@ -5,7 +5,7 @@ import Link from "next/link"
 import { IconPhotoOff, IconWorld } from "@tabler/icons-react"
 import { Badge } from "@workspace/ui/components/badge"
 import { cn } from "@workspace/ui/lib/utils"
-import { BorealisCard, BorealisCardGroup } from "@Runa/borealis"
+import { BorealisCard, BorealisCardGroup } from "@NamelessLiberty/borealis"
 import type { CharacterItem } from "../media-types"
 
 interface CharactersTabProps {

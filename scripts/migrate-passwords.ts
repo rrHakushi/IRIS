@@ -7,7 +7,7 @@
  */
 
 import '../apps/elysia/src/load-env'
-import { prisma } from '@Iris/db'
+import { prisma } from '@NamelessLiberty/db'
 
 // Terminal ANSI formatting
 const c = {

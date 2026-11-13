@@ -159,15 +159,16 @@ export function BorealisCardRoot({
   const [isHoverCardEditing, setIsHoverCardEditing] = useState(false)
   const [popoverPlacement, setPopoverPlacement] = useState<"left" | "right">("right")
   const containerRef = useRef<HTMLDivElement>(null)
+  const popoverRef = useRef<HTMLDivElement>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const lastPointerTypeRef = useRef<string | null>(null)
+  const openedByTouchRef = useRef(false)
 
   const [localScore, setLocalScore] = useState<number | null | undefined>(undefined)
   const [localStatus, setLocalStatus] = useState<ListStatus | undefined>(undefined)
   const [localProgress, setLocalProgress] = useState<number | undefined>(undefined)
 
-  const handleMouseEnter = () => {
-    if (timerRef.current) clearTimeout(timerRef.current)
-
+  const updatePopoverPlacement = () => {
     // Calculate placement to guarantee the popover does NOT cover the card
     if (containerRef.current && typeof window !== "undefined") {
       const rect = containerRef.current.getBoundingClientRect()
@@ -185,18 +186,87 @@ export function BorealisCardRoot({
         setPopoverPlacement(spaceOnRight >= spaceOnLeft ? "right" : "left")
       }
     }
+  }
+
+  const handleMouseEnter = () => {
+    if (lastPointerTypeRef.current === "touch") return
+    if (timerRef.current) clearTimeout(timerRef.current)
+
+    updatePopoverPlacement()
 
     timerRef.current = setTimeout(() => {
+      openedByTouchRef.current = false
       setIsHovered(true)
     }, hoverDelay)
   }
 
   const handleMouseLeave = () => {
+    if (lastPointerTypeRef.current === "touch" || openedByTouchRef.current) return
     if (isHoverCardEditing) return
     if (timerRef.current) clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => {
       setIsHovered(false)
     }, 150)
+  }
+
+  // Close touch-opened hover card when tapping outside both the card and its popover
+  useEffect(() => {
+    if (!isHovered || typeof document === "undefined") return
+
+    const handleOutsidePointerDown = (e: PointerEvent) => {
+      if (!openedByTouchRef.current || isHoverCardEditing) return
+      const target = e.target as HTMLElement | null
+      if (!target) return
+      if (containerRef.current?.contains(target)) return
+      if (popoverRef.current?.contains(target)) return
+      if (target.closest('[role="menu"], [role="listbox"], [role="dialog"]')) return
+
+      openedByTouchRef.current = false
+      setIsHovered(false)
+    }
+
+    document.addEventListener("pointerdown", handleOutsidePointerDown, true)
+    return () => {
+      document.removeEventListener("pointerdown", handleOutsidePointerDown, true)
+    }
+  }, [isHovered, isHoverCardEditing])
+
+  const handleClickCapture = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (lastPointerTypeRef.current !== "touch" || !showHoverCard) {
+      return
+    }
+
+    const target = e.target as HTMLElement | null
+    if (!target) return
+
+    // Let interactive controls (buttons, dropdown triggers, inputs) behave normally
+    if (
+      target.closest(
+        'button, input, select, textarea, [role="button"], [role="menuitem"]'
+      )
+    ) {
+      return
+    }
+
+    if (!isHovered) {
+      e.preventDefault()
+      e.stopPropagation()
+      if (timerRef.current) clearTimeout(timerRef.current)
+      updatePopoverPlacement()
+      openedByTouchRef.current = true
+      setIsHovered(true)
+      return
+    }
+
+    // Hover card is already open: second tap navigates to the link
+    if (!target.closest("a[href]") && data.href && data.href !== "#") {
+      const anchor = containerRef.current?.querySelector<HTMLAnchorElement>("a[href]")
+      if (anchor) {
+        anchor.click()
+      } else if (typeof window !== "undefined") {
+        window.location.assign(data.href)
+      }
+    }
   }
 
   const config = {
@@ -237,6 +307,7 @@ export function BorealisCardRoot({
         isHovered,
         popoverPlacement,
         containerRef,
+        popoverRef,
         handleMouseEnter,
         handleMouseLeave,
         localScore,
@@ -251,6 +322,13 @@ export function BorealisCardRoot({
     >
       <div
         ref={containerRef}
+        onPointerOverCapture={(e) => {
+          lastPointerTypeRef.current = e.pointerType
+        }}
+        onPointerDownCapture={(e) => {
+          lastPointerTypeRef.current = e.pointerType
+        }}
+        onClickCapture={handleClickCapture}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         className={cn(
@@ -3517,6 +3595,7 @@ export function BorealisCardHoverContent({
     isHovered,
     popoverPlacement,
     containerRef,
+    popoverRef: contextPopoverRef,
     handleMouseEnter,
     handleMouseLeave,
     setLocalScore,
@@ -3789,7 +3868,8 @@ export function BorealisCardHoverContent({
     maxHeight: number
     placement: "left" | "right"
   } | null>(null)
-  const popoverRef = useRef<HTMLDivElement>(null)
+  const localPopoverRef = useRef<HTMLDivElement>(null)
+  const popoverRef = contextPopoverRef ?? localPopoverRef
 
   useEffect(() => {
     setMounted(true)
@@ -4182,7 +4262,16 @@ export function BorealisCardHoverContent({
             <div className="flex flex-col gap-0.5">
               <div className="flex items-start justify-between gap-2">
                 <h4 className="line-clamp-2 text-sm sm:text-base font-extrabold text-foreground font-mono">
-                  {data.title}
+                  {data.href && data.href !== "#" ? (
+                    <a
+                      href={data.href}
+                      className="transition-colors hover:text-primary hover:underline"
+                    >
+                      {data.title}
+                    </a>
+                  ) : (
+                    data.title
+                  )}
                 </h4>
                 <div className="flex shrink-0 items-center gap-1.5">
                   {(() => {

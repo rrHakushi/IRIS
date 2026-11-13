@@ -1,10 +1,10 @@
 /**
- * @IRIS/cache
+ * @NamelessLiberty/cache
  *
  * Unified caching package providing Redis connection management with automatic,
  * zero-downtime in-memory LRU fallback, stampede protection, and NestJS dynamic module integration.
  *
- * @module @IRIS/cache
+ * @module @NamelessLiberty/cache
  */
 export * from './core/cache-manager.js';
 export * from './core/memory-store.js';

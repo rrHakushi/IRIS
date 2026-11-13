@@ -1,7 +1,7 @@
 import React from 'react'
 import nodemailer, { type Transporter } from 'nodemailer'
 import { render } from '@react-email/render'
-import { LogFactory, c } from '@Iris/logger'
+import { LogFactory, c } from '@NamelessLiberty/logger'
 import { MfaVerificationEmail, PasswordResetEmail } from '../../emails/index'
 
 const logger = new LogFactory('Mailer')

@@ -1,4 +1,4 @@
-import { LogFactory } from '@Iris/logger'
+import { LogFactory } from '@NamelessLiberty/logger'
 
 const logger = new LogFactory('Borealis:Provider:TheTVDB')
 

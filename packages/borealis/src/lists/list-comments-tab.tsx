@@ -54,7 +54,7 @@ import {
   getDisplayNameEffectClasses,
   type UserProfileCustomization,
   type DisplayNameStyle,
-} from "@IRIS/shared"
+} from "@NamelessLiberty/shared"
 import { UserProfilePopover } from "@/components/navigation/settings-tabs/account/profile/profile-preview-card"
 import type { MediaListType } from "./types"
 

@@ -1,4 +1,4 @@
-import { prisma, and, or, toDate } from '@Iris/db'
+import { prisma, and, or, toDate } from '@NamelessLiberty/db'
 import { cache } from '../../utils/cache'
 
 export interface CalendarQuery {

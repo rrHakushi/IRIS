@@ -1,7 +1,7 @@
-import { CacheManager } from "@IRIS/cache"
+import { CacheManager } from "@NamelessLiberty/cache"
 
 /**
- * Shared CacheManager instance for @IRIS/elysia.
+ * Shared CacheManager instance for @NamelessLiberty/elysia.
  * Automatically connects to Redis if available, or seamlessly falls back
  * to an in-memory LRU cache when offline or unconfigured.
  */

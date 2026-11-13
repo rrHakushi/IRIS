@@ -24,7 +24,7 @@ import { cn } from "@workspace/ui/lib/utils"
 import { Button, buttonVariants } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
 import { Separator } from "@workspace/ui/components/separator"
-import { MultiSelectFilterPopover } from "@Runa/borealis"
+import { MultiSelectFilterPopover } from "@NamelessLiberty/borealis"
 import {
   type DiscoverCategory,
   type DiscoverSortByOption,

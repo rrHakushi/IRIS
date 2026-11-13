@@ -1,0 +1,11 @@
+import { Metadata } from "next"
+import { ServarrQueueView } from "@NamelessLiberty/borealis"
+
+export const metadata: Metadata = {
+  title: "Borealis | Servarr > Sonarr > Activity Queue",
+  description: "Live downloads and activity queue for Sonarr.",
+}
+
+export default function SonarrQueuePage() {
+  return <ServarrQueueView provider="SONARR" />
+}

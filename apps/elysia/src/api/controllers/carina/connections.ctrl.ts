@@ -1,5 +1,5 @@
 import { Elysia } from 'elysia'
-import { verifyOAuthStateToken } from '@IRIS/connections'
+import { verifyOAuthStateToken } from '@NamelessLiberty/connections'
 import { session } from '../../../plugins/session'
 import { CarinaConnectionsModel } from '../../models/carina/connections.model'
 import { CarinaConnectionsServ } from '../../../services/carina/connections.serv'

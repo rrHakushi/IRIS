@@ -5,8 +5,8 @@ import { kiroshiSearch } from '../../src/api/controllers/kiroshi/search.ctrl'
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt } from '../../src/utils/auth-crypto'
 import { cache } from '../../src/utils/cache'
-import { decryptConnectionData } from '@IRIS/connections'
-import { prisma } from '@Iris/db'
+import { decryptConnectionData } from '@NamelessLiberty/connections'
+import { prisma } from '@NamelessLiberty/db'
 
 // -----------------------------------------------------------------------------
 // In-Memory Database Mock

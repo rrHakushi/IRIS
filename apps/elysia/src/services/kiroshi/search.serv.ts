@@ -1,6 +1,6 @@
-import { prisma } from '@Iris/db'
+import { prisma } from '@NamelessLiberty/db'
 import { cache } from '../../utils/cache'
-import { encryptConnectionData } from '@IRIS/connections'
+import { encryptConnectionData } from '@NamelessLiberty/connections'
 import { BadRequest, BadGateway, TooManyRequests } from '../../lib/errors'
 
 export interface SearchOptions {

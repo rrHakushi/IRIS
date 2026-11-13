@@ -7,7 +7,7 @@ import {
   type ConnectionProvider,
   type ConnectionStatus,
   type ConnectionAuthType,
-} from '@Iris/db'
+} from '@NamelessLiberty/db'
 import {
   encryptConnectionData,
   decryptConnectionData,
@@ -19,7 +19,7 @@ import {
   type MediaType,
   type OAuthTokens,
   type ConnectionCredentials,
-} from '@IRIS/connections'
+} from '@NamelessLiberty/connections'
 import { NotFound, BadRequest } from '../../lib/errors'
 import { BorealisListsServ } from '../borealis/lists.serv'
 import { ActivityServ } from './activity.serv'

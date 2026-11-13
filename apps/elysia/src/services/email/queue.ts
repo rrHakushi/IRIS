@@ -1,5 +1,5 @@
 import { Queue, type Job, type JobsOptions } from 'bullmq'
-import { LogFactory } from '@Iris/logger'
+import { LogFactory } from '@NamelessLiberty/logger'
 import {
   getEmailWorker,
   closeEmailWorker,

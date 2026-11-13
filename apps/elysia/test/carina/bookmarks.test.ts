@@ -3,8 +3,8 @@ import { Elysia, ValidationError } from 'elysia'
 import { carinaBookmarks } from '../../src/api/controllers/carina/bookmarks.ctrl'
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt } from '../../src/utils/auth-crypto'
-import { IRISBitField, IRISFlags } from '@IRIS/permissions'
-import { prisma } from '@Iris/db'
+import { IRISBitField, IRISFlags } from '@NamelessLiberty/permissions'
+import { prisma } from '@NamelessLiberty/db'
 
 // -----------------------------------------------------------------------------
 // In-Memory Database Mock for Bookmarks and Users

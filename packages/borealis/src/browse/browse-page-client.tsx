@@ -28,7 +28,7 @@ import {
   type SearchResultItem,
 } from "./browse-search-results"
 import { useUser } from "@/context/user-context"
-import { getMediaPreferences } from "@IRIS/shared"
+import { getMediaPreferences } from "@NamelessLiberty/shared"
 
 type MusicBrowseType = "all" | "tracks" | "albums"
 

@@ -1,6 +1,6 @@
 /**
- * Entry point for `@IRIS/cache`.
+ * Entry point for `@NamelessLiberty/cache`.
  *
- * @module @IRIS/cache
+ * @module @NamelessLiberty/cache
  */
 export * from './src/index';

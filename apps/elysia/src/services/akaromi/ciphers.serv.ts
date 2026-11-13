@@ -1,4 +1,4 @@
-import { prisma, toDate, type PassCipherType, type PassRepromptType } from '@Iris/db'
+import { prisma, toDate, type PassCipherType, type PassRepromptType } from '@NamelessLiberty/db'
 import { NotFound, BadRequest } from '../../lib/errors'
 
 export interface ListCiphersFilter {

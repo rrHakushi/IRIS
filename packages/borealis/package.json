@@ -1,5 +1,5 @@
 {
-  "name": "@Runa/borealis",
+  "name": "@NamelessLiberty/borealis",
   "version": "0.0.1",
   "private": true,
   "description": "Universal polymorphic media, character, and staff cards for the Borealis ecosystem",
@@ -14,9 +14,9 @@
   "dependencies": {
     "@elysia/eden": "^2.0.0-rc.1",
     "@internationalized/date": "^3.12.4",
-    "@IRIS/elysia": "workspace:*",
-    "@IRIS/permissions": "workspace:*",
-    "@IRIS/shared": "workspace:*",
+    "@NamelessLiberty/elysia": "workspace:*",
+    "@NamelessLiberty/permissions": "workspace:*",
+    "@NamelessLiberty/shared": "workspace:*",
     "@tabler/icons-react": "^3.51.0",
     "@workspace/ui": "workspace:*",
     "react-aria-components": "^1.22.1",

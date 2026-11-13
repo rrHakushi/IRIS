@@ -2,7 +2,7 @@ import { describe, expect, it, beforeEach } from 'bun:test'
 import { Elysia, ValidationError } from 'elysia'
 import { borealisSearch } from '../../src/api/controllers/borealis/search.ctrl'
 import { isHttpError } from '../../src/lib/errors'
-import { prisma } from '@Iris/db'
+import { prisma } from '@NamelessLiberty/db'
 
 // Mock Catalogs
 const mockAnime = [

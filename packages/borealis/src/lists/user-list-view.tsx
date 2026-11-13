@@ -10,7 +10,7 @@ import dynamic from "next/dynamic"
 import {
   getMediaPreferences,
   type UserProfileCustomization,
-} from "@IRIS/shared"
+} from "@NamelessLiberty/shared"
 import {
   UserListBanner,
   UserListToolbar,
@@ -23,7 +23,7 @@ import {
   type SortByOption,
   type SortOrderOption,
   getMediaListStatusText,
-} from "@Runa/borealis"
+} from "@NamelessLiberty/borealis"
 import { MediaListGrid } from "./media-list-grid"
 
 const ListCommentsTab = dynamic(

@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto'
-import { prisma, or, toDate, countOf } from '@Iris/db'
-import { isReservedKeyword } from '@IRIS/shared'
-import { IRISFlags } from '@IRIS/permissions'
+import { prisma, or, toDate, countOf } from '@NamelessLiberty/db'
+import { isReservedKeyword } from '@NamelessLiberty/shared'
+import { IRISFlags } from '@NamelessLiberty/permissions'
 import { cache } from '../../utils/cache'
 import {
   hashPassword,
@@ -15,7 +15,7 @@ import { BadRequest, Conflict, NotFound, Unauthorized } from '../../lib/errors'
 import { EmailService } from '../email/email.serv'
 import type { CarinaAuthModel } from '../../api/models/carina/auth.model'
 import { getDomainConfig } from '../../utils/domain'
-import { LogFactory } from '@Iris/logger'
+import { LogFactory } from '@NamelessLiberty/logger'
 
 const logger = new LogFactory('CarinaAuth')
 
@@ -136,7 +136,7 @@ export abstract class CarinaAuthServ {
       )
     }
 
-    // 1. Reserved keyword check from @IRIS/shared
+    // 1. Reserved keyword check from @NamelessLiberty/shared
     if (isReservedKeyword(lowerUsername)) {
       throw new Conflict(
         `The username '${sanitizedUsername}' is a reserved system or language keyword and cannot be registered.`

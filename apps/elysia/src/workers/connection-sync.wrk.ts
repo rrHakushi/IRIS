@@ -5,8 +5,8 @@ import {
   toDate,
   type ConnectionProvider,
   type MediaType,
-} from '@Iris/db'
-import { LogFactory, c } from '@Iris/logger'
+} from '@NamelessLiberty/db'
+import { LogFactory, c } from '@NamelessLiberty/logger'
 import { getRedisConnectionOptions } from '../services/email/queue'
 import {
   getConnectionAdapter,
@@ -16,7 +16,7 @@ import {
   ConnectionRateLimitError,
   type ConnectionCredentials,
   type UpdateMediaPayload,
-} from '@IRIS/connections'
+} from '@NamelessLiberty/connections'
 import { CarinaNotificationsServ } from '../services/carina/notifications.serv'
 
 const logger = new LogFactory('Worker:ConnectionSync')

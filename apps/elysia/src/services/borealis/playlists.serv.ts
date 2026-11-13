@@ -1,7 +1,7 @@
-import { prisma, countOf, toDate, or, type MediaType } from '@Iris/db'
+import { prisma, countOf, toDate, or, type MediaType } from '@NamelessLiberty/db'
 import { NotFound, BadRequest, Forbidden } from '../../lib/errors'
-import { getProfileCustomization } from '@IRIS/shared'
-import { IRISBitField, IRISFlags } from '@IRIS/permissions'
+import { getProfileCustomization } from '@NamelessLiberty/shared'
+import { IRISBitField, IRISFlags } from '@NamelessLiberty/permissions'
 import { ActivityServ } from '../carina/activity.serv'
 import { CarinaUsersServ } from '../carina/users.serv'
 

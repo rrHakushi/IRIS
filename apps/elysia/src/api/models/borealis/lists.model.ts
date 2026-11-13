@@ -1,5 +1,5 @@
 import { t, type UnwrapSchema } from 'elysia'
-import { LIST_STATUSES } from '@Iris/db'
+import { LIST_STATUSES } from '@NamelessLiberty/db'
 
 /**
  * Unified list status accepted/returned by every list type.

@@ -3,7 +3,7 @@
 import React, { useMemo, useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { useUser } from "@/context/user-context"
-import { getMediaPreferences } from "@IRIS/shared"
+import { getMediaPreferences } from "@NamelessLiberty/shared"
 import { MediaHero } from "./media-hero"
 import { MediaTabNav } from "./media-tab-nav"
 import { OverviewTab } from "./tabs/overview-tab"

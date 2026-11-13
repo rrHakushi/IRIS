@@ -1,7 +1,7 @@
 import {
   DEFAULT_PROFILE_CUSTOMIZATION,
   type UserProfileCustomization,
-} from "@IRIS/shared"
+} from "@NamelessLiberty/shared"
 
 export interface ActivityDiffChange {
   field:

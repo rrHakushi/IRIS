@@ -1,4 +1,4 @@
-import { LogFactory, c } from '@Iris/logger'
+import { LogFactory, c } from '@NamelessLiberty/logger'
 
 const logger = new LogFactory('Borealis:Provider:AniList')
 

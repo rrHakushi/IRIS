@@ -13,7 +13,7 @@ import {
 import { SearchProxyManager } from "../search/index.js";
 import type { ConnectionCredentials } from "../types/index.js";
 
-describe("@IRIS/connections - Cryptographic Envelope", () => {
+describe("@NamelessLiberty/connections - Cryptographic Envelope", () => {
   const userId = "user_test_12345";
   const otherUserId = "user_attacker_67890";
 
@@ -79,7 +79,7 @@ describe("@IRIS/connections - Cryptographic Envelope", () => {
   });
 });
 
-describe("@IRIS/connections - Provider Registry", () => {
+describe("@NamelessLiberty/connections - Provider Registry", () => {
   it("should register and retrieve all required providers", () => {
     const providers = [
       "ANILIST",
@@ -117,7 +117,7 @@ describe("@IRIS/connections - Provider Registry", () => {
   });
 });
 
-describe("@IRIS/connections - Search Proxy", () => {
+describe("@NamelessLiberty/connections - Search Proxy", () => {
   it("should ensure tracking providers have search capability enabled", () => {
     const searchProviders = [
       "ANILIST",

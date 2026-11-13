@@ -164,7 +164,7 @@ steps:
         from_secret: INFISICAL_SITE_URL
       INFISICAL_ENV: prod
     commands:
-      - INFISICAL_API_URL="$(printf '%s' "$INFISICAL_SITE_URL" | sed 's|/$||')/api" bun run --filter=@Iris/db contract:emit
+      - INFISICAL_API_URL="$(printf '%s' "$INFISICAL_SITE_URL" | sed 's|/$||')/api" bun run --filter=@NamelessLiberty/db contract:emit
     depends_on:
       - searxng
 
@@ -228,7 +228,7 @@ steps:
     commands:
       - export DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1
       - |
-        PKG_VERSION=$(sed -n 's/.*"version":[[:space:]]*"\([^"]*\)".*/\1/p' apps/web/package.json | head -n 1)
+        PKG_VERSION=$(sed -n 's/.*"version":[[:space:]]*"\([^"]*\)".*/\1/p' apps/next/package.json | head -n 1)
         echo "Building NamelessLiberty-Next v$PKG_VERSION..."
         APP_VERSION="$PKG_VERSION" docker compose build --build-arg APP_VERSION="$PKG_VERSION" next
         APP_VERSION="$PKG_VERSION" docker compose up -d --no-deps next
