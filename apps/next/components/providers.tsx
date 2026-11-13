@@ -4,7 +4,6 @@ import * as React from "react"
 import { useRouter } from "next/navigation"
 import { RouterProvider } from "react-aria-components"
 import { SessionProvider } from "@/context/session-context"
-import { ThemeProvider } from "next-themes"
 import { DirectionProvider } from "@workspace/ui/components/direction"
 import { IrisSidebarProvider } from "@/components/navigation/sidebar-provider"
 import { UserProvider } from "@/context/user-context"
@@ -39,15 +38,12 @@ if (typeof window !== "undefined") {
   ;(window as any).__IRIS_API_URL__ = `${window.location.origin}/elysia`
 }
 
-// Suppress false-positive React 19 / Next.js 16 warnings (script tag emitted by next-themes SSR inline script and extension attribute injection)
+// Suppress false-positive React 19 / Next.js 16 warnings from browser extension attribute injection
 if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
   const origError = console.error
   console.error = (...args: unknown[]) => {
     const firstArg = typeof args[0] === "string" ? args[0] : ""
     if (
-      firstArg.includes(
-        "Encountered a script tag while rendering React component"
-      ) ||
       firstArg.includes("data-akaromi-attached") ||
       firstArg.includes("akaromi")
     ) {
@@ -73,18 +69,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <WebSocketProvider>
               <NotificationProvider>
                 <DirectionProvider direction="ltr">
-                  <ThemeProvider
-                    attribute="class"
-                    defaultTheme="dark"
-                    enableSystem
-                    disableTransitionOnChange
-                  >
-                    <IrisSidebarProvider>{children}</IrisSidebarProvider>
-                    <Toaster closeButton position="top-center" />
-                    {process.env.NODE_ENV === "development" && (
-                      <MetadataDevTool />
-                    )}
-                  </ThemeProvider>
+                  <IrisSidebarProvider>{children}</IrisSidebarProvider>
+                  <Toaster closeButton position="top-center" />
+                  {process.env.NODE_ENV === "development" && (
+                    <MetadataDevTool />
+                  )}
                 </DirectionProvider>
               </NotificationProvider>
             </WebSocketProvider>

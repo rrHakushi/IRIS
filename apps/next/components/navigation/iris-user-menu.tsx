@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import Link from "next/link"
-import { useTheme } from "next-themes"
 import { useSession, signIn, signOut } from "@/context/session-context"
 import { useTranslations } from "next-intl"
 import { usePathname } from "next/navigation"
@@ -39,8 +38,6 @@ import {
   IconPinFilled,
   IconApps,
   IconFolder,
-  IconSun,
-  IconMoon,
   IconEdit,
   IconDotsVertical,
   IconLock,
@@ -143,7 +140,6 @@ export function IrisUserMenu({
     isModalOpen: notificationsOpen,
     setIsModalOpen: setNotificationsOpen,
   } = useNotifications()
-  const { theme, setTheme, resolvedTheme } = useTheme()
   const { position } = useIrisSidebar()
   const isRight = position === "right"
   const isTop = position === "top"
@@ -948,30 +944,6 @@ export function IrisUserMenu({
           <IconUsers className="size-4" />
         </Button>
         <Tooltip>{t("friends")}</Tooltip>
-      </TooltipTrigger>
-
-      {/* Appearance / Theme Switcher */}
-      <TooltipTrigger delay={150}>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          className={cn(
-            "cursor-pointer rounded-xl border border-border/40 bg-background/50 hover:bg-background hover:text-primary transition-all shadow-2xs",
-            isCompact ? "size-8" : "size-9"
-          )}
-          onPress={() => {
-            const nextTheme = resolvedTheme === "dark" ? "light" : "dark"
-            setTheme(nextTheme)
-          }}
-          aria-label={t("appearance")}
-        >
-          {resolvedTheme === "dark" ? (
-            <IconSun className="size-4 text-amber-400" />
-          ) : (
-            <IconMoon className="size-4 text-indigo-400" />
-          )}
-        </Button>
-        <Tooltip>{t("appearance")}</Tooltip>
       </TooltipTrigger>
 
       {/* Language Switcher Dropdown */}
