@@ -439,8 +439,8 @@ export function BadgeShowcaseCard({
                             {isShowcased ? (
                               <Badge
                                 variant="default"
-                                className="h-4.5 gap-1 px-1.5 text-[9px] font-semibold uppercase tracking-wider shrink-0"
-                                style={{ backgroundColor: badge.color, color: "#fff" }}
+                                className="h-4.5 gap-1 px-1.5 text-[9px] font-semibold uppercase tracking-wider shrink-0 text-white"
+                                style={{ backgroundColor: badge.color }}
                               >
                                 <IconCheck className="size-2.5" />
                                 Pinned

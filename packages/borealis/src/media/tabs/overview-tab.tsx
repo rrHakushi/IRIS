@@ -1935,7 +1935,7 @@ export function OverviewTab({
                       href={media.lastFmUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 rounded-lg bg-[#D51007]/10 px-2.5 py-1 text-[11px] font-medium text-[#D51007] transition-colors hover:bg-[#D51007]/20"
+                      className="inline-flex items-center gap-1 rounded-lg bg-red-600/10 px-2.5 py-1 text-[11px] font-medium text-red-600 transition-colors hover:bg-red-600/20"
                     >
                       <span>Last.fm</span>
                       <IconExternalLink
@@ -1949,7 +1949,7 @@ export function OverviewTab({
                       href={`https://open.spotify.com/${media.format === "TRACK" ? "track" : "album"}/${media.spotifyId}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 rounded-lg bg-[#1DB954]/10 px-2.5 py-1 text-[11px] font-medium text-[#1DB954] transition-colors hover:bg-[#1DB954]/20"
+                      className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-500 transition-colors hover:bg-emerald-500/20"
                     >
                       <span>Spotify</span>
                       <IconExternalLink
@@ -1963,7 +1963,7 @@ export function OverviewTab({
                       href={`https://music.apple.com/song/${media.appleMusicId}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 rounded-lg bg-[#FA243C]/10 px-2.5 py-1 text-[11px] font-medium text-[#FA243C] transition-colors hover:bg-[#FA243C]/20"
+                      className="inline-flex items-center gap-1 rounded-lg bg-rose-500/10 px-2.5 py-1 text-[11px] font-medium text-rose-500 transition-colors hover:bg-rose-500/20"
                     >
                       <span>Apple Music</span>
                       <IconExternalLink
@@ -1977,7 +1977,7 @@ export function OverviewTab({
                       href={`https://music.youtube.com/watch?v=${media.youtubeMusicId}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 rounded-lg bg-[#FF0000]/10 px-2.5 py-1 text-[11px] font-medium text-[#FF0000] transition-colors hover:bg-[#FF0000]/20"
+                      className="inline-flex items-center gap-1 rounded-lg bg-red-500/10 px-2.5 py-1 text-[11px] font-medium text-red-500 transition-colors hover:bg-red-500/20"
                     >
                       <span>YouTube Music</span>
                       <IconExternalLink
@@ -1991,7 +1991,7 @@ export function OverviewTab({
                       href={`https://musicbrainz.org/${media.format === "TRACK" ? "recording" : "release-group"}/${media.musicBrainzId}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 rounded-lg bg-[#BA478F]/10 px-2.5 py-1 text-[11px] font-medium text-[#BA478F] transition-colors hover:bg-[#BA478F]/20"
+                      className="inline-flex items-center gap-1 rounded-lg bg-fuchsia-600/10 px-2.5 py-1 text-[11px] font-medium text-fuchsia-600 transition-colors hover:bg-fuchsia-600/20"
                     >
                       <span>MusicBrainz</span>
                       <IconExternalLink

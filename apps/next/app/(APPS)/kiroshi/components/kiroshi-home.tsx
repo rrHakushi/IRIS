@@ -16,11 +16,7 @@ export const KiroshiHome = memo(function KiroshiHome({
         {/* Brand Hero */}
         <div className="flex flex-col items-center space-y-2">
           <h1
-            className="bg-clip-text text-4xl font-extrabold tracking-tight text-transparent sm:text-6xl"
-            style={{
-              backgroundImage:
-                "linear-gradient(135deg, #10b981 0%, #06b6d4 25%, #2563eb 50%, #7c3aed 75%, #1e1b4b 100%)",
-            }}
+            className="bg-gradient-to-br from-emerald-500 via-cyan-500 to-violet-600 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent sm:text-6xl"
           >
             Kiroshi
           </h1>

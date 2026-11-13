@@ -452,7 +452,7 @@ export function ImageCropperModal({
           {cropBoxSize.width > 0 && (
             <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
               <div
-                className="relative border-2 border-white/95 shadow-[0_0_0_9999px_rgba(0,0,0,0.65)] transition-all"
+                className="relative border-2 border-white/95 shadow-[0_0_0_9999px] shadow-black/65 transition-all"
                 style={{
                   width: `${cropBoxSize.width}px`,
                   height: `${cropBoxSize.height}px`,

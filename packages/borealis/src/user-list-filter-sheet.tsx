@@ -483,7 +483,7 @@ export function UserListFilterSheet({
             size="icon-sm"
             className="size-7 rounded-lg border border-zinc-700/60 bg-zinc-900/80 text-zinc-200 hover:text-white hover:bg-zinc-800 cursor-pointer"
           >
-            <IconX className="size-4 text-white stroke-[2.5]" style={{ color: "#ffffff", stroke: "#ffffff" }} />
+            <IconX className="size-4 text-white stroke-[2.5]" />
             <span className="sr-only">Close</span>
           </SheetClose>
         </div>

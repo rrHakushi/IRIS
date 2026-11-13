@@ -317,7 +317,7 @@ export const BOOKMARK_COLOR_PRESETS: Array<{
 }> = [
   { id: "indigo", name: "Indigo", value: "#6366f1", bgClass: "bg-indigo-500" },
   { id: "rose", name: "Rose", value: "#f43f5e", bgClass: "bg-rose-500" },
-  { id: "fuchsia", name: "Fuchsia", value: "#d800a6", bgClass: "bg-[#d800a6]" },
+  { id: "fuchsia", name: "Fuchsia", value: "#d800a6", bgClass: "bg-fuchsia-600" },
   { id: "violet", name: "Violet", value: "#8b5cf6", bgClass: "bg-violet-500" },
   { id: "cyan", name: "Cyan", value: "#06b6d4", bgClass: "bg-cyan-500" },
   { id: "sky", name: "Sky", value: "#38bdf8", bgClass: "bg-sky-400" },

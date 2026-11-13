@@ -707,7 +707,7 @@ export function DisplayNameStyleCard({
                       style={{ backgroundColor: col.value }}
                     >
                       {isSelected && (
-                        <IconCheck className="size-3.5 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
+                        <IconCheck className="size-3.5 text-white drop-shadow-sm" />
                       )}
                     </button>
                   )

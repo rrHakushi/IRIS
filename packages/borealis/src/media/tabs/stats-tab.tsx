@@ -358,7 +358,7 @@ export function StatsTab({ media }: StatsTabProps) {
         >
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="flex size-7 items-center justify-center rounded-lg bg-[#D51007]/10 text-[#D51007]">
+              <div className="flex size-7 items-center justify-center rounded-lg bg-red-600/10 text-red-600">
                 <IconHeadphones className="size-4" aria-hidden="true" />
               </div>
               <div className="flex flex-col">

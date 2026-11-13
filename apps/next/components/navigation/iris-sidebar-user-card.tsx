@@ -186,7 +186,7 @@ export const IrisSidebarUserCard = React.forwardRef<
             className={cn(
               "truncate text-xs font-bold",
               activeNameplate
-                ? "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"
+                ? "text-white drop-shadow-md"
                 : "text-foreground",
               effectClasses
             )}
@@ -198,7 +198,7 @@ export const IrisSidebarUserCard = React.forwardRef<
             className={cn(
               "mt-0.5 truncate text-[10px] font-medium",
               activeNameplate
-                ? "text-zinc-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)]"
+                ? "text-zinc-200 drop-shadow-sm"
                 : "text-muted-foreground"
             )}
           >
@@ -212,7 +212,7 @@ export const IrisSidebarUserCard = React.forwardRef<
             className={cn(
               "z-10 ml-auto size-4 shrink-0",
               sidebarCardBackgroundUrl
-                ? "text-zinc-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
+                ? "text-zinc-200 drop-shadow-sm"
                 : "text-muted-foreground/70"
             )}
           />
