@@ -2,9 +2,106 @@
  * Akaromi for Firefox — Background Message Dispatcher & Lifecycle Coordinator
  */
 
-// PIN brute-force defense state
+// PIN brute-force defense state (also persisted in akaromi_pin_lockout across MV3 restarts)
 let pinFailedAttempts = 0
 let pinLockoutUntil = 0
+
+// Tracks last autofilled cipher per tab so floating 2FA widget can request short-lived OTP codes without holding totpSecret
+const lastAutofilledCipherByTab = new Map()
+
+// Tracks active popup-initiated QR capture session { tabId, expiresAt }
+let activeQrCaptureSession = null
+
+const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]", "::1"])
+
+function validateWebAuthnCaller(senderUrl, requestedRpId) {
+  if (!senderUrl || typeof senderUrl !== "string") {
+    return { ok: false, error: "Untrusted sender context" }
+  }
+  let parsed
+  try {
+    parsed = new URL(senderUrl)
+  } catch {
+    return { ok: false, error: "Invalid sender URL" }
+  }
+
+  const host = parsed.hostname.toLowerCase()
+  const isHttps = parsed.protocol === "https:"
+  const isLocalHttp = parsed.protocol === "http:" && LOOPBACK_HOSTS.has(host)
+  if (!isHttps && !isLocalHttp) {
+    return { ok: false, error: "WebAuthn requires HTTPS or localhost origin" }
+  }
+
+  const rpId = String(requestedRpId || host).toLowerCase().trim().replace(/\.+$/, "")
+  if (!rpId) {
+    return { ok: false, error: "Invalid Relying Party ID" }
+  }
+
+  const isIp = /^(\d{1,3}\.){3}\d{1,3}$/.test(host) || host.includes(":")
+  if (!LOOPBACK_HOSTS.has(rpId)) {
+    if (isIp && rpId !== host) {
+      return { ok: false, error: `Caller ${host} is not authorized for RP ID ${rpId}` }
+    }
+    if (!isIp) {
+      if (!rpId.includes(".")) {
+        return { ok: false, error: "Invalid RP ID: bare domain label is not permitted" }
+      }
+      if (Array.isArray(IrisMatching.PUBLIC_SUFFIXES) && IrisMatching.PUBLIC_SUFFIXES.includes(rpId)) {
+        return { ok: false, error: "Invalid RP ID: public suffix is not permitted" }
+      }
+    }
+  }
+
+  const isDomainValid = host === rpId || (!isIp && !LOOPBACK_HOSTS.has(rpId) && host.endsWith("." + rpId))
+  if (!isDomainValid) {
+    return { ok: false, error: `Cannot use passkey: Caller domain ${host} is not authorized for RP ID ${rpId}` }
+  }
+
+  return {
+    ok: true,
+    validatedRpId: rpId,
+    callerHost: host,
+    callerOrigin: parsed.origin,
+  }
+}
+
+function isPasskeyRpIdAuthorized(effectiveRpId, validatedRpId) {
+  if (!effectiveRpId || !validatedRpId) return false
+  const e = String(effectiveRpId).toLowerCase().trim()
+  const v = String(validatedRpId).toLowerCase().trim()
+  return e === v || v.endsWith("." + e)
+}
+
+async function persistPasskeyCipherUpdate(cipher) {
+  if (!cipher || !inMemoryVaultKey) return
+  try {
+    const encTitle = await IrisCrypto.encryptVaultData(cipher.title, inMemoryVaultKey)
+    const encData = await IrisCrypto.encryptVaultObject(cipher.data, inMemoryVaultKey)
+
+    // Update local encrypted cache first
+    try {
+      const sData = await storage.get(["cachedEncryptedCiphers"])
+      const cached = Array.isArray(sData?.cachedEncryptedCiphers) ? [...sData.cachedEncryptedCiphers] : []
+      const idx = cached.findIndex((item) => item.id === cipher.id)
+      if (idx !== -1) {
+        cached[idx] = { ...cached[idx], encryptedTitle: encTitle, encryptedData: encData }
+        await storage.set({ cachedEncryptedCiphers: cached })
+      }
+    } catch {}
+
+    // Best-effort sync to server
+    if (cipher.id && typeof IrisApi?.updateCipher === "function") {
+      await IrisApi.updateCipher(cipher.id, {
+        type: cipher.type,
+        encryptedTitle: encTitle,
+        encryptedData: encData,
+        favorite: Boolean(cipher.favorite),
+      })
+    }
+  } catch (err) {
+    console.warn("[Akaromi] Failed to persist updated passkey signCount:", err)
+  }
+}
 
 /**
  * Schedules wiping sensitive text from system clipboard after specified seconds
@@ -39,10 +136,14 @@ function scheduleClipboardWipe(text, seconds = 30) {
         const tabs = await ext.tabs.query({ active: true, lastFocusedWindow: true })
         const activeTab = tabs[0] || (await ext.tabs.query({ active: true }))[0]
         if (activeTab?.id) {
-          ext.tabs.sendMessage(activeTab.id, {
-            action: "CLEAR_CLIPBOARD_IF_MATCHES",
-            payload: { text },
-          }).catch(() => {})
+          ext.tabs.sendMessage(
+            activeTab.id,
+            {
+              action: "CLEAR_CLIPBOARD_IF_MATCHES",
+              payload: { text },
+            },
+            { frameId: 0 }
+          ).catch(() => {})
         }
       } catch (e) {}
     } catch (e) {
@@ -307,7 +408,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (action === "UNLOCK_VAULT") {
     ;(async () => {
       try {
-        if (!isPrivilegedSender(sender)) {
+        if (!sender || sender.id !== ext.runtime.id || (!isPrivilegedSender(sender) && sender.frameId !== 0)) {
           throw new Error("Unauthorized sender context")
         }
         const { password } = payload
@@ -316,6 +417,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         await unlockWithPassword(password)
         pinFailedAttempts = 0
         pinLockoutUntil = 0
+        await storage.remove(["akaromi_pin_lockout"]).catch(() => {})
         sendResponse({ success: true })
       } catch (err) {
         console.error("[Akaromi] Unlock error:", err)
@@ -344,10 +446,13 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
 
         const pinData = IrisCrypto.setupPinUnlock(pin, inMemoryVaultKey)
+        pinFailedAttempts = 0
+        pinLockoutUntil = 0
         await storage.set({
           pinUnlockData: pinData,
           pinUnlockEnabled: true,
         })
+        await storage.remove(["akaromi_pin_lockout"]).catch(() => {})
 
         sendResponse({ success: true })
       } catch (err) {
@@ -362,23 +467,32 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (action === "UNLOCK_WITH_PIN") {
     ;(async () => {
       try {
-        if (!isPrivilegedSender(sender)) {
+        if (!sender || sender.id !== ext.runtime.id || (!isPrivilegedSender(sender) && sender.frameId !== 0)) {
           throw new Error("Unauthorized sender context")
         }
         const { pin } = payload || {}
         if (!pin) throw new Error("PIN is required")
+
+        const sData = await storage.get([
+          "pinUnlockData",
+          "pinUnlockEnabled",
+          "user",
+          "akaromi_pin_lockout",
+        ])
+        const storedLockout = sData?.akaromi_pin_lockout || {}
+        pinFailedAttempts = Math.max(pinFailedAttempts, Number(storedLockout.failedAttempts) || 0)
+        pinLockoutUntil = Math.max(pinLockoutUntil, Number(storedLockout.lockoutUntil) || 0)
 
         if (pinLockoutUntil > Date.now()) {
           const remainingSec = Math.ceil((pinLockoutUntil - Date.now()) / 1000)
           throw new Error(`PIN unlock temporarily locked. Please wait ${remainingSec}s.`)
         }
 
-        const sData = await storage.get(["pinUnlockData", "pinUnlockEnabled", "user"])
         if (!sData.pinUnlockEnabled || !sData.pinUnlockData) {
           throw new Error("PIN unlock is not enabled on this device")
         }
 
-        // Decrypt vault key using PIN with rate-limiting & brute-force lockout
+        // Decrypt vault key using PIN with persistent rate-limiting & brute-force lockout
         let vaultKey
         try {
           vaultKey = IrisCrypto.unlockWithPin(pin, sData.pinUnlockData)
@@ -386,14 +500,20 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           pinFailedAttempts++
           if (pinFailedAttempts >= 5) {
             await storage.set({ pinUnlockEnabled: false })
-            await storage.remove(["pinUnlockData"])
+            await storage.remove(["pinUnlockData", "pinEncryptedMasterKey", "akaromi_pin_lockout"])
             pinFailedAttempts = 0
             pinLockoutUntil = 0
             throw new Error("Too many incorrect attempts (5). PIN unlock disabled for security. Please unlock with your account password.")
           } else if (pinFailedAttempts >= 3) {
             pinLockoutUntil = Date.now() + 5000
+            await storage.set({
+              akaromi_pin_lockout: { failedAttempts: pinFailedAttempts, lockoutUntil: pinLockoutUntil },
+            })
             throw new Error(`Incorrect PIN (${pinFailedAttempts}/5 attempts). Please wait 5 seconds.`)
           } else {
+            await storage.set({
+              akaromi_pin_lockout: { failedAttempts: pinFailedAttempts, lockoutUntil: pinLockoutUntil },
+            })
             throw new Error(`Incorrect PIN (${pinFailedAttempts}/5 attempts)`)
           }
         }
@@ -401,6 +521,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // Success: reset attempt counters and save to session
         pinFailedAttempts = 0
         pinLockoutUntil = 0
+        await storage.remove(["akaromi_pin_lockout"]).catch(() => {})
         inMemoryVaultKey = vaultKey
 
         await saveVaultKeyToSession()
@@ -654,6 +775,10 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // 6a2. Get All Decrypted Logins for Inline Fill Global Search
   if (action === "GET_ALL_LOGINS_FOR_INLINE_FILL") {
     ;(async () => {
+      if (!sender || sender.id !== ext.runtime.id || (!isPrivilegedSender(sender) && sender.frameId !== 0)) {
+        sendResponse({ ciphers: [], isUnlocked: false, error: "Unauthorized sender context" })
+        return
+      }
       await ensureVaultActive()
       resetAutoLock()
       if (!inMemoryVaultKey || !inMemoryCiphers) {
@@ -661,13 +786,21 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return
       }
       const logins = inMemoryCiphers
-        .filter((c) => !c.deletedAt && (c.type === "LOGIN" || c.data?.itemType === "login"))
+        .filter(
+          (c) =>
+            !c.deletedAt &&
+            c.type !== "SSH_KEY" &&
+            c.type !== 2 &&
+            (!c.data?.itemType || c.data.itemType === "login") &&
+            (c.type === "LOGIN" || c.type === 1 || c.data?.itemType === "login")
+        )
         .map((c) => ({
           id: c.id,
           title: c.title,
           _matchTier: "all",
           data: {
             username: c.login?.username || c.data?.username || c.data?.email || "",
+            email: c.data?.email || "",
             uris: c.data?.uris || c.login?.uris || c.data?.websites || [],
             additionalPasswords: (c.data?.additionalPasswords || []).map((ap, idx) => ({
               id: ap.id || String(idx),
@@ -687,20 +820,30 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (action === "GET_CREDENTIAL_FOR_AUTOFILL") {
     ;(async () => {
       try {
+        if (!sender || sender.id !== ext.runtime.id || (!isPrivilegedSender(sender) && sender.frameId !== 0)) {
+          throw new Error("Unauthorized sender context")
+        }
         await ensureVaultActive()
         resetAutoLock()
         if (!inMemoryVaultKey) throw new Error("Vault is locked")
 
-        const { cipherId, subPasswordId } = payload || {}
+        const { cipherId, subPasswordId, userSelected } = payload || {}
         if (!cipherId) throw new Error("cipherId is required")
 
-        // Security check: Verify sender tab matches the cipher's authorized domain
-        const isPrivileged = isPrivilegedSender(sender)
-        const targetUrl = isPrivileged && payload?.url ? payload.url : (sender.url || sender.tab?.url || "")
-        const matching = getMatchingLogins(targetUrl)
-        const cipher = matching.find((c) => c.id === cipherId)
+        const cipher = inMemoryCiphers.find((c) => !c.deletedAt && c.id === cipherId)
         if (!cipher) {
-          throw new Error("Cipher does not match current domain or unauthorized")
+          throw new Error("Cipher not found")
+        }
+
+        if (!isPrivilegedSender(sender)) {
+          const callerUrl = sender.url || sender.tab?.url || ""
+          const uriMatched = callerUrl && getMatchingLogins(callerUrl).some((m) => m.id === cipher.id)
+          if (!uriMatched && !userSelected) {
+            throw new Error("Credential URI does not match sender origin")
+          }
+          if (sender.tab?.id) {
+            lastAutofilledCipherByTab.set(sender.tab.id, cipher.id)
+          }
         }
 
         let passwordToFill = cipher.login?.password || cipher.data?.password || ""
@@ -730,14 +873,66 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         sendResponse({
           success: true,
+          cipherId: cipher.id,
+          hasTotp: Boolean(totpSecret),
           username: cipher.login?.username || cipher.data?.username || cipher.data?.email || "",
           password: passwordToFill,
-          totpSecret,
           totpCode: generatedTotpCode,
         })
       } catch (err) {
         console.warn("[Akaromi] Credential autofill retrieval error:", err)
         sendResponse({ success: false, error: err.message })
+      }
+    })()
+    return true
+  }
+
+  // 6c. Get current short-lived 6-digit TOTP code by cipherId (keeps raw totpSecret in background)
+  if (action === "GET_TOTP_CODE_FOR_CIPHER") {
+    ;(async () => {
+      try {
+        if (!sender || sender.id !== ext.runtime.id || (!isPrivilegedSender(sender) && sender.frameId !== 0)) {
+          throw new Error("Unauthorized sender context")
+        }
+        await ensureVaultActive()
+        resetAutoLock()
+        if (!inMemoryVaultKey) throw new Error("Vault is locked")
+
+        const { cipherId } = payload || {}
+        if (!cipherId) throw new Error("cipherId is required")
+
+        const cipher = inMemoryCiphers.find((c) => !c.deletedAt && c.id === cipherId)
+        if (!cipher) throw new Error("Cipher not found")
+
+        if (!isPrivilegedSender(sender) && sender.tab) {
+          const callerUrl = sender.url || sender.tab?.url || ""
+          const uriMatched = callerUrl && getMatchingLogins(callerUrl).some((m) => m.id === cipher.id)
+          const wasAutofilledInTab = lastAutofilledCipherByTab.get(sender.tab.id) === cipher.id
+          if (!uriMatched && !wasAutofilledInTab) {
+            throw new Error("Cipher not authorized for this tab")
+          }
+        }
+
+        const rawTotp =
+          cipher.data?.totpSecret ||
+          cipher.data?.totp ||
+          cipher.data?.totpUri ||
+          cipher.data?.otpauth ||
+          cipher.totpSecret ||
+          cipher.totp ||
+          cipher.login?.totp ||
+          ""
+        const totpSecret = typeof rawTotp === "string" ? rawTotp.trim() : ""
+        if (!totpSecret) throw new Error("No 2FA configured on this item")
+
+        const totpCode = typeof IrisTotp !== "undefined" ? await IrisTotp.generateTotp(totpSecret) : ""
+        const remainingSeconds =
+          typeof IrisTotp !== "undefined" && typeof IrisTotp.getRemainingSeconds === "function"
+            ? IrisTotp.getRemainingSeconds()
+            : 30
+        sendResponse({ success: true, totpCode, remainingSeconds })
+      } catch (err) {
+        sendResponse({ success: false, error: err.message || "Failed to generate 2FA code" })
       }
     })()
     return true
@@ -764,6 +959,9 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (action === "PERFORM_AUTOFILL") {
     ;(async () => {
       try {
+        if (!isPrivilegedSender(sender)) {
+          throw new Error("Unauthorized sender context")
+        }
         await ensureVaultActive()
         const { cipherId, tabId } = payload
         const cipher = inMemoryCiphers.find((c) => c.id === cipherId)
@@ -775,15 +973,35 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           (await ext.tabs.query({ active: true, currentWindow: true }))[0]?.id
         if (!targetTabId) throw new Error("Target tab not found")
 
-        await ext.tabs.sendMessage(targetTabId, {
-          action: "FILL_INPUTS",
-          payload: {
-            title: cipher.title || cipher.data?.username || "Account",
-            username: cipher.data?.username || "",
-            password: cipher.data?.password || "",
-            totpSecret: cipher.data?.totpSecret || "",
+        const rawTotp =
+          cipher.data?.totpSecret ||
+          cipher.data?.totp ||
+          cipher.data?.totpUri ||
+          cipher.data?.otpauth ||
+          ""
+        const hasTotp = Boolean(typeof rawTotp === "string" && rawTotp.trim())
+        let totpCode = ""
+        if (hasTotp && typeof IrisTotp !== "undefined") {
+          totpCode = await IrisTotp.generateTotp(rawTotp.trim())
+        }
+
+        lastAutofilledCipherByTab.set(targetTabId, cipher.id)
+
+        await ext.tabs.sendMessage(
+          targetTabId,
+          {
+            action: "FILL_INPUTS",
+            payload: {
+              cipherId: hasTotp ? cipher.id : "",
+              hasTotp,
+              totpCode,
+              title: cipher.title || cipher.data?.username || "Account",
+              username: cipher.data?.username || "",
+              password: cipher.data?.password || "",
+            },
           },
-        })
+          { frameId: 0 }
+        )
 
         sendResponse({ success: true })
       } catch (err) {
@@ -862,7 +1080,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const targetTabId = sender.tab?.id
         if (targetTabId) {
           try {
-            await ext.tabs.sendMessage(targetTabId, { action: "SHOW_IN_PAGE_UNLOCK_MODAL" })
+            await ext.tabs.sendMessage(targetTabId, { action: "SHOW_IN_PAGE_UNLOCK_MODAL" }, { frameId: 0 })
             sendResponse({ success: true, method: "in_page_modal" })
             return
           } catch (e) {
@@ -900,12 +1118,36 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true
   }
 
+  // 8c-0. Track popup-authorized QR screen capture session
+  if (action === "BEGIN_QR_CAPTURE") {
+    if (!isPrivilegedSender(sender)) {
+      sendResponse({ success: false, error: "Unauthorized sender context" })
+      return true
+    }
+    const tabId = payload?.tabId
+    activeQrCaptureSession = tabId ? { tabId, expiresAt: Date.now() + 60000 } : null
+    sendResponse({ success: true })
+    return true
+  }
+
   // 8c. Process QR Code Screenshot from Selected Area
   if (action === "PROCESS_QR_SCREENSHOT") {
     ;(async () => {
       try {
+        if (!sender || sender.id !== ext.runtime.id || (!isPrivilegedSender(sender) && sender.frameId !== 0)) {
+          throw new Error("Unauthorized sender context")
+        }
         const { bounds, tabId } = payload || {}
         const targetTabId = tabId || sender.tab?.id
+        if (
+          !activeQrCaptureSession ||
+          activeQrCaptureSession.expiresAt < Date.now() ||
+          activeQrCaptureSession.tabId !== targetTabId
+        ) {
+          throw new Error("QR capture session expired or not initiated from Akaromi popup")
+        }
+        activeQrCaptureSession = null
+
         const targetWindowId = sender.tab?.windowId
         const screenshotUrl = targetWindowId !== undefined && targetWindowId !== null
           ? await ext.tabs.captureVisibleTab(targetWindowId, { format: "png" })
@@ -963,14 +1205,25 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           await ext.storage.session.set({ pendingScannedTotp: parsedOtp }).catch(() => {})
         }
 
-        if (targetTabId) {
-          ext.tabs.sendMessage(targetTabId, {
-            action: "QR_SCAN_SUCCESS",
-            payload: parsedOtp,
-          }).catch(() => {})
+        const initialCode = typeof IrisTotp !== "undefined" ? await IrisTotp.generateTotp(parsedOtp.secret) : ""
+        const safeResult = {
+          label: parsedOtp.label,
+          issuer: parsedOtp.issuer,
+          totpCode: initialCode,
         }
 
-        sendResponse({ success: true, result: parsedOtp })
+        if (targetTabId) {
+          ext.tabs.sendMessage(
+            targetTabId,
+            {
+              action: "QR_SCAN_SUCCESS",
+              payload: safeResult,
+            },
+            { frameId: 0 }
+          ).catch(() => {})
+        }
+
+        sendResponse({ success: true, result: safeResult })
       } catch (err) {
         console.warn("[Akaromi] QR Screen Capture error:", err)
         sendResponse({ success: false, error: err.message || "Failed to decode QR code" })
@@ -995,11 +1248,14 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         let saved
         if (id) {
+          const existingCipher = inMemoryCiphers.find((c) => c.id === id)
+          const resolvedFavorite =
+            favorite !== undefined ? Boolean(favorite) : Boolean(existingCipher?.favorite)
           saved = await IrisApi.updateCipher(id, {
             type,
             encryptedTitle,
             encryptedData,
-            favorite: Boolean(favorite),
+            favorite: resolvedFavorite,
           })
         } else {
           saved = await IrisApi.createCipher({
@@ -1060,6 +1316,16 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (action === "PASSKEY_GET_CREDENTIALS") {
     ;(async () => {
       try {
+        if (!sender || sender.id !== ext.runtime.id || sender.frameId !== 0) {
+          sendResponse({
+            success: false,
+            isUnlocked: false,
+            credentials: [],
+            passkeys: [],
+            error: "Unauthorized sender context",
+          })
+          return
+        }
         await ensureVaultActive()
         if (!inMemoryVaultKey) {
           sendResponse({
@@ -1072,19 +1338,25 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           return
         }
 
-        const callerUrl = sender.url || sender.tab?.url || payload?.url || ""
-        const callerHost = IrisMatching.extractHost(callerUrl)
-        if (!callerHost) {
-          sendResponse({ success: false, credentials: [], passkeys: [] })
+        const callerUrl = sender.url || ""
+        const rpCheck = validateWebAuthnCaller(callerUrl, payload?.rpId)
+        if (!rpCheck.ok) {
+          sendResponse({
+            success: false,
+            isUnlocked: true,
+            credentials: [],
+            passkeys: [],
+            error: rpCheck.error,
+          })
           return
         }
+        const { validatedRpId } = rpCheck
 
         function normalizeB64(id) {
           if (!id || typeof id !== "string") return ""
           return id.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")
         }
 
-        const requestedRpId = (payload?.rpId || callerHost || "").toLowerCase()
         const rawAllowed =
           Array.isArray(payload?.allowCredentials) && payload.allowCredentials.length > 0
             ? payload.allowCredentials.map((c) => (typeof c === "string" ? c : c.id))
@@ -1098,24 +1370,36 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           if (!passkey) continue
 
           const effectiveRpId = (passkey.rpId || "").toLowerCase()
-          const hasMatchingUri =
-            Array.isArray(cipher.data?.uris) &&
-            cipher.data.uris.some((u) => {
-              const uStr = typeof u === "string" ? u : u?.uri
-              return uStr && IrisMatching.isUriMatch(callerUrl, uStr, u?.match ?? 0)
-            })
+          if (!isPasskeyRpIdAuthorized(effectiveRpId, validatedRpId)) continue
 
-          const isRpMatch =
-            effectiveRpId === requestedRpId ||
-            (callerHost && (effectiveRpId === callerHost || callerHost.endsWith("." + effectiveRpId))) ||
-            (callerUrl && IrisMatching.isUriMatch(callerUrl, effectiveRpId, 0)) ||
-            hasMatchingUri
+          const normCredId = normalizeB64(passkey.credentialId)
+          if (allowedIds && !allowedIds.includes(normCredId)) {
+            continue
+          }
+          matched.push({
+            id: passkey.credentialId,
+            credentialId: passkey.credentialId,
+            rawId: passkey.credentialId,
+            type: "public-key",
+            userName: passkey.userName || cipher.data?.username || "Account",
+            userDisplayName: passkey.userDisplayName || cipher.title || cipher.data?.username || "Account",
+            userHandle: passkey.userHandle || "",
+            cipherId: cipher.id,
+            cipherTitle: cipher.title || "Passkey",
+            title: cipher.title || passkey.userName || "Passkey",
+          })
+        }
 
-          if (isRpMatch) {
-            const normCredId = normalizeB64(passkey.credentialId)
-            if (allowedIds && !allowedIds.includes(normCredId)) {
-              continue
-            }
+        // If allowCredentials was specified but strict ID match didn't find them, return all strictly RP-authorized passkeys for selection
+        if (matched.length === 0 && allowedIds) {
+          for (const cipher of inMemoryCiphers) {
+            if (cipher.deletedAt || cipher.type !== "LOGIN") continue
+            const passkey = cipher.data?.passkey
+            if (!passkey) continue
+
+            const effectiveRpId = (passkey.rpId || "").toLowerCase()
+            if (!isPasskeyRpIdAuthorized(effectiveRpId, validatedRpId)) continue
+
             matched.push({
               id: passkey.credentialId,
               credentialId: passkey.credentialId,
@@ -1128,44 +1412,6 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
               cipherTitle: cipher.title || "Passkey",
               title: cipher.title || passkey.userName || "Passkey",
             })
-          }
-        }
-
-        // If allowCredentials was specified but strict ID match didn't find them, check if any RP passkeys exist
-        if (matched.length === 0 && allowedIds) {
-          for (const cipher of inMemoryCiphers) {
-            if (cipher.deletedAt || cipher.type !== "LOGIN") continue
-            const passkey = cipher.data?.passkey
-            if (!passkey) continue
-
-            const effectiveRpId = (passkey.rpId || "").toLowerCase()
-            const hasMatchingUri =
-              Array.isArray(cipher.data?.uris) &&
-              cipher.data.uris.some((u) => {
-                const uStr = typeof u === "string" ? u : u?.uri
-                return uStr && IrisMatching.isUriMatch(callerUrl, uStr, u?.match ?? 0)
-              })
-
-            const isRpMatch =
-              effectiveRpId === requestedRpId ||
-              (callerHost && (effectiveRpId === callerHost || callerHost.endsWith("." + effectiveRpId))) ||
-              (callerUrl && IrisMatching.isUriMatch(callerUrl, effectiveRpId, 0)) ||
-              hasMatchingUri
-
-            if (isRpMatch) {
-              matched.push({
-                id: passkey.credentialId,
-                credentialId: passkey.credentialId,
-                rawId: passkey.credentialId,
-                type: "public-key",
-                userName: passkey.userName || cipher.data?.username || "Account",
-                userDisplayName: passkey.userDisplayName || cipher.title || cipher.data?.username || "Account",
-                userHandle: passkey.userHandle || "",
-                cipherId: cipher.id,
-                cipherTitle: cipher.title || "Passkey",
-                title: cipher.title || passkey.userName || "Passkey",
-              })
-            }
           }
         }
 
@@ -1191,15 +1437,15 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (action === "PASSKEY_CREATE_CREDENTIAL") {
     ;(async () => {
       try {
+        if (!sender || sender.id !== ext.runtime.id || sender.frameId !== 0) {
+          throw new Error("Unauthorized sender context")
+        }
         await ensureVaultActive()
         if (!inMemoryVaultKey) {
           throw new Error("Vault is locked. Please unlock Akaromi first.")
         }
 
-        const callerUrl = sender.url || sender.tab?.url || payload?.url || ""
-        const callerHost = IrisMatching.extractHost(callerUrl)
-        if (!callerHost) throw new Error("Untrusted sender context")
-
+        const callerUrl = sender.url || ""
         const {
           rpId,
           rpName,
@@ -1210,17 +1456,12 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           targetCipherId,
         } = payload || {}
 
-        const effectiveRpId = rpId || callerHost
-        const isRpAllowed =
-          effectiveRpId.toLowerCase() === callerHost.toLowerCase() ||
-          callerHost.toLowerCase().endsWith("." + effectiveRpId.toLowerCase()) ||
-          IrisMatching.isUriMatch(callerUrl, effectiveRpId, 0)
-
-        if (!isRpAllowed) {
-          throw new Error(
-            `Cannot register passkey: Caller domain ${callerHost} is not authorized for RP ID ${effectiveRpId}`
-          )
+        const rpCheck = validateWebAuthnCaller(callerUrl, rpId)
+        if (!rpCheck.ok) {
+          throw new Error(rpCheck.error)
         }
+        const effectiveRpId = rpCheck.validatedRpId
+        const origin = rpCheck.callerOrigin
 
         const keyPair = await crypto.subtle.generateKey(
           { name: "ECDSA", namedCurve: "P-256" },
@@ -1247,7 +1488,6 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const credIdBytes = crypto.getRandomValues(new Uint8Array(32))
         const credIdB64 = bufferToBase64Url(credIdBytes)
 
-        const origin = callerUrl ? new URL(callerUrl).origin : "https://" + effectiveRpId
         const clientDataObj = {
           type: "webauthn.create",
           challenge: challenge,
@@ -1358,12 +1598,18 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (action === "PASSKEY_SIGN_ASSERTION") {
     ;(async () => {
       try {
+        if (!sender || sender.id !== ext.runtime.id || sender.frameId !== 0) {
+          throw new Error("Unauthorized sender context")
+        }
         await ensureVaultActive()
         if (!inMemoryVaultKey) throw new Error("Vault is locked. Please unlock Akaromi.")
 
-        const callerUrl = sender.url || sender.tab?.url || payload?.url || ""
-        const callerHost = IrisMatching.extractHost(callerUrl)
-        if (!callerHost) throw new Error("Untrusted sender context")
+        const callerUrl = sender.url || ""
+        const rpCheck = validateWebAuthnCaller(callerUrl, payload?.rpId)
+        if (!rpCheck.ok) {
+          throw new Error(rpCheck.error)
+        }
+        const { validatedRpId, callerHost, callerOrigin } = rpCheck
 
         const { credentialId, challenge } = payload || {}
         if (!credentialId) throw new Error("Missing credential ID")
@@ -1389,31 +1635,18 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (!matchedPasskey) throw new Error("Passkey not found in vault")
 
         const effectiveRpId = (matchedPasskey.rpId || "").toLowerCase()
-        const requestedRpId = (payload?.rpId || callerHost || "").toLowerCase()
-        const hasMatchingUri =
-          Array.isArray(matchedCipher?.data?.uris) &&
-          matchedCipher.data.uris.some((u) => {
-            const uStr = typeof u === "string" ? u : u?.uri
-            return uStr && IrisMatching.isUriMatch(callerUrl, uStr, u?.match ?? 0)
-          })
-
-        const isRpMatch =
-          effectiveRpId === requestedRpId ||
-          (callerHost && (effectiveRpId === callerHost || callerHost.endsWith("." + effectiveRpId))) ||
-          (callerUrl && IrisMatching.isUriMatch(callerUrl, effectiveRpId, 0)) ||
-          hasMatchingUri
-
-        if (!isRpMatch) {
-          throw new Error(`Relying party mismatch: Passkey is registered to ${effectiveRpId}, but assertion was requested by ${callerHost}`)
+        if (!isPasskeyRpIdAuthorized(effectiveRpId, validatedRpId)) {
+          throw new Error(
+            `Relying party mismatch: Passkey is registered to ${effectiveRpId}, but assertion was requested by ${callerHost}`
+          )
         }
 
-        const effectiveOrigin = payload?.origin || (callerUrl ? new URL(callerUrl).origin : "https://" + (requestedRpId || effectiveRpId))
         const enc = new TextEncoder()
 
         const clientDataObj = {
           type: "webauthn.get",
           challenge: challenge,
-          origin: effectiveOrigin,
+          origin: callerOrigin,
           crossOrigin: false,
         }
         const clientDataJSON = enc.encode(JSON.stringify(clientDataObj))
@@ -1421,8 +1654,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const clientDataHashBuf = await crypto.subtle.digest("SHA-256", clientDataJSON)
         const clientDataHash = new Uint8Array(clientDataHashBuf)
 
-        const rpIdToUse = requestedRpId || effectiveRpId || callerHost
-        const rpIdHashBuf = await crypto.subtle.digest("SHA-256", enc.encode(rpIdToUse))
+        const rpIdHashBuf = await crypto.subtle.digest("SHA-256", enc.encode(validatedRpId))
         const rpIdHash = new Uint8Array(rpIdHashBuf)
         const flags = 0x1d
 
@@ -1450,6 +1682,8 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         )
         const rawSig = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, privKey, signData)
         const derSig = rawToDerSignature(new Uint8Array(rawSig))
+
+        persistPasskeyCipherUpdate(matchedCipher).catch(() => {})
 
         sendResponse({
           success: true,
@@ -1503,6 +1737,17 @@ ext.runtime.onInstalled?.addListener(async () => {
     for (const tab of tabs) {
       if (!tab.id) continue
       try {
+        if (ext.scripting?.insertCSS) {
+          await ext.scripting.insertCSS({
+            target: { tabId: tab.id, allFrames: true },
+            files: [
+              "content/badge.css",
+              "content/menu.css",
+              "content/passkey.css",
+              "content/content.css",
+            ],
+          }).catch(() => {})
+        }
         if (ext.scripting?.executeScript) {
           await ext.scripting.executeScript({
             target: { tabId: tab.id, allFrames: true },
@@ -1513,6 +1758,7 @@ ext.runtime.onInstalled?.addListener(async () => {
             target: { tabId: tab.id, allFrames: true },
             files: [
               "lib/icons.js",
+              "lib/totp.js",
               "content/detection.js",
               "content/badge.js",
               "content/menu.js",

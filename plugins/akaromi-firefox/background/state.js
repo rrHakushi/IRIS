@@ -177,10 +177,25 @@ function lockVault() {
     ext.alarms?.clear("autoLock")
   } catch {}
   clearVaultKeyFromSession()
+  storage
+    .remove([
+      "sessionMasterKey",
+      "akaromi_auth_draft",
+      "akaromi_edit_draft",
+      "akaromi_gen_draft",
+      "pendingScannedTotp",
+    ])
+    .catch(() => {})
   updateBadge()
 }
 
 function isPrivilegedSender(sender) {
-  // Only internal extension contexts (e.g. popup, options page) - not untrusted webpage content scripts
-  return !sender.tab && sender.id === ext.runtime.id
+  // Allow internal extension pages (toolbar popup, standalone popup window, extension tab, options page)
+  // while rejecting webpage content scripts.
+  if (!sender || sender.id !== ext.runtime.id) return false
+  const extOrigin = ext.runtime.getURL("")
+  if (sender.url) {
+    return sender.url.startsWith(extOrigin)
+  }
+  return !sender.tab
 }

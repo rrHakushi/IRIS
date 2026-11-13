@@ -73,7 +73,25 @@
   // ----------------------------------------------------
   // Settings Modal Interactions & Storage Persistence
   // ----------------------------------------------------
+  function applyManifestInfo() {
+    try {
+      const manifest = ext.runtime?.getManifest?.()
+      if (!manifest) return
+      const aboutName = document.getElementById("about-extension-name")
+      const aboutVersion = document.getElementById("about-extension-version")
+      const drawerVersion = document.getElementById("drawer-version-label")
+      if (aboutName && manifest.name) aboutName.textContent = manifest.name
+      if (aboutVersion && manifest.version) aboutVersion.textContent = `Version ${manifest.version}`
+      if (drawerVersion && manifest.version) {
+        drawerVersion.textContent = `${manifest.name || "Akaromi"} v${manifest.version}`
+      }
+    } catch {}
+  }
+
+  applyManifestInfo()
+
   async function loadSettings() {
+    applyManifestInfo()
     try {
       const data = await storage.get([
         "autoLockMinutes",
@@ -157,10 +175,15 @@
   btnSaveSettingsServer?.addEventListener("click", async () => {
     const url = settingServerUrl?.value.trim()
     if (!url) return
-    await IrisApi.setServerUrl(url)
-    await storage.set({ serverUrl: url })
-    if (drawerUserServer) drawerUserServer.textContent = url.replace(/^https?:\/\//, "")
-    showToast("Server URL saved")
+    try {
+      const normalized = await IrisApi.setServerUrl(url)
+      await storage.set({ serverUrl: normalized })
+      if (settingServerUrl) settingServerUrl.value = normalized
+      if (drawerUserServer) drawerUserServer.textContent = normalized.replace(/^https?:\/\//, "")
+      showToast("Server URL saved")
+    } catch (err) {
+      showToast(err.message || "Invalid server URL")
+    }
   })
 
   // ----------------------------------------------------
@@ -315,12 +338,17 @@
 
     if (activeNameplate && customization) {
       const fullUrl = customization.resolveMediaUrl(activeNameplate, serverUrl)
-      if (nameplateEl) {
-        nameplateEl.style.backgroundImage = `url("${fullUrl}")`
+      const safeUrl = customization.sanitizeCssUrl ? customization.sanitizeCssUrl(fullUrl) : ""
+      if (nameplateEl && safeUrl) {
+        nameplateEl.style.backgroundImage = `url("${safeUrl}")`
         nameplateEl.style.display = "block"
+        if (overlayEl) overlayEl.style.display = "block"
+        if (drawerCard) drawerCard.classList.add("has-nameplate")
+      } else {
+        if (nameplateEl) nameplateEl.style.display = "none"
+        if (overlayEl) overlayEl.style.display = "none"
+        if (drawerCard) drawerCard.classList.remove("has-nameplate")
       }
-      if (overlayEl) overlayEl.style.display = "block"
-      if (drawerCard) drawerCard.classList.add("has-nameplate")
     } else {
       if (nameplateEl) nameplateEl.style.display = "none"
       if (overlayEl) overlayEl.style.display = "none"

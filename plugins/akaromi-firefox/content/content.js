@@ -821,7 +821,7 @@
     removeUnlockModal()
 
     // Query vault state to see if PIN unlock is enabled
-    const stateRes = await ext.runtime.sendMessage({ action: "GET_VAULT_STATE" }).catch(() => ({}))
+    const stateRes = await ext.runtime.sendMessage({ action: "GET_STATUS" }).catch(() => ({}))
     const pinEnabled = Boolean(stateRes?.pinUnlockEnabled)
 
     const overlay = document.createElement("div")
@@ -969,6 +969,7 @@
   // Step 4.1: Message Listener & Clipboard Sanitization
   ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "SHOW_IN_PAGE_UNLOCK_MODAL") {
+      if (window !== window.top) return
       showInPageUnlockModal()
       sendResponse({ success: true })
       return true
@@ -979,11 +980,18 @@
     }
 
     if (message.action === "FILL_INPUTS" || message.action === "FILL_CREDENTIALS") {
-      const { username, password, totpSecret, title } = message.payload || {}
-      globalThis.AkaromiFill?.fillCredential({
-        title,
-        data: { username, password, totpSecret },
-      })
+      if (window !== window.top) return
+      const { username, password, cipherId, hasTotp, totpCode, title } = message.payload || {}
+      globalThis.AkaromiFill?.fillCredential(
+        {
+          id: cipherId,
+          title,
+          hasTotp: Boolean(hasTotp || cipherId || totpCode),
+          data: { username, password },
+        },
+        null,
+        totpCode || ""
+      )
       showToast("Credentials autofilled by Akaromi")
       sendResponse({ success: true })
       return true
@@ -997,18 +1005,21 @@
     }
 
     if (message.action === "SHOW_TOTP_TIMER" || message.action === "SHOW_FLOATING_TOTP_WIDGET") {
-      const { secret, label, initialCode } = message.payload || {}
-      showFloatingTotpWidget(secret, label, initialCode)
+      if (window !== window.top) return
+      const { cipherId, label, initialCode } = message.payload || {}
+      showFloatingTotpWidget(cipherId, label, initialCode)
       sendResponse({ success: true })
       return true
     }
 
     if (message.action === "QR_SCAN_SUCCESS") {
       const parsed = message.payload || {}
-      if (parsed.secret) {
-        copyToClipboard(parsed.secret)
+      if (parsed.totpCode) {
+        copyToClipboard(parsed.totpCode)
+        showToast(`QR code decoded! Temporary 2FA code ${parsed.totpCode} copied. Open Akaromi to save.`)
+      } else {
+        showToast("QR code decoded! Open Akaromi to save your 2FA key.")
       }
-      showToast(`Scanned QR Code! 2FA Secret imported: ${parsed.secret?.slice(0, 4)}...`)
       sendResponse({ success: true })
       return true
     }
@@ -1225,9 +1236,11 @@
               },
             },
             (res) => {
-              if (res?.success && res.result?.secret) {
-                copyToClipboard(res.result.secret)
-                showToast("QR code decoded! 2FA Secret imported. Open Akaromi to save.")
+              if (res?.success) {
+                if (res.result?.totpCode) {
+                  copyToClipboard(res.result.totpCode)
+                }
+                showToast("QR code decoded! Open Akaromi to save your 2FA key.")
               } else {
                 showToast(res?.error || "Could not decode QR code. Please try selecting the QR code again.")
               }
@@ -1292,7 +1305,7 @@
   let activeTotpWidget = null
   let totpCountdownInterval = null
 
-  async function showFloatingTotpWidget(secret, label = "2FA Code", initialCode = "") {
+  async function showFloatingTotpWidget(cipherId, label = "2FA Code", initialCode = "") {
     if (totpCountdownInterval) {
       clearInterval(totpCountdownInterval)
       totpCountdownInterval = null
@@ -1303,9 +1316,9 @@
       } catch {}
       activeTotpWidget = null
     }
-    if (!secret) return
+    if (!cipherId) return
 
-    const cleanSecret = String(secret).trim()
+    const targetCipherId = String(cipherId).trim()
 
     // Normalized URL (domain + path, ignoring query string & hash fragments)
     function getNormalizedUrl() {
@@ -1321,18 +1334,12 @@
 
     const initialNormalizedUrl = getNormalizedUrl()
 
-    // Helper to generate TOTP code
+    // Fetch short-lived 6-digit TOTP code from background by cipherId (keeps raw totpSecret out of content scripts)
     function getCode() {
-      if (typeof IrisTotp !== "undefined" && typeof IrisTotp.generateTotpSync === "function") {
-        try {
-          const c = IrisTotp.generateTotpSync(cleanSecret)
-          if (c) return c
-        } catch {}
-      }
       return new Promise((resolve) => {
         ext.runtime.sendMessage(
-          { action: "GENERATE_TOTP", payload: { secret: cleanSecret } },
-          (res) => resolve(res?.code || "")
+          { action: "GET_TOTP_CODE_FOR_CIPHER", payload: { cipherId: targetCipherId } },
+          (res) => resolve(res?.totpCode || "")
         )
       })
     }

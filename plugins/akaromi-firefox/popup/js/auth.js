@@ -69,8 +69,23 @@
   let activeLoginMethod = "account"
   let pendingMfa = null
   let isBackupModeActive = false
+  let activePrimaryMfaType = "totp"
   let emailResendCooldown = 0
   let resendTimer = null
+
+  function clearSensitiveAuthInputs() {
+    if (loginPassword) loginPassword.value = ""
+    if (loginApiKey) loginApiKey.value = ""
+    if (loginApiMasterPass) loginApiMasterPass.value = ""
+    if (unlockPassword) unlockPassword.value = ""
+    if (unlockPin) unlockPin.value = ""
+    if (mfaCode) mfaCode.value = ""
+    if (mfaBackupCode) mfaBackupCode.value = ""
+    otpBoxes.forEach((box) => {
+      box.value = ""
+      box.classList.remove("filled")
+    })
+  }
 
   // ----------------------------------------------------
   // Screen Transition Helpers
@@ -94,6 +109,7 @@
     const types = Array.isArray(allowedMfaTypes) ? allowedMfaTypes : ["totp"]
     const hasEmail = types.includes("email")
     const hasTotp = types.includes("totp")
+    activePrimaryMfaType = hasTotp ? "totp" : (hasEmail ? "email" : "totp")
 
     if (mfaSubtitle) {
       if (hasTotp) {
@@ -162,8 +178,9 @@
   }
 
   function showUnlockedView(user) {
-    clearAuthDraft()
     pendingMfa = null
+    clearSensitiveAuthInputs()
+    clearAuthDraft()
 
     if (appHeader) appHeader.style.display = "flex"
     if (viewLogin) viewLogin.style.display = "none"
@@ -196,18 +213,24 @@
 
   function saveAuthDraftImmediate() {
     try {
+      const isLoginVisible = viewLogin && viewLogin.style.display !== "none"
       const isMfaVisible = viewMfa && viewMfa.style.display !== "none"
+      if (!isLoginVisible && !isMfaVisible) return
+
       const otpValues = otpBoxes.map((b) => b.value || "")
       const backupVal = mfaBackupCode?.value || ""
+      const safePendingMfa = pendingMfa
+        ? {
+            mfaTicket: pendingMfa.mfaTicket,
+            allowedMfaTypes: pendingMfa.allowedMfaTypes,
+          }
+        : null
 
       const draft = {
         method: activeLoginMethod,
         identifier: loginIdentifier?.value || "",
-        password: loginPassword?.value || "",
-        apiKey: loginApiKey?.value || "",
-        accountPassword: loginApiMasterPass?.value || "",
-        isMfaActive: isMfaVisible && Boolean(pendingMfa?.mfaTicket),
-        pendingMfa: pendingMfa || null,
+        isMfaActive: Boolean(isMfaVisible && safePendingMfa?.mfaTicket),
+        pendingMfa: safePendingMfa,
         otpValues,
         backupCode: backupVal,
         isBackupMode: isBackupModeActive,
@@ -225,7 +248,10 @@
 
       // 1. If MFA was pending when closed, reopen MFA view directly
       if (draft.isMfaActive && draft.pendingMfa?.mfaTicket) {
-        pendingMfa = draft.pendingMfa
+        pendingMfa = {
+          mfaTicket: draft.pendingMfa.mfaTicket,
+          allowedMfaTypes: draft.pendingMfa.allowedMfaTypes,
+        }
         showMfaView(pendingMfa.mfaTicket, pendingMfa.allowedMfaTypes)
 
         if (draft.isBackupMode) {
@@ -248,7 +274,7 @@
         return true
       }
 
-      // 2. Otherwise restore login form fields
+      // 2. Otherwise restore non-secret login form fields
       if (draft.method === "apikey") {
         activeLoginMethod = "apikey"
         btnLoginTabApiKey?.classList.add("active")
@@ -264,9 +290,6 @@
       }
 
       if (loginIdentifier && draft.identifier) loginIdentifier.value = draft.identifier
-      if (loginPassword && draft.password) loginPassword.value = draft.password
-      if (loginApiKey && draft.apiKey) loginApiKey.value = draft.apiKey
-      if (loginApiMasterPass && draft.accountPassword) loginApiMasterPass.value = draft.accountPassword
 
       return false
     } catch {
@@ -275,6 +298,7 @@
   }
 
   function clearAuthDraft() {
+    clearTimeout(draftSaveTimeout)
     storage.remove("akaromi_auth_draft").catch(() => {})
   }
 
@@ -300,9 +324,6 @@
   })
 
   loginIdentifier?.addEventListener("input", saveAuthDraft)
-  loginPassword?.addEventListener("input", saveAuthDraft)
-  loginApiKey?.addEventListener("input", saveAuthDraft)
-  loginApiMasterPass?.addEventListener("input", saveAuthDraft)
 
   window.addEventListener("pagehide", saveAuthDraftImmediate)
   document.addEventListener("visibilitychange", () => {
@@ -356,11 +377,20 @@
   btnSaveServerUrl?.addEventListener("click", async () => {
     const url = loginServerUrl?.value.trim()
     if (!url) return
-    await IrisApi.setServerUrl(url)
-    await storage.set({ serverUrl: url })
-    if (loginServerLabel) loginServerLabel.textContent = url
-    showToast("Server URL updated")
-    if (serverConfigBody) serverConfigBody.style.display = "none"
+    try {
+      const normalized = await IrisApi.setServerUrl(url)
+      await storage.set({ serverUrl: normalized })
+      if (loginServerUrl) loginServerUrl.value = normalized
+      if (loginServerLabel) loginServerLabel.textContent = normalized
+      showToast("Server URL updated")
+      if (serverConfigBody) serverConfigBody.style.display = "none"
+    } catch (err) {
+      if (loginError) {
+        loginError.textContent = err.message || "Invalid server URL"
+        loginError.style.display = "block"
+      }
+      showToast(err.message || "Invalid server URL")
+    }
   })
 
     // Step 1: Server Authentication & API Key Login
@@ -387,11 +417,13 @@
 
         if (res?.mfaRequired) {
           pendingMfa = { mfaTicket: res.mfaTicket, password, allowedMfaTypes: res.allowedMfaTypes }
+          if (loginPassword) loginPassword.value = ""
           showMfaView(res.mfaTicket, res.allowedMfaTypes)
           return
         }
 
         if (res?.success) {
+          clearSensitiveAuthInputs()
           showUnlockedView(res.user)
           showToast("Signed in successfully")
         } else {
@@ -408,6 +440,7 @@
         })
 
         if (res?.success) {
+          clearSensitiveAuthInputs()
           showUnlockedView(res.user)
           showToast("Connected via API Key")
         } else {
@@ -616,15 +649,22 @@
         payload: {
           mfaTicket: pendingMfa?.mfaTicket,
           code,
-          mfaType: isBackupModeActive ? "backup_code" : "totp",
+          mfaType: isBackupModeActive ? "backup_code" : activePrimaryMfaType,
           password: pendingMfa?.password,
         },
       })
 
       if (res?.success) {
+        pendingMfa = null
         clearAuthDraft()
-        showUnlockedView(res.user)
-        showToast("Authentication verified")
+        clearSensitiveAuthInputs()
+        if (res.isUnlocked === false) {
+          showLockedView(res.user, { pinUnlockEnabled: false })
+          showToast("2FA verified — enter Master Password to unlock vault")
+        } else {
+          showUnlockedView(res.user)
+          showToast("Authentication verified")
+        }
       } else {
         throw new Error(res?.error || "Invalid verification code")
       }
@@ -672,6 +712,7 @@
         payload: { pin },
       })
       if (res?.success) {
+        clearSensitiveAuthInputs()
         showUnlockedView(res.user)
         showToast("Vault unlocked")
       } else {
@@ -752,6 +793,7 @@
         payload: { password: pass },
       })
       if (res?.success) {
+        clearSensitiveAuthInputs()
         showUnlockedView(res.user)
         showToast("Vault unlocked")
       } else {
@@ -777,6 +819,8 @@
   btnSwitchAccount?.addEventListener("click", async () => {
     if (confirm("Log out of this account?")) {
       await ext.runtime.sendMessage({ action: "LOGOUT" })
+      pendingMfa = null
+      clearSensitiveAuthInputs()
       clearAuthDraft()
       showLoginView()
     }

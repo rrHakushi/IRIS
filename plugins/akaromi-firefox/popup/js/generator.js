@@ -154,10 +154,14 @@
     try {
       const tabs = await ext.tabs.query({ active: true, currentWindow: true })
       if (tabs[0]?.id) {
-        ext.tabs.sendMessage(tabs[0].id, {
-          action: "FILL_INPUTS",
-          payload: { password },
-        })
+        ext.tabs.sendMessage(
+          tabs[0].id,
+          {
+            action: "FILL_INPUTS",
+            payload: { password },
+          },
+          { frameId: 0 }
+        )
         window.close()
       }
     } catch {
@@ -220,7 +224,6 @@
             ambig: chkAmbig?.checked ?? false,
             capitalize: chkCapitalize?.checked ?? true,
             includeNum: chkIncludeNum?.checked ?? true,
-            output: genOutputText?.textContent || "",
           },
         })
         .catch(() => {})
@@ -259,11 +262,7 @@
         if (chkAmbig && g.ambig !== undefined) chkAmbig.checked = g.ambig
         if (chkCapitalize && g.capitalize !== undefined) chkCapitalize.checked = g.capitalize
         if (chkIncludeNum && g.includeNum !== undefined) chkIncludeNum.checked = g.includeNum
-        if (g.output && genOutputText) {
-          genOutputText.textContent = g.output
-        } else {
-          generateCredentials()
-        }
+        generateCredentials()
       }
     } catch (err) {
       console.warn("[Akaromi] Failed to restore generator draft:", err)

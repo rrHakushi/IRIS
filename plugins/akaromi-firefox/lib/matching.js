@@ -54,7 +54,8 @@
       )
       return url.hostname.toLowerCase()
     } catch {
-      return urlString.toLowerCase().split("/")[0] || ""
+      const bare = urlString.toLowerCase().split("/")[0] || ""
+      return bare.replace(/^.*@/, "").replace(/:\d+$/, "")
     }
   }
 
@@ -74,8 +75,12 @@
     "com.tw", "org.tw", "gov.tw",
     "github.io", "gitlab.io", "pages.dev", "vercel.app",
     "netlify.app", "azurewebsites.net", "herokuapp.com",
-    "cloudfront.net", "s3.amazonaws.com"
+    "cloudfront.net", "s3.amazonaws.com",
+    "workers.dev", "fly.dev", "onrender.com", "web.app",
+    "firebaseapp.com", "ngrok-free.app", "ngrok.io",
+    "duckdns.org", "supabase.co"
   ]
+  IrisMatching.PUBLIC_SUFFIXES = PUBLIC_SUFFIXES
 
   /**
    * Extracts base domain (eTLD+1 approximation)
@@ -159,6 +164,9 @@
 
       case BitwardenUriMatch.REGULAR_EXPRESSION: {
         try {
+          if (cleanVault.length > 256) return false
+          // Reject catastrophic nested quantifiers (ReDoS protection)
+          if (/(\([^)]*[+*][^)]*\))[+*?{]/.test(cleanVault)) return false
           const regex = new RegExp(cleanVault, "i")
           return regex.test(cleanTarget)
         } catch {

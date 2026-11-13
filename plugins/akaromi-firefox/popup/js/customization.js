@@ -88,11 +88,35 @@
     }
   }
 
+  function sanitizeCssColor(val, fallback = "#ffffff") {
+    if (!val || typeof val !== "string") return fallback
+    const clean = val.trim()
+    if (/^#[0-9a-fA-F]{3,8}$/.test(clean)) return clean
+    if (/^(rgb|hsl)a?\(\s*[0-9.%\s,]+\)$/i.test(clean)) return clean
+    return fallback
+  }
+
+  function sanitizeCssUrl(val) {
+    if (!val || typeof val !== "string") return ""
+    const clean = val.trim()
+    if (/^(data|blob):/i.test(clean) && isValidImageUrl(clean)) {
+      return clean.replace(/["()\\;\r\n]/g, "")
+    }
+    try {
+      const parsed = new URL(clean)
+      if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+        return parsed.href.replace(/["()\\;\r\n]/g, "")
+      }
+    } catch {}
+    return ""
+  }
+
   function buildStopsCss(colors, positions) {
     return colors
       .map((col, idx) => {
+        const safeCol = sanitizeCssColor(col, "#ffffff")
         const pos = positions?.[idx]
-        return typeof pos === "number" && !isNaN(pos) ? `${col} ${pos}%` : col
+        return typeof pos === "number" && !isNaN(pos) && isFinite(pos) ? `${safeCol} ${pos}%` : safeCol
       })
       .join(", ")
   }
@@ -109,14 +133,14 @@
     }
 
     const effect = style.effect || "solid"
-    const c1 = style.color && style.color !== "currentColor" ? style.color : "#ffffff"
-    const c2 = style.color2 || "#8b5cf6"
+    const c1 = style.color && style.color !== "currentColor" ? sanitizeCssColor(style.color, "#ffffff") : "#ffffff"
+    const c2 = sanitizeCssColor(style.color2, "#8b5cf6")
     const customStops = Array.isArray(style.colors) && style.colors.length >= 2 ? style.colors : null
 
     switch (effect) {
       case "solid":
         if (style.color && style.color !== "currentColor") {
-          css.color = style.color
+          css.color = sanitizeCssColor(style.color, "#ffffff")
         }
         break
 
@@ -233,6 +257,8 @@
     FONT_PRESETS,
     isValidImageUrl,
     resolveMediaUrl,
+    sanitizeCssColor,
+    sanitizeCssUrl,
     getProfileCustomization,
     getDisplayNameStyleCss,
     getDisplayNameEffectClasses,

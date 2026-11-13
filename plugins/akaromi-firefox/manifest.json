@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "Akaromi for Firefox",
-  "version": "2.1.1",
+  "name": "NamelessLiberty's Akaromi",
+  "version": "2.1.2",
   "description": "Self hosted password manager to keep your login credentials safe.",
   "browser_specific_settings": {
     "gecko": {
-      "id": "info@runerra.org",
+      "id": "akaromi@namelessliberty",
       "strict_min_version": "142.0",
       "data_collection_permissions": {
         "required": [

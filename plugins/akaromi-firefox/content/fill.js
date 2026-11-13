@@ -36,13 +36,13 @@
 
     // Step 3: Multi-Field Credential Injection
   // Step 3.1: Username, Password & 2FA OTP Automatic Discovery
-  function fillCredential(cipher, specificPassword = null, initialCode = "") {
+  function fillCredential(cipher, specificPassword = null, initialCode = "", targetInput = null) {
     if (!cipher) return
     const data = cipher.data || {}
     const username = data.username || data.email || ""
     const password = specificPassword !== null ? specificPassword : (data.password || "")
 
-    const activeEl = document.activeElement
+    const activeEl = (targetInput && targetInput.isConnected) ? targetInput : document.activeElement
     const form = (activeEl && activeEl.form) || (activeEl && activeEl.closest("form")) || document
 
     // Fill Username
@@ -84,32 +84,19 @@
     // Ping background activity
     ext.runtime.sendMessage({ action: "PING_ACTIVITY" }).catch(() => {})
 
-    // Trigger TOTP Auto-Copy & Live Countdown Widget if account has 2FA
-    const rawSecret =
-      data.totpSecret ||
-      data.totp ||
-      data.totpUri ||
-      data.otpauth ||
-      cipher.totpSecret ||
-      cipher.totp ||
-      cipher.login?.totp ||
-      ""
-    const totpSecret = typeof rawSecret === "string" ? rawSecret.trim() : ""
+    // Trigger TOTP Auto-Copy & Live Countdown Widget if account has 2FA (by cipherId, never raw totpSecret)
+    const hasTotp = Boolean(cipher.hasTotp || initialCode)
+    const cipherId = cipher.id || ""
 
-    if (totpSecret) {
+    if (hasTotp && cipherId) {
       const accountLabel = cipher.title || username || "2FA"
-      let codeToUse = initialCode
-      if (!codeToUse && typeof IrisTotp !== "undefined" && typeof IrisTotp.generateTotpSync === "function") {
-        codeToUse = IrisTotp.generateTotpSync(totpSecret)
-      }
-
       let launched = false
       const invokeWidget = () => {
         if (launched) return
         const fn = global.AkaromiTotp?.showFloatingTotpWidget || globalThis.AkaromiTotp?.showFloatingTotpWidget
         if (typeof fn === "function") {
           launched = true
-          fn(totpSecret, accountLabel, codeToUse)
+          fn(cipherId, accountLabel, initialCode || "")
         }
       }
 

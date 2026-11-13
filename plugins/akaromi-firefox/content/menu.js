@@ -168,25 +168,36 @@
       }
 
       const siteMatches = response.matches || []
+      const siteMatchTierById = new Map(siteMatches.map((m) => [m.id, m._matchTier || "exact"]))
       let allVaultLogins = null
+      let allLoginsPromise = null
       let isSearchingAll = false
       let currentQuery = ""
 
+      function ensureAllVaultLogins() {
+        if (allVaultLogins) return Promise.resolve(allVaultLogins)
+        if (!allLoginsPromise) {
+          allLoginsPromise = ext.runtime
+            .sendMessage({ action: "GET_ALL_LOGINS_FOR_INLINE_FILL" })
+            .then((res) => {
+              const raw = res?.ciphers || []
+              allVaultLogins = raw.map((c) => ({
+                ...c,
+                _matchTier: siteMatchTierById.get(c.id) || "all",
+              }))
+              return allVaultLogins
+            })
+            .catch(() => {
+              allLoginsPromise = null
+              return null
+            })
+        }
+        return allLoginsPromise
+      }
+
       dropdown.replaceChildren()
 
-      // 1. Header
-      const header = document.createElement("div")
-      header.className = "iris-pass-dropdown-header"
-      safeSetTemplate(
-        header,
-        `<div class="iris-pass-dropdown-brand">
-          <span class="iris-pass-dropdown-title">Akaromi Logins</span>
-          <span class="iris-pass-dropdown-count" id="header-match-count">${siteMatches.length}</span>
-        </div>`
-      )
-      dropdown.appendChild(header)
-
-      // 2. Search Container with Toggle
+      // 1. Search Container with Toggle
       const searchBox = document.createElement("div")
       searchBox.className = "iris-pass-search-container"
       safeSetTemplate(
@@ -234,14 +245,17 @@
       function renderList() {
         list.replaceChildren()
 
-        let pool = siteMatches
-        if (isSearchingAll) {
-          pool = allVaultLogins || siteMatches
+        const hasQuery = Boolean(currentQuery && currentQuery.trim())
+        const showAllPool = isSearchingAll || hasQuery
+
+        if (showAllPool && !allVaultLogins) {
+          ensureAllVaultLogins().then((loaded) => {
+            if (loaded && dropdown.parentElement) renderList()
+          })
         }
 
+        const pool = showAllPool ? (allVaultLogins || siteMatches) : siteMatches
         const filtered = filterCiphersByQuery(pool, currentQuery)
-        const countBadge = dropdown.querySelector("#header-match-count")
-        if (countBadge) countBadge.textContent = String(filtered.length)
 
         if (filtered.length === 0) {
           safeSetTemplate(
@@ -291,7 +305,7 @@
           })
         }
 
-        if (isSearchingAll) {
+        if (showAllPool) {
           appendGroup(exact, "Exact Domain Matches")
           appendGroup(base, "Base Domain Matches")
           appendGroup(other, "Other Vault Logins")
@@ -333,49 +347,52 @@
           </div>`
         )
 
-        const handleCredentialSelect = (subPasswordId = null) => {
+        const handleCredentialSelect = async (subPasswordId = null) => {
+          const targetEl = targetInput
           removeDropdown()
-          ext.runtime.sendMessage(
-            {
+          try {
+            const res = await ext.runtime.sendMessage({
               action: "GET_CREDENTIAL_FOR_AUTOFILL",
               payload: {
                 cipherId: m.id,
                 subPasswordId,
                 url: window.location.href,
+                userSelected: true,
               },
-            },
-            (res) => {
-              if (!res || !res.success) return
-              const password = res.password || ""
-              const generatedCode = res.totpCode || ""
-              const totpSecret = res.totpSecret || ""
+            })
+            if (!res || !res.success) return
+            const password = res.password || ""
+            const generatedCode = res.totpCode || ""
 
-              if (generatedCode) {
-                try {
-                  if (navigator.clipboard?.writeText) {
-                    navigator.clipboard.writeText(generatedCode).catch(() => {})
-                  }
-                } catch {}
-                ext.runtime.sendMessage({
-                  action: "COPY_TO_CLIPBOARD",
-                  payload: { text: generatedCode },
-                }).catch(() => {})
-              }
-
-              global.AkaromiFill?.fillCredential(
-                {
-                  title: m.title,
-                  data: {
-                    username: res.username || m.data?.username || "",
-                    password,
-                    totpSecret,
-                  },
-                },
-                password,
-                generatedCode
-              )
+            if (generatedCode) {
+              try {
+                if (navigator.clipboard?.writeText) {
+                  navigator.clipboard.writeText(generatedCode).catch(() => {})
+                }
+              } catch {}
+              ext.runtime.sendMessage({
+                action: "COPY_TO_CLIPBOARD",
+                payload: { text: generatedCode },
+              }).catch(() => {})
             }
-          )
+
+            global.AkaromiFill?.fillCredential(
+              {
+                id: res.cipherId || m.id,
+                title: m.title,
+                hasTotp: Boolean(res.hasTotp || generatedCode),
+                data: {
+                  username: res.username || m.data?.username || "",
+                  password,
+                },
+              },
+              password,
+              generatedCode,
+              targetEl
+            )
+          } catch (err) {
+            console.warn("[Akaromi] Failed to autofill credential:", err)
+          }
         }
 
         const mainItem = item.querySelector(".iris-pass-item-main")
@@ -456,8 +473,7 @@
         toggleAllBtn.classList.toggle("active", isSearchingAll)
 
         if (isSearchingAll && !allVaultLogins) {
-          const res = await ext.runtime.sendMessage({ action: "GET_ALL_LOGINS_FOR_INLINE_FILL" }).catch(() => ({}))
-          allVaultLogins = res?.ciphers || []
+          await ensureAllVaultLogins()
         }
         renderList()
       })

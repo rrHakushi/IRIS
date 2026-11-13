@@ -623,7 +623,8 @@
           }
         }
 
-        await ext.tabs.sendMessage(tabId, { action: "START_QR_CAPTURE" })
+        await ext.runtime.sendMessage({ action: "BEGIN_QR_CAPTURE", payload: { tabId } }).catch(() => {})
+        await ext.tabs.sendMessage(tabId, { action: "START_QR_CAPTURE" }, { frameId: 0 })
         setTimeout(() => {
           try {
             window.close()
@@ -803,9 +804,14 @@
         }
       }
 
+      const existingItem = state.editingCipherId
+        ? state.allCiphers.find((c) => c.id === state.editingCipherId)
+        : null
+
       const payload = {
         title,
         type: state.currentEditType === "ssh" ? "SSH_KEY" : "LOGIN",
+        favorite: existingItem ? Boolean(existingItem.favorite) : false,
         data: dataPayload,
       }
 
@@ -869,19 +875,19 @@
     const additionalPasswords = []
     document.querySelectorAll(".additional-pass-row-item").forEach((row) => {
       const n = row.querySelector(".pass-row-name")?.value || ""
-      const v = row.querySelector(".pass-row-value")?.value || ""
-      if (n || v) additionalPasswords.push({ name: n, value: v })
+      if (n) additionalPasswords.push({ name: n, value: "" })
     })
 
     const customFields = []
     document.querySelectorAll(".custom-field-row-item").forEach((row) => {
       const n = row.querySelector(".custom-field-name")?.value || ""
       const valInput = row.querySelector(".custom-field-value")
-      const v = valInput?.value || ""
       const isHidden = valInput?.type === "password"
+      const v = isHidden ? "" : (valInput?.value || "")
       if (n || v) customFields.push({ name: n, value: v, isHidden })
     })
 
+    // Security: never persist cleartext secrets (passwords, TOTP seeds, card numbers/CVVs/PINs, SSH keys, notes) to local disk drafts
     return {
       type: state.currentEditType || "login",
       title: editTitle?.value || "",
@@ -890,22 +896,22 @@
       emailOrUsername: editEmailOrUsername?.value || "",
       email: editEmail?.value || "",
       username: editUsername?.value || "",
-      password: editPassword?.value || "",
+      password: "",
       totpActive: wrapEditTotpActive?.style.display === "flex",
-      totpSecret: editTotpSecret?.value || "",
+      totpSecret: "",
       websites: uris.length > 0 ? uris : [{ uri: "", match: 0 }],
       additionalPasswords,
-      notes: editGeneralNotes?.value || "",
-      noteBody: editNoteBody?.value || "",
+      notes: "",
+      noteBody: "",
       cardHolder: editCardHolder?.value || "",
-      cardNumber: editCardNumber?.value || "",
+      cardNumber: "",
       cardExp: editCardExp?.value || "",
-      cardCvv: editCardCvv?.value || "",
-      cardPin: editCardPin?.value || "",
+      cardCvv: "",
+      cardPin: "",
       sshKeytype: editSshKeytype?.value || "ED25519",
       sshPublickey: editSshPublickey?.value || "",
-      sshPrivatekey: editSshPrivatekey?.value || "",
-      sshPassphrase: editSshPassphrase?.value || "",
+      sshPrivatekey: "",
+      sshPassphrase: "",
       idFullname: editIdFullname?.value || "",
       idEmail: editIdEmail?.value || "",
       idPhone: editIdPhone?.value || "",

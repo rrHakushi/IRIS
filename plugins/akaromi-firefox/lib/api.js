@@ -17,7 +17,21 @@
   }
 
   IrisApi.setServerUrl = async function (url) {
-    const cleanUrl = (url || DEFAULT_SERVER_URL).trim().replace(/\/+$/, "")
+    const raw = (url || DEFAULT_SERVER_URL).trim().replace(/\/+$/, "")
+    let parsed
+    try {
+      parsed = new URL(raw)
+    } catch {
+      throw new Error("Invalid server URL format")
+    }
+
+    const host = parsed.hostname.toLowerCase()
+    const isLoopback = host === "localhost" || host === "127.0.0.1" || host === "[::1]" || host === "::1"
+    if (parsed.protocol !== "https:" && !(parsed.protocol === "http:" && isLoopback)) {
+      throw new Error("Server URL must use HTTPS (HTTP is only allowed for localhost)")
+    }
+
+    const cleanUrl = parsed.origin + (parsed.pathname === "/" ? "" : parsed.pathname.replace(/\/+$/, ""))
     await storage.set({ serverUrl: cleanUrl })
     return cleanUrl
   }
@@ -100,7 +114,13 @@
    * Complete MFA verification challenge (email OTP or totp)
    */
   IrisApi.verifyMfa = async function (mfaTicket, code, mfaType = "email") {
-    const data = await request("/carina/auth/twofactor/email/verify", {
+    let endpoint = "/carina/auth/twofactor/email/verify"
+    if (mfaType === "totp") {
+      endpoint = "/carina/auth/twofactor/totp/verify"
+    } else if (mfaType === "backup_code" || mfaType === "backupcodes") {
+      endpoint = "/carina/auth/twofactor/backupcodes/verify"
+    }
+    const data = await request(endpoint, {
       method: "POST",
       body: JSON.stringify({
         mfaTicket,

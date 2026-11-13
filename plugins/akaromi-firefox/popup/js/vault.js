@@ -567,9 +567,41 @@
       }
     }
 
-    // Custom Fields
-    const customFields = data.customFields || []
+    // Structured item fields (card, ssh, identity) + Custom Fields
+    const itemType = data.itemType || (cipher.type === "SSH_KEY" || cipher.type === 2 ? "ssh" : "login")
+    const structuredFields = []
+    if (itemType === "card") {
+      if (data.cardHolder) structuredFields.push({ name: "Cardholder", value: data.cardHolder, isHidden: false })
+      if (data.cardNumber) structuredFields.push({ name: "Card Number", value: data.cardNumber, isHidden: true })
+      if (data.cardExp) structuredFields.push({ name: "Expiration", value: data.cardExp, isHidden: false })
+      if (data.cardCvv) structuredFields.push({ name: "Security Code (CVV)", value: data.cardCvv, isHidden: true })
+      if (data.cardPin) structuredFields.push({ name: "PIN", value: data.cardPin, isHidden: true })
+    } else if (itemType === "ssh") {
+      if (data.keyType) structuredFields.push({ name: "Key Type", value: data.keyType, isHidden: false })
+      if (data.publicKey) structuredFields.push({ name: "Public Key", value: data.publicKey, isHidden: false })
+      if (data.fingerprint) structuredFields.push({ name: "Fingerprint", value: data.fingerprint, isHidden: false })
+      if (data.privateKey) structuredFields.push({ name: "Private Key", value: data.privateKey, isHidden: true })
+      if (data.passphrase) structuredFields.push({ name: "Passphrase", value: data.passphrase, isHidden: true })
+    } else if (itemType === "identity") {
+      if (data.fullName) structuredFields.push({ name: "Full Name", value: data.fullName, isHidden: false })
+      if (data.company) structuredFields.push({ name: "Company", value: data.company, isHidden: false })
+      if (data.phone) structuredFields.push({ name: "Phone", value: data.phone, isHidden: false })
+      if (data.address) structuredFields.push({ name: "Address", value: data.address, isHidden: false })
+    }
+
+    const customFields = [...structuredFields, ...(data.customFields || [])]
     if (detailCustomFieldsCard && detailCustomFieldsList) {
+      const cardHeader = detailCustomFieldsCard.querySelector(".card-subtitle-header")
+      if (cardHeader) {
+        cardHeader.textContent =
+          itemType === "card"
+            ? "Card Details"
+            : itemType === "ssh"
+              ? "SSH Key"
+              : itemType === "identity"
+                ? "Identity Details"
+                : "Custom Fields"
+      }
       if (customFields.length > 0) {
         detailCustomFieldsCard.style.display = "flex"
         detailCustomFieldsList.replaceChildren()
@@ -709,15 +741,34 @@
         uris.forEach((u) => {
           const urlStr = typeof u === "string" ? u : u.uri
           if (!urlStr) return
-          const link = document.createElement("a")
-          link.href = urlStr.includes("://") ? urlStr : `https://${urlStr}`
-          link.target = "_blank"
-          link.title = urlStr
-          link.className = "field-value font-mono"
-          link.textContent = formatDisplayHost(urlStr)
-          link.style.display = "block"
-          link.style.textDecoration = "none"
-          detailWebsitesContainer.appendChild(link)
+          let safeHref = null
+          try {
+            const candidate = urlStr.includes("://") ? urlStr : `https://${urlStr}`
+            const parsed = new URL(candidate)
+            if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+              safeHref = parsed.href
+            }
+          } catch {}
+
+          if (safeHref) {
+            const link = document.createElement("a")
+            link.href = safeHref
+            link.target = "_blank"
+            link.rel = "noopener noreferrer"
+            link.title = urlStr
+            link.className = "field-value font-mono"
+            link.textContent = formatDisplayHost(urlStr)
+            link.style.display = "block"
+            link.style.textDecoration = "none"
+            detailWebsitesContainer.appendChild(link)
+          } else {
+            const span = document.createElement("span")
+            span.title = urlStr
+            span.className = "field-value font-mono"
+            span.textContent = urlStr
+            span.style.display = "block"
+            detailWebsitesContainer.appendChild(span)
+          }
         })
       } else {
         rowDetailWebsites.style.display = "none"
@@ -826,18 +877,22 @@
 
       const label = cipher?.title || "2FA Code"
 
-      // Show floating countdown widget and auto-copy next code on active tab
-      if (totpSecret) {
+      // Show floating countdown widget and auto-copy next code on active tab (top frame only, never send raw totpSecret)
+      if (totpSecret && cipher?.id) {
         ext.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
           if (tabs[0]?.id) {
-            ext.tabs.sendMessage(tabs[0].id, {
-              action: "SHOW_FLOATING_TOTP_WIDGET",
-              payload: {
-                secret: totpSecret,
-                label,
-                initialCode: code,
+            ext.tabs.sendMessage(
+              tabs[0].id,
+              {
+                action: "SHOW_FLOATING_TOTP_WIDGET",
+                payload: {
+                  cipherId: cipher.id,
+                  label,
+                  initialCode: code,
+                },
               },
-            }).catch(() => {})
+              { frameId: 0 }
+            ).catch(() => {})
           }
         }).catch(() => {})
       }
@@ -926,20 +981,31 @@
       cipher.totp ||
       ""
     const totpSecret = typeof rawTotpSecret === "string" ? rawTotpSecret.trim() : ""
+    const hasTotp = Boolean(totpSecret)
+    let totpCode = ""
+    if (hasTotp && typeof IrisTotp !== "undefined" && typeof IrisTotp.generateTotpSync === "function") {
+      totpCode = IrisTotp.generateTotpSync(totpSecret)
+    }
 
     try {
       const tabs = await ext.tabs.query({ active: true, currentWindow: true })
       if (tabs[0]?.id) {
         ext.tabs
-          .sendMessage(tabs[0].id, {
-            action: "FILL_CREDENTIALS",
-            payload: {
-              title: cipher.title || data.username || "2FA",
-              username: data.username || data.email || "",
-              password: data.password || "",
-              totpSecret,
+          .sendMessage(
+            tabs[0].id,
+            {
+              action: "FILL_CREDENTIALS",
+              payload: {
+                cipherId: hasTotp ? cipher.id : "",
+                hasTotp,
+                totpCode,
+                title: cipher.title || data.username || "2FA",
+                username: data.username || data.email || "",
+                password: data.password || "",
+              },
             },
-          })
+            { frameId: 0 }
+          )
           .catch(() => {
             showToast("Could not autofill on this page")
           })

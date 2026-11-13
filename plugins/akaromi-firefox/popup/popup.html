@@ -7,9 +7,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Akaromi for Firefox</title>
   <link rel="stylesheet" href="popup.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Dancing+Script:wght@700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Orbitron:wght@600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Press+Start+2P&family=UnifrakturMaguntia&display=swap" rel="stylesheet" />
 </head>
 
 <body style="width: 650px; min-width: 650px; height: 446px; min-height: 446px;">
@@ -183,7 +180,7 @@
       </nav>
 
       <div class="drawer-footer">
-        <span>Akaromi for Firefox v2.0.0</span>
+        <span id="drawer-version-label"></span>
       </div>
     </aside>
 
@@ -1286,13 +1283,10 @@
               <div class="about-logo-row">
                 <img src="../icons/icon-48.png" alt="Akaromi" class="about-icon" />
                 <div>
-                  <div class="about-name">Akaromi for Firefox</div>
-                  <div class="about-version">Version 2.0.0</div>
+                  <div class="about-name" id="about-extension-name"></div>
+                  <div class="about-version" id="about-extension-version"></div>
                 </div>
               </div>
-              <p class="about-desc">
-                High-security, zero-knowledge password manager for the IRIS ecosystem. Post-quantum encryption with local key derivation.
-              </p>
             </div>
           </div>
         </div>
