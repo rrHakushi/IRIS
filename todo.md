@@ -45,10 +45,8 @@
 # Amadeus [Cloud storage and stuff]
     -
 
-# Tesseract [Local network file sharing] (may be renamed later)
-    - https://www.local-share.com/
-    - https://web.localsend.org/
-    - stea... borrow ideas from the above two
+# Tesseract [Local network file sharing]
+    - 
 
 
 # Vex [Link shortener]
