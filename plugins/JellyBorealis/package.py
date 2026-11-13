@@ -7,6 +7,7 @@ for automated installation in Jellyfin.
 """
 
 import argparse
+import base64
 import datetime
 import hashlib
 import json
@@ -85,21 +86,63 @@ def compute_md5(file_path: Path) -> str:
     return hasher.hexdigest().lower()
 
 
-def update_manifest(meta: dict, version: str, zip_path: Path, checksum: str) -> None:
-    print(f"[3/4] Updating Jellyfin manifest -> {MANIFEST_FILE.relative_to(REPO_ROOT)}...")
-
+def build_version_entry(
+    version: str,
+    checksum: str,
+    timestamp: str | None = None,
+) -> dict:
     tag_name = f"jellyborealis-v{version}"
-    source_url = f"https://github.com/{GITHUB_REPO}/releases/download/{tag_name}/{zip_path.name}"
-    timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-    version_entry = {
+    source_url = (
+        f"https://github.com/{GITHUB_REPO}/releases/download/{tag_name}/JellyBorealis_v{version}.zip"
+    )
+    return {
         "version": version,
         "changelog": f"Release v{version} for modern IRIS/Borealis API.",
         "targetAbi": TARGET_ABI,
         "sourceUrl": source_url,
         "checksum": checksum,
-        "timestamp": timestamp,
+        "timestamp": timestamp
+        or datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
+
+
+def download_release_asset_md5(release: dict, asset_name: str) -> str | None:
+    assets = release.get("assets", [])
+    asset = next((a for a in assets if a.get("name") == asset_name), None)
+    if not asset or not asset.get("url"):
+        return None
+
+    headers = {
+        "Accept": "application/octet-stream",
+        "User-Agent": "JellyBorealis-Packager",
+    }
+    token = os.environ.get("GITHUB_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    req = urllib.request.Request(asset["url"], headers=headers, method="GET")
+    try:
+        hasher = hashlib.md5()
+        with urllib.request.urlopen(req, timeout=30) as response:
+            while True:
+                chunk = response.read(65536)
+                if not chunk:
+                    break
+                hasher.update(chunk)
+        return hasher.hexdigest().lower()
+    except Exception as e:
+        print(f"Warning: Could not download asset {asset_name} for checksum: {e}")
+        return None
+
+
+def update_manifest(
+    meta: dict,
+    version: str | None,
+    zip_path: Path | None,
+    checksum: str | None,
+    github_releases: dict[str, dict] | None = None,
+) -> bool:
+    print(f"[3/4] Updating Jellyfin manifest -> {MANIFEST_FILE.relative_to(REPO_ROOT)}...")
 
     plugin_entry = {
         "guid": meta.get("guid", "f9a4c810-7213-4d43-9821-2e65d8a9b12d"),
@@ -109,14 +152,15 @@ def update_manifest(meta: dict, version: str, zip_path: Path, checksum: str) -> 
         "owner": meta.get("owner", "rrHakushi"),
         "category": meta.get("category", "General"),
         "imageUrl": f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/plugins/JellyBorealis/thumb.png",
-        "versions": [version_entry],
+        "versions": [],
     }
 
+    previous_raw = ""
     manifest_data = []
     if MANIFEST_FILE.exists():
         try:
-            with open(MANIFEST_FILE, "r", encoding="utf-8") as f:
-                manifest_data = json.load(f)
+            previous_raw = MANIFEST_FILE.read_text(encoding="utf-8")
+            manifest_data = json.loads(previous_raw)
         except Exception as e:
             print(f"Warning: Could not parse existing manifest: {e}. Recreating...")
             manifest_data = []
@@ -124,45 +168,80 @@ def update_manifest(meta: dict, version: str, zip_path: Path, checksum: str) -> 
     if not isinstance(manifest_data, list):
         manifest_data = []
 
-    # Find existing plugin by guid or name
-    matched_plugin = None
-    for item in manifest_data:
-        if isinstance(item, dict) and item.get("guid") == plugin_entry["guid"]:
-            matched_plugin = item
-            break
+    matched_plugin = next(
+        (
+            item
+            for item in manifest_data
+            if isinstance(item, dict) and item.get("guid") == plugin_entry["guid"]
+        ),
+        None,
+    )
 
     if matched_plugin:
-        # Update metadata fields
-        matched_plugin["name"] = plugin_entry["name"]
-        matched_plugin["description"] = plugin_entry["description"]
-        matched_plugin["overview"] = plugin_entry["overview"]
-        matched_plugin["owner"] = plugin_entry["owner"]
-        matched_plugin["category"] = plugin_entry["category"]
-        matched_plugin["imageUrl"] = plugin_entry["imageUrl"]
-
-        versions_list = matched_plugin.get("versions", [])
-        updated = False
-        for idx, ver in enumerate(versions_list):
-            if isinstance(ver, dict) and ver.get("version") == version:
-                if ver.get("checksum") == checksum and "timestamp" in ver:
-                    version_entry["timestamp"] = ver["timestamp"]
-                versions_list[idx] = version_entry
-                updated = True
-                break
-
-        if not updated:
-            versions_list.insert(0, version_entry)
-        matched_plugin["versions"] = versions_list
+        for key in ("name", "description", "overview", "owner", "category", "imageUrl"):
+            matched_plugin[key] = plugin_entry[key]
+        existing_versions = matched_plugin.get("versions", [])
     else:
-        manifest_data.append(plugin_entry)
+        matched_plugin = plugin_entry
+        manifest_data.append(matched_plugin)
+        existing_versions = []
 
-    with open(MANIFEST_FILE, "w", encoding="utf-8") as f:
-        json.dump(manifest_data, f, indent=2)
-        f.write("\n")
+    versions_by_ver: dict[str, dict] = {}
+    for ver_obj in existing_versions:
+        if isinstance(ver_obj, dict) and ver_obj.get("version"):
+            versions_by_ver[ver_obj["version"]] = ver_obj
 
-    print(f"  Checksum (MD5): {checksum}")
-    print(f"  Target ABI:     {TARGET_ABI}")
-    print(f"  Source URL:     {source_url}")
+    # Reconcile against live GitHub releases when available
+    if github_releases is not None:
+        valid_versions = set(github_releases.keys())
+        if version and checksum:
+            valid_versions.add(version)
+
+        removed = [v for v in list(versions_by_ver.keys()) if v not in valid_versions]
+        for v in removed:
+            print(f"  Removing stale manifest version v{v} (release not found on GitHub).")
+            versions_by_ver.pop(v, None)
+
+        for rel_ver, rel in github_releases.items():
+            if rel_ver == version and checksum:
+                continue
+            if rel_ver not in versions_by_ver:
+                asset_name = f"JellyBorealis_v{rel_ver}.zip"
+                rel_checksum = download_release_asset_md5(rel, asset_name)
+                if rel_checksum:
+                    rel_ts = rel.get("published_at") or rel.get("created_at")
+                    print(f"  Adding existing GitHub release v{rel_ver} to manifest.")
+                    versions_by_ver[rel_ver] = build_version_entry(rel_ver, rel_checksum, rel_ts)
+
+    if version and zip_path and checksum:
+        existing_entry = versions_by_ver.get(version)
+        preserved_ts = (
+            existing_entry.get("timestamp")
+            if existing_entry and existing_entry.get("checksum") == checksum
+            else None
+        )
+        new_entry = build_version_entry(version, checksum, preserved_ts)
+        versions_by_ver[version] = new_entry
+        print(f"  Checksum (MD5): {checksum}")
+        print(f"  Target ABI:     {TARGET_ABI}")
+        print(f"  Source URL:     {new_entry['sourceUrl']}")
+
+    sorted_versions = sorted(
+        versions_by_ver.values(),
+        key=lambda item: parse_version(item.get("version", "0")),
+        reverse=True,
+    )
+    matched_plugin["versions"] = sorted_versions
+
+    RELEASES_DIR.mkdir(parents=True, exist_ok=True)
+    new_raw = json.dumps(manifest_data, indent=2) + "\n"
+    if new_raw == previous_raw:
+        print("  Manifest is already up to date.")
+        return False
+
+    MANIFEST_FILE.write_text(new_raw, encoding="utf-8")
+    print(f"  Manifest updated ({len(sorted_versions)} version(s)).")
+    return True
 
 
 def publish_github_release(version: str, zip_path: Path, overwrite: bool = False):
@@ -267,7 +346,7 @@ def parse_version(version: str) -> tuple[int, ...]:
     return tuple(parts)
 
 
-def get_latest_released_version(tag_prefix: str) -> str | None:
+def fetch_github_releases(tag_prefix: str) -> dict[str, dict] | None:
     api_url = f"https://api.github.com/repos/{GITHUB_REPO}/releases?per_page=100"
     headers = {
         "Accept": "application/vnd.github+json",
@@ -286,19 +365,91 @@ def get_latest_released_version(tag_prefix: str) -> str | None:
         return None
 
     prefix = f"{tag_prefix}-v"
-    versions: list[tuple[tuple[int, ...], str]] = []
+    result: dict[str, dict] = {}
     for rel in releases:
         if rel.get("draft"):
             continue
         tag = rel.get("tag_name", "")
         if tag.startswith(prefix):
             ver_str = tag[len(prefix):]
-            versions.append((parse_version(ver_str), ver_str))
+            result[ver_str] = rel
+    return result
 
-    if not versions:
+
+def get_latest_released_version(
+    tag_prefix: str,
+    github_releases: dict[str, dict] | None = None,
+) -> str | None:
+    releases = (
+        github_releases
+        if github_releases is not None
+        else fetch_github_releases(tag_prefix)
+    )
+    if not releases:
         return None
-    versions.sort(key=lambda item: item[0], reverse=True)
+    versions = sorted(
+        ((parse_version(ver_str), ver_str) for ver_str in releases.keys()),
+        key=lambda item: item[0],
+        reverse=True,
+    )
     return versions[0][1]
+
+
+def push_manifest_to_github() -> None:
+    token = os.environ.get("GITHUB_TOKEN")
+    if not token:
+        print("Note: GITHUB_TOKEN not set. Skipping manifest push to GitHub.")
+        return
+
+    if not MANIFEST_FILE.exists():
+        return
+
+    local_bytes = MANIFEST_FILE.read_bytes()
+    manifest_rel_path = MANIFEST_FILE.relative_to(REPO_ROOT).as_posix()
+    api_url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{manifest_rel_path}"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "JellyBorealis-Packager",
+    }
+
+    remote_sha = None
+    get_req = urllib.request.Request(f"{api_url}?ref=main", headers=headers, method="GET")
+    try:
+        with urllib.request.urlopen(get_req, timeout=15) as response:
+            remote_data = json.loads(response.read().decode("utf-8"))
+            remote_sha = remote_data.get("sha")
+            remote_content = base64.b64decode(remote_data.get("content", ""))
+            if remote_content == local_bytes:
+                print("Remote manifest.json on main is already up to date.")
+                return
+    except urllib.error.HTTPError as e:
+        if e.code != 404:
+            print(f"GitHub API Error fetching manifest.json: {e}", file=sys.stderr)
+            return
+    except Exception as e:
+        print(f"Error checking remote manifest.json: {e}", file=sys.stderr)
+        return
+
+    payload: dict = {
+        "message": "chore(jellyborealis): update release manifest [skip ci]",
+        "content": base64.b64encode(local_bytes).decode("ascii"),
+        "branch": "main",
+    }
+    if remote_sha:
+        payload["sha"] = remote_sha
+
+    put_req = urllib.request.Request(
+        api_url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={**headers, "Content-Type": "application/json"},
+        method="PUT",
+    )
+    try:
+        with urllib.request.urlopen(put_req, timeout=15) as put_res:
+            print("Pushed updated manifest.json to main!")
+    except Exception as e:
+        print(f"Error pushing manifest.json to GitHub: {e}", file=sys.stderr)
 
 
 def main():
@@ -311,24 +462,38 @@ def main():
     meta = read_meta()
     version = meta.get("version", "2.0.0.0")
 
-    if not args.overwrite:
-        latest_released = get_latest_released_version("jellyborealis")
-        if latest_released is not None and parse_version(version) <= parse_version(latest_released):
-            print(f"JellyBorealis v{version} is already released (latest: v{latest_released}). Skipping build and release.")
-            return
+    github_releases = fetch_github_releases("jellyborealis")
+    latest_released = get_latest_released_version("jellyborealis", github_releases)
+    already_released = (
+        not args.overwrite
+        and latest_released is not None
+        and parse_version(version) <= parse_version(latest_released)
+    )
 
-    if not args.skip_build:
-        build_plugin()
+    zip_path: Path | None = None
+    if already_released:
+        print(
+            f"JellyBorealis v{version} is already released (latest: v{latest_released}). "
+            "Skipping build and release upload; reconciling manifest..."
+        )
+        update_manifest(meta, None, None, None, github_releases)
+    else:
+        if not args.skip_build:
+            build_plugin()
 
-    zip_path = create_release_zip(version)
-    checksum = compute_md5(zip_path)
-    update_manifest(meta, version, zip_path, checksum)
+        zip_path = create_release_zip(version)
+        checksum = compute_md5(zip_path)
+        update_manifest(meta, version, zip_path, checksum, github_releases)
+
+        if args.ci:
+            publish_github_release(version, zip_path, overwrite=args.overwrite)
 
     if args.ci:
-        publish_github_release(version, zip_path, overwrite=args.overwrite)
+        push_manifest_to_github()
 
     print("\n[Done] Release packaging completed successfully!")
-    print(f"  Artifact: {zip_path}")
+    if zip_path:
+        print(f"  Artifact: {zip_path}")
     print(f"  Manifest: {MANIFEST_FILE}")
 
 
