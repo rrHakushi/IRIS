@@ -5,7 +5,7 @@
 
     
 # Akaromi [Password manager]
-    - password sharing, to another user's vault, by url (one time use / expiry time), custom expiration times
+    - 
     
 # Kiroshi [Web search]
     - 
@@ -13,8 +13,6 @@
 # Carina [Account management]
     - Web extension for managing and using bookmarks
     - Update login/register pages
-    - Add customs apps to applications in user menu ( user enters url and title, onClick redirect to that url, use favicon as icon )
-
 
 # Lynx [Discord bot]
     - Copy from Runa and update
@@ -24,7 +22,6 @@
     - Dev tools (floating popup like nextjs has), onclick open sidebar with tools [metadata viewer, send notification, trigger events/workers... ]
     - .md version of every single page
     - mcp server for all the apps
-    - New app icons 
 
 # Apertune [Music player]
     - 
@@ -90,22 +87,8 @@
         - if a folder is linked to entry instead then all books in that folder will be linked to the same entry 
 
 # Akaromi For Firefox
-    - in inline fill when searching fill doesnt work (works kinda but only on stuff that is domain matched and not anything like it should)
-    - Unlocking outside the main extension window throws Unauthorized sender context 
-    - Remove Akaromi Logins *Count text from inline
-    - Remove text high-security, zero-knowledge... from settings
+    - 
 
 # Borealis Extra
     - Add support for other list
 
-
-
-
-TODO AFTER UPDATNG TO LATEST
-  run migrate-passwords  #done
-  run vault:migrate-keys # done
-  run update-description-urls  #done
-  run db:prepare-prisma8   #done
-  run db:unify-status  #done
-
-  update oauth callback urls https://[url]/carina/connections/[provider]/callback #done
