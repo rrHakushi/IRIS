@@ -1,4 +1,4 @@
-// This file is auto-generated at runtime by @NamelessLiberty/logger. Do not edit manually.
+// This file is auto-generated at runtime by @Iris/logger. Do not edit manually.
 export interface KnownModules {
   "ActivityServ": true
   "AniList": true
@@ -25,6 +25,7 @@ export interface KnownModules {
   "Elysia": true
   "Elysia:Cluster": true
   "Elysia:Server": true
+  "Elysia:Tesseract": true
   "Elysia:WebSocket": true
   "ElysiaMain": true
   "EmailService": true
@@ -35,7 +36,6 @@ export interface KnownModules {
   "ProdModule": true
   "Scoped": true
   "SubModule": true
-  "Test": true
   "Worker:ConnectionSync": true
   "Worker:Email": true
   "Worker:Media": true

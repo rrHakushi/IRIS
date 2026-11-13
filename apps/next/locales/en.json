@@ -103,6 +103,11 @@
         "name": "Kiroshi",
         "description": "Web & meta-search.",
         "descriptionShort": "Web & Meta Search"
+      },
+      "irisTesseract": {
+        "name": "Tesseract",
+        "description": "Local-network-only peer-to-peer file, folder, and text sharing.",
+        "descriptionShort": "Local Network Share"
       }
     },
     "listSidebar": {
@@ -984,6 +989,133 @@
           }
         }
       }
+    }
+  },
+  "tesseract": {
+    "common": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "retry": "Retry",
+      "dismiss": "Dismiss",
+      "copy": "Copy",
+      "clear": "Clear",
+      "download": "Download",
+      "folderSummary": "{count, plural, one {# file} other {# files}} · {size}"
+    },
+    "header": {
+      "editAlias": "Edit device alias",
+      "guestSignIn": "Sign in to IRIS",
+      "myDevicesFilter": "My Devices",
+      "preferences": "Transfer preferences"
+    },
+    "preferences": {
+      "title": "Transfer Preferences",
+      "subtitle": "Control automatic acceptance and shelf permissions.",
+      "autoAcceptOwnTitle": "Auto-accept my IRIS devices",
+      "autoAcceptOwnDesc": "Receive Direct Send transfers from your own signed-in devices without confirmation.",
+      "requireApprovalTitle": "Require shelf download approval",
+      "requireApprovalDesc": "Prompt to allow each download requested from your Shared by You shelf.",
+      "signInHint": "Sign in to an IRIS account to unlock folder sharing and Direct Send."
+    },
+    "sharedByYou": {
+      "title": "Shared by me",
+      "approvalActive": "Approval required",
+      "clearAll": "Clear all",
+      "dropTitle": "Drop files or snippets here",
+      "dropSubtitleAuth": "Drop files, folders, links, or screenshots for nearby peers to download directly.",
+      "dropSubtitleGuest": "Drop files, links, or text snippets for nearby peers to download directly.",
+      "addFiles": "Add Files",
+      "addFolder": "Add Folder",
+      "folderAccountLocked": "Folders (IRIS Account)",
+      "addText": "Share Text / Link",
+      "textTitlePlaceholder": "Optional label (e.g. Wi-Fi Note or Local URL)",
+      "textBodyPlaceholder": "Paste text, code, or URL to share on your local network…",
+      "publishText": "Add to Shelf",
+      "sharedLink": "Shared link",
+      "sharedSnippet": "Shared text snippet",
+      "removeItem": "Remove item"
+    },
+    "sharedByOthers": {
+      "nearbyPeersTitle": "Nearby Devices",
+      "hostOnlyHint": "Host-only WebRTC · Zero cloud relays",
+      "noPeersTitle": "Waiting for nearby devices on your local network",
+      "noPeersHint": "Open Tesseract on another device on the same local network to see its shared files.",
+      "yourDeviceBadge": "Your Device",
+      "guestBadge": "Guest",
+      "p2pConnectedType": "P2P · {type}",
+      "p2pConnected": "P2P connected",
+      "p2pConnecting": "Connecting P2P…",
+      "p2pUnreachable": "Unreachable",
+      "diagnosticsHelp": "Connection troubleshooting",
+      "diagnosticsTitle": "Local P2P Connection Hint",
+      "diagnosticsHint": "Ensure both devices are on the same LAN subnet, AP client isolation is off, and browser mDNS/UDP candidates are permitted.",
+      "directSend": "Direct Send",
+      "signInForDirect": "Sign in for Direct Send",
+      "guestPullOnly": "Pull Shelf only",
+      "directTextFrom": "Direct text from {peer}",
+      "openLink": "Open",
+      "shelfTitle": "Available files",
+      "selectedSummary": "{count} selected · {size}",
+      "downloadSelected": "Download Selected",
+      "saveToFolder": "Save to Folder",
+      "shelfEmpty": "When nearby devices drop files, folders, or links, they appear here for instant download.",
+      "peerItemCount": "{count, plural, one {# item} other {# items}}",
+      "saveFolder": "Save Folder",
+      "downloadZip": "Download ZIP"
+    },
+    "directSend": {
+      "title": "Direct Send to {peer}",
+      "ownDeviceAutoAcceptHint": "Signed into your IRIS account — transfer starts automatically on recipient device.",
+      "subtitle": "Push files, folders, or text straight to this peer with recipient approval.",
+      "dropHint": "Drop files or folders here to send directly",
+      "optionalTextLabel": "Optional text or URL",
+      "totalSize": "Total payload: {size}",
+      "sendButton": "Send Now"
+    },
+    "incomingOffer": {
+      "title": "Incoming Direct Transfer",
+      "subtitle": "{peer} wants to send you files directly over your local network.",
+      "textOnlyBadge": "Text snippet",
+      "decline": "Decline",
+      "accept": "Accept"
+    },
+    "shelfApproval": {
+      "title": "Approve Shelf Download",
+      "subtitle": "{peer} requested to download from your Shared by You shelf.",
+      "deny": "Deny",
+      "allow": "Allow Download"
+    },
+    "transfers": {
+      "title": "Transfer Activity",
+      "clearHistory": "Clear History",
+      "modeDirect": "Direct",
+      "modePull": "Pull",
+      "sendingTo": "Sending to {peer}",
+      "receivingFrom": "Receiving from {peer}",
+      "awaitingApproval": "Awaiting approval…",
+      "completed": "Completed",
+      "failed": "Failed",
+      "declined": "Declined",
+      "cancelled": "Cancelled",
+      "declinedByRecipient": "Declined by recipient",
+      "cancelledByUser": "Cancelled"
+    },
+    "errors": {
+      "itemsUnavailable": "Requested items are no longer on the shelf",
+      "directRequiresAccount": "Direct Send requires signing in with an IRIS account",
+      "loginRequiredFeature": "Sign in to IRIS to configure this setting",
+      "folderRequiresAccount": "Sign in to IRIS to share entire folders",
+      "directoryPickerUnsupported": "Direct folder saving requires a Chromium browser with File System Access support",
+      "peerDisconnected": "Target peer is no longer connected",
+      "recipientGuestNoDirect": "Guest peers only support Pull Shelf downloads"
+    },
+    "toasts": {
+      "directTextReceived": "Received text from {peer}",
+      "transferCompleted": "Transfer completed",
+      "transferFailed": "Transfer failed",
+      "autoAcceptedOwnDevice": "Auto-accepting transfer from {peer}",
+      "pastedToShelf": "Added clipboard content to Shared by You",
+      "copiedToClipboard": "Copied to clipboard"
     }
   }
 }

@@ -103,6 +103,11 @@
         "name": "Kiroshi",
         "description": "SearXNGを活用したプライバシー重視のメタ検索エンジン。",
         "descriptionShort": "ウェブ・メタ検索"
+      },
+      "irisTesseract": {
+        "name": "Tesseract",
+        "description": "同一ローカルネットワーク限定のP2Pファイル・フォルダ・テキスト共有。",
+        "descriptionShort": "ローカルネットワーク共有"
       }
     },
     "listSidebar": {
@@ -981,6 +986,133 @@
           }
         }
       }
+    }
+  },
+  "tesseract": {
+    "common": {
+      "save": "保存",
+      "cancel": "キャンセル",
+      "retry": "再試行",
+      "dismiss": "閉じる",
+      "copy": "コピー",
+      "clear": "クリア",
+      "download": "ダウンロード",
+      "folderSummary": "{count}件のファイル · {size}"
+    },
+    "header": {
+      "editAlias": "デバイス名を編集",
+      "guestSignIn": "IRISにサインイン",
+      "myDevicesFilter": "自分のデバイス",
+      "preferences": "転送設定"
+    },
+    "preferences": {
+      "title": "転送設定",
+      "subtitle": "自動承認やシェルフ共有の承認設定を管理します。",
+      "autoAcceptOwnTitle": "自分のIRISデバイスを自動承認",
+      "autoAcceptOwnDesc": "同じIRISアカウントの別デバイスからのダイレクト送信を確認なしで受信します。",
+      "requireApprovalTitle": "シェルフからのダウンロードに承認を必須化",
+      "requireApprovalDesc": "他のデバイスがあなたの共有リストからダウンロードする際に承認プロンプトを表示します。",
+      "signInHint": "フォルダ共有・ダイレクト送信を使うにはIRISアカウントでサインインしてください。"
+    },
+    "sharedByYou": {
+      "title": "共有中（自分）",
+      "approvalActive": "承認必須",
+      "clearAll": "すべて削除",
+      "dropTitle": "ファイルやテキストをドロップ",
+      "dropSubtitleAuth": "ファイル・フォルダ・リンク・画像をドロップすると近くのデバイスが直接取得できます。",
+      "dropSubtitleGuest": "ファイル・リンク・テキストをドロップすると近くのデバイスが直接取得できます。",
+      "addFiles": "ファイル追加",
+      "addFolder": "フォルダ追加",
+      "folderAccountLocked": "フォルダ (要IRISログイン)",
+      "addText": "テキスト / URL共有",
+      "textTitlePlaceholder": "タイトル（任意）",
+      "textBodyPlaceholder": "ローカルネットワークに共有するテキストやURLを入力…",
+      "publishText": "シェルフに追加",
+      "sharedLink": "共有リンク",
+      "sharedSnippet": "共有テキスト",
+      "removeItem": "項目を削除"
+    },
+    "sharedByOthers": {
+      "nearbyPeersTitle": "近くのデバイス",
+      "hostOnlyHint": "ホスト限定WebRTC · 外部サーバー経由なし",
+      "noPeersTitle": "同じローカルネットワーク上のデバイスを待機中",
+      "noPeersHint": "同じローカルネットワークの別端末でTesseractを開くと共有ファイルが表示されます。",
+      "yourDeviceBadge": "自分の端末",
+      "guestBadge": "ゲスト",
+      "p2pConnectedType": "P2P · {type}",
+      "p2pConnected": "P2P接続完了",
+      "p2pConnecting": "P2P接続中…",
+      "p2pUnreachable": "接続不可",
+      "diagnosticsHelp": "接続トラブルシューティング",
+      "diagnosticsTitle": "ローカルP2P接続のヒント",
+      "diagnosticsHint": "同じLANサブネットに接続され、APクライアント分離が無効で、mDNS/UDP通信が許可されているか確認してください。",
+      "directSend": "ダイレクト送信",
+      "signInForDirect": "送信は要サインイン",
+      "guestPullOnly": "シェルフ取得のみ",
+      "directTextFrom": "{peer} からのダイレクトテキスト",
+      "openLink": "開く",
+      "shelfTitle": "利用可能なファイル",
+      "selectedSummary": "{count}件選択中 · {size}",
+      "downloadSelected": "選択項目をダウンロード",
+      "saveToFolder": "フォルダに保存",
+      "shelfEmpty": "近くのデバイスがファイルやリンクを追加するとここに表示されます。",
+      "peerItemCount": "{count}件",
+      "saveFolder": "フォルダ保存",
+      "downloadZip": "ZIP保存"
+    },
+    "directSend": {
+      "title": "{peer} へダイレクト送信",
+      "ownDeviceAutoAcceptHint": "同じIRISアカウントにログイン中のため、受信側で自動的に転送が開始されます。",
+      "subtitle": "相手の承認を得てファイル・フォルダ・テキストを直接送信します。",
+      "dropHint": "送信するファイルやフォルダをドロップ",
+      "optionalTextLabel": "テキストまたはURL（任意）",
+      "totalSize": "合計サイズ: {size}",
+      "sendButton": "今すぐ送信"
+    },
+    "incomingOffer": {
+      "title": "受信オファー",
+      "subtitle": "{peer} がローカルネットワーク経由でファイルを送信しようとしています。",
+      "textOnlyBadge": "テキストのみ",
+      "decline": "拒否",
+      "accept": "承認して受信"
+    },
+    "shelfApproval": {
+      "title": "ダウンロードの承認",
+      "subtitle": "{peer} があなたの共有シェルフからダウンロードをリクエストしています。",
+      "deny": "拒否",
+      "allow": "許可する"
+    },
+    "transfers": {
+      "title": "転送アクティビティ",
+      "clearHistory": "履歴を消去",
+      "modeDirect": "ダイレクト",
+      "modePull": "プル",
+      "sendingTo": "{peer} へ送信中",
+      "receivingFrom": "{peer} から受信中",
+      "awaitingApproval": "承認待ち…",
+      "completed": "完了",
+      "failed": "失敗",
+      "declined": "拒否済み",
+      "cancelled": "キャンセル",
+      "declinedByRecipient": "受信側により拒否されました",
+      "cancelledByUser": "キャンセル済み"
+    },
+    "errors": {
+      "itemsUnavailable": "リクエストされた項目は共有リストから削除されました",
+      "directRequiresAccount": "ダイレクト送信にはIRISアカウントへのサインインが必要です",
+      "loginRequiredFeature": "この設定を変更するにはIRISにサインインしてください",
+      "folderRequiresAccount": "フォルダ共有にはIRISアカウントへのサインインが必要です",
+      "directoryPickerUnsupported": "フォルダへの直接保存はFile System Access対応のChromiumブラウザが必要です",
+      "peerDisconnected": "対象デバイスは切断されました",
+      "recipientGuestNoDirect": "ゲスト端末はシェルフからの取得のみ対応しています"
+    },
+    "toasts": {
+      "directTextReceived": "{peer} からテキストを受信しました",
+      "transferCompleted": "転送が完了しました",
+      "transferFailed": "転送に失敗しました",
+      "autoAcceptedOwnDevice": "{peer} からの転送を自動承認しています",
+      "pastedToShelf": "クリップボードの内容を共有リストに追加しました",
+      "copiedToClipboard": "クリップボードにコピーしました"
     }
   }
 }

@@ -208,6 +208,8 @@ export function IrisSidebar({
       ? "carina"
       : pathname.startsWith("/kiroshi") || pathname.startsWith("/IRIS-search")
       ? "kiroshi"
+      : pathname.startsWith("/tesseract")
+      ? "tesseract"
       : "borealis")
 
   // Real-time synchronization of per-app sidebar layout customization
@@ -271,6 +273,9 @@ export function IrisSidebar({
         href.startsWith("http://") ||
         href.startsWith("https://")
       ) {
+        if ((!href || href === "#") && customOnClick) {
+          e.preventDefault()
+        }
         return
       }
 

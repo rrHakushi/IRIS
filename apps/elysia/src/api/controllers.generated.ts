@@ -40,6 +40,7 @@ import { kiroshiHistory as _ctrl_35 } from './controllers/kiroshi/history.ctrl'
 import { kiroshiSearch as _ctrl_36 } from './controllers/kiroshi/search.ctrl'
 import { kiroshiSettings as _ctrl_37 } from './controllers/kiroshi/settings.ctrl'
 import { servarrController as _ctrl_38 } from './controllers/servarr/servarr.ctrl'
+import { tesseractController as _ctrl_39 } from './controllers/tesseract/tesseract.ctrl'
 
 const _group_0 = new Elysia()
   .use(_ctrl_0)
@@ -87,6 +88,7 @@ const _group_6 = new Elysia()
   .use(_ctrl_36)
   .use(_ctrl_37)
   .use(_ctrl_38)
+  .use(_ctrl_39)
 
 export const controllers = new Elysia({ name: 'controllers' })
   .use(_group_0)

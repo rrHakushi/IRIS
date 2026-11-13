@@ -8,6 +8,7 @@ import { resolveSessionFromRequest } from './plugins/session'
 import { isHttpError } from './lib/errors'
 import { LogFactory, c } from '@NamelessLiberty/logger'
 import { wsHub } from './services/ws.serv'
+import { isPrivateLanOrigin, tesseractServ } from './services/tesseract/tesseract.serv'
 import { controllers, type ControllersApp } from './api/controllers.generated'
 import { websocket } from 'elysia/websocket'
 
@@ -44,6 +45,10 @@ function isWsOrPublicRoute(pathname: string): boolean {
     pathname === '/ws' ||
     pathname.startsWith('/ws?') ||
     pathname.startsWith('/ws/') ||
+    pathname === '/tesseract/ws' ||
+    pathname.startsWith('/tesseract/ws?') ||
+    pathname === '/tesseract/events' ||
+    pathname.startsWith('/tesseract/events?') ||
     pathname === '/public' ||
     pathname.startsWith('/public/') ||
     pathname === '/carina/public' ||
@@ -70,7 +75,15 @@ export const app = new Elysia()
       origin: (request: Request): boolean => {
         const origin = request.headers.get('origin')
         if (!origin) return true
-        return allowedOrigins.has(origin)
+        if (allowedOrigins.has(origin)) return true
+        if (isPrivateLanOrigin(origin)) {
+          if (isDev) return true
+          try {
+            const pathname = new URL(request.url).pathname
+            if (pathname.startsWith('/tesseract')) return true
+          } catch {}
+        }
+        return false
       },
       credentials: true,
       methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
@@ -241,6 +254,49 @@ export const app = new Elysia()
       }
     },
   })
+  .ws('/tesseract/ws', {
+    async open(ws: any) {
+      const conn = ws.raw ?? ws
+      const request = ws.request as Request | undefined
+      if (!request) {
+        ws.close?.(4400, 'Missing request context')
+        return
+      }
+
+      let queryParams: URLSearchParams | null = null
+      try {
+        const rawUrl = typeof request.url === 'string' ? request.url : ''
+        queryParams = new URL(rawUrl, 'http://localhost:4000').searchParams
+      } catch {}
+
+      await tesseractServ.connectPeer({
+        transport: {
+          send: (data: string) => ws.send(data),
+          close: (code?: number, reason?: string) => ws.close?.(code, reason),
+        },
+        transportKey: conn,
+        request,
+        remoteAddress: ws.remoteAddress ?? conn?.remoteAddress ?? null,
+        deviceId: queryParams?.get('deviceId'),
+        tabId: queryParams?.get('tabId'),
+        alias: queryParams?.get('alias'),
+        deviceType: queryParams?.get('deviceType'),
+        os: queryParams?.get('os'),
+        browser: queryParams?.get('browser'),
+        requireShelfApproval: queryParams?.get('approval') === 'true',
+      })
+    },
+    async message(ws: any, message: any) {
+      const conn = ws.raw ?? ws
+      const peerId = tesseractServ.getPeerIdByTransportKey(conn)
+      if (!peerId) return
+      await tesseractServ.handleClientSignal(peerId, message)
+    },
+    async close(ws: any) {
+      const conn = ws.raw ?? ws
+      await tesseractServ.disconnectPeer(conn)
+    },
+  })
 
 export type App = ControllersApp
 
@@ -269,6 +325,9 @@ export function startServer(port?: number) {
 
   const handleShutdown = async (signal: string) => {
     logger.info(`Worker ${process.pid} received ${signal}, shutting down...`)
+    try {
+      await tesseractServ.shutdown()
+    } catch {}
     try {
       await app.stop()
     } catch { }

@@ -109,6 +109,20 @@ export const BOOKMARK_ICON_OPTIONS: BookmarkIconOption[] = [
     ),
   },
   {
+    id: "app:tesseract",
+    label: "Tesseract",
+    type: "app",
+    customRender: (className = "size-4") => (
+      <Image
+        src="/icons/tesseract.png"
+        alt="Tesseract"
+        width={24}
+        height={24}
+        className={`${className} rounded-full object-contain`}
+      />
+    ),
+  },
+  {
     id: "app:iris-cloud",
     label: "IRIS Cloud",
     type: "app",
@@ -262,6 +276,18 @@ export function renderBookmarkIcon(
       <Image
         src="/iris-icons/iris-search-ring-left.png"
         alt="Kiroshi"
+        width={96}
+        height={96}
+        className={`${className} rounded-full object-contain`}
+      />
+    )
+  }
+
+  if (iconId === "app:tesseract" || iconId === "tesseract") {
+    return (
+      <Image
+        src="/icons/tesseract.png"
+        alt="Tesseract"
         width={96}
         height={96}
         className={`${className} rounded-full object-contain`}

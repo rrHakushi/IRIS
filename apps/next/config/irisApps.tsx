@@ -95,6 +95,21 @@ export function getIrisApps(t: (key: string) => string): IrisApp[] {
         ? t("irisSearch.descriptionShort")
         : "Web Search",
     },
+    {
+      id: "tesseract",
+      name: t ? t("irisTesseract.name") : "Tesseract",
+      href: "/tesseract",
+      color: "#84cc16",
+      gradient:
+        "linear-gradient(135deg, #ecfccb 0%, #a3e635 25%, #84cc16 50%, #4d7c0f 75%, #1a2e05 100%)",
+      icon: "/icons/tesseract.png",
+      description: t
+        ? t("irisTesseract.description")
+        : "Local network file, folder, and text sharing.",
+      descriptionShort: t
+        ? t("irisTesseract.descriptionShort")
+        : "Local file sharing",
+    },
     // {
     //   id: "apertune",
     //   name: "Apertune",
@@ -149,17 +164,6 @@ export function getIrisApps(t: (key: string) => string): IrisApp[] {
     //   icon: "/icons/amadeus.png",
     //   description: "Cloud storage and file management.",
     //   descriptionShort: "Cloud storage",
-    // },
-    // {
-    //   id: "tesseract",
-    //   name: "Tesseract",
-    //   href: "/tesseract",
-    //   color: "#84cc16",
-    //   gradient:
-    //     "linear-gradient(135deg, #ecfccb 0%, #a3e635 25%, #84cc16 50%, #4d7c0f 75%, #1a2e05 100%)",
-    //   icon: "/icons/tesseract.png",
-    //   description: "Local network file sharing.",
-    //   descriptionShort: "Local file sharing",
     // },
     // {
     //   id: "vex",

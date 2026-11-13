@@ -104,6 +104,7 @@ export function SidebarSettingsTab({
       return "akaromi"
     if (pathname.startsWith("/kiroshi") || pathname.startsWith("/iris-search"))
       return "kiroshi"
+    if (pathname.startsWith("/tesseract")) return "tesseract"
     if (pathname.startsWith("/carina") || pathname.startsWith("/iris-account"))
       return "carina"
     if (currentActiveConfig && currentActiveConfig.length > 0) {

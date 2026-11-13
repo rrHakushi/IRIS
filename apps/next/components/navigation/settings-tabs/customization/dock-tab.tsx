@@ -126,6 +126,7 @@ export function DockSettingsTab({
       return "akaromi"
     if (pathname.startsWith("/kiroshi") || pathname.startsWith("/iris-search"))
       return "kiroshi"
+    if (pathname.startsWith("/tesseract")) return "tesseract"
     if (pathname.startsWith("/carina") || pathname.startsWith("/iris-account"))
       return "carina"
     if (currentActiveConfig && currentActiveConfig.length > 0) {
@@ -727,6 +728,7 @@ export function DockSettingsTab({
     if (activeAppId === "borealis") return "/borealis"
     if (activeAppId === "akaromi") return "/akaromi"
     if (activeAppId === "kiroshi") return "/kiroshi"
+    if (activeAppId === "tesseract") return "/tesseract"
     return "/carina"
   }, [activeAppId])
 

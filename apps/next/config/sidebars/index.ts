@@ -17,6 +17,10 @@ import {
   useCarinaSidebarConfig,
   getCarinaSidebarConfig,
 } from "./carinaSidebarConfig"
+import {
+  useTesseractSidebarConfig,
+  getTesseractSidebarConfig,
+} from "./tesseractSidebarConfig"
 
 export interface AppSidebarRegistryEntry {
   appId: string
@@ -35,6 +39,7 @@ export function useAllAppSidebarConfigs(
   const akaromiConfig = useAkaromiSidebarConfig(session)
   const kiroshiConfig = useKiroshiSidebarConfig(session)
   const carinaConfig = useCarinaSidebarConfig(session)
+  const tesseractConfig = useTesseractSidebarConfig(session)
 
   return useMemo(
     () => [
@@ -58,8 +63,13 @@ export function useAllAppSidebarConfigs(
         appName: "Carina",
         config: carinaConfig,
       },
+      {
+        appId: "tesseract",
+        appName: "Tesseract",
+        config: tesseractConfig,
+      },
     ],
-    [borealisConfig, akaromiConfig, kiroshiConfig, carinaConfig]
+    [borealisConfig, akaromiConfig, kiroshiConfig, carinaConfig, tesseractConfig]
   )
 }
 
@@ -96,6 +106,11 @@ export function getAllAppSidebarConfigs(
       appName: "Carina",
       config: getCarinaSidebarConfig(session),
     },
+    {
+      appId: "tesseract",
+      appName: "Tesseract",
+      config: getTesseractSidebarConfig(session),
+    },
   ]
 }
 
@@ -104,3 +119,4 @@ export * from "./akaromiSidebarConfig"
 export * from "./kiroshiSidebarConfig"
 export * from "./carinaSidebarConfig"
 export * from "./carinaUserSidebarConfig"
+export * from "./tesseractSidebarConfig"
