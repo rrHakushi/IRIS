@@ -12,7 +12,6 @@
 
 # Carina [Account management]
     - Web extension for managing and using bookmarks
-    - Update login/register pages
 
 # Lynx [Discord bot]
     - Copy from Runa and update
@@ -73,7 +72,7 @@
 
 # JellyBorealis 
     - Add support for other list (idk we'll see)
-    - detect music button in the player ui (next to borealis icon) to detect currently playing music in the playback
+
 
 # BorealisReader
     - cross-platform epub reader
